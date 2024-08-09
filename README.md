@@ -2,7 +2,10 @@
 
 A collection of VScript mods for various maps that I think improve the overall gameplay experience.
 
-Copy the contents of the repo to tf/scripts/vscripts/mega_mod (you have to execute the scripts manually via map cfgs; this will be fixed in the future)
+Installation:
+- Copy the contents of the repo to `tf/scripts/vscripts/mega_mod`
+- Add `script_execute mega_mod/mega_mod.nut` to the end of your server.cfg
+- You can comment out any maps you don't want to use the mod for within `mega_mod.nut`
 
 ## arena_perks
 

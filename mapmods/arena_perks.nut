@@ -14,7 +14,7 @@ function MegaModRoundStart() {
 
     if(IsInWaitingForPlayers()) return;
 
-    IncludeScript("mega_mod/arena_perks_overrides.nut");
+    IncludeScript("mega_mod/mapmods/arena_perks_overrides.nut");
 
     // Can't override the logic_script changing the game state so have to do this terribleness to
     // clean up the gamestate at the start of the round.
