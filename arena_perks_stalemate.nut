@@ -1,0 +1,1 @@
+if (::PerkGamemode.CurrentState == "round") ::PerkGamemode.GetActiveState().WinRound(0);
