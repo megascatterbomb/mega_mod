@@ -35,6 +35,25 @@ function MegaModRoundStart() {
     // Re-enter the gamestate (this time with our overrides in place)
     ::PerkGamemode.CurrentState = "";
     ::PerkGamemode.ChangeState("vote");
+
+    // Fix >32 players appearing inside the arena at the start of a new match.
+    local redSpawn =  Vector(0.0, 5180.0, 160.0);
+    local blueSpawn = Vector(0.0, -5180.0, 160.0);
+    // These angles are backwards from what cl_showpos 1 suggests should be the case.
+    local redAngles = QAngle(0, -90, 0);
+    local blueAngles = QAngle(0, 90, 0);
+    for (local i = 1; i <= MaxClients().tointeger() ; i++)
+    {
+        local player = PlayerInstanceFromIndex(i)
+        if (player == null) continue
+        if(player.GetTeam() == Constants.ETFTeam.TF_TEAM_RED && player.GetOrigin().x < 4000) {
+            player.SetAbsOrigin(redSpawn);
+            player.SetAbsAngles(redAngles);
+        } else if(player.GetTeam() == Constants.ETFTeam.TF_TEAM_BLUE && player.GetOrigin().x > -4000) {
+            player.SetAbsOrigin(blueSpawn);
+            player.SetAbsAngles(blueAngles);
+        }
+    }
 }
 
 ::MOST_RECENT_DEATH_TEAM <- 0;
