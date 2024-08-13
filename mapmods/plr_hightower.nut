@@ -155,14 +155,30 @@ function DisableRollback() {
 function SwitchToElevatorRed() {
     ::RED_ELV <- MM_GetEntByName("clamp_red");
     ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone_elv");
-    AddCaptureOutputsToEntity(RED_PUSHZONE, "Red");
+
+    local redPushingCaseElv = MM_GetEntByName("plr_red_pushingcase_elv");
+    AddCaptureOutputsToEntity(redPushingCaseElv, "Red");
+    EntityOutputs.AddOutput(redPushingCaseElv, "OnCase01", "clamp_red", "SetSpeedDirAccel", "0.0", 0, -1);
+    EntityOutputs.AddOutput(redPushingCaseElv, "OnDefault", "clamp_red", "SetSpeedDirAccel", "0.77", 0, -1);
+
+    EntityOutputs.AddOutput(RED_ROLLBACK, "OnTrue", "clamp_red", "SetSpeedDirAccel", "-1.0", 0, -1);
+    EntityOutputs.AddOutput(RED_ROLLBACK, "OnFalse", "clamp_red", "SetSpeedDirAccel", "0.0", 0, -1);
+
     BlockRedCart(false);
 }
 
 function SwitchToElevatorBlu() {
     ::BLU_ELV <- MM_GetEntByName("clamp_blue");
     ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone_elv");
-    AddCaptureOutputsToEntity(BLU_PUSHZONE, "Blu");
+
+    local bluPushingCaseElv = MM_GetEntByName("plr_blu_pushingcase_elv");
+    AddCaptureOutputsToEntity(bluPushingCaseElv, "Blu");
+    EntityOutputs.AddOutput(bluPushingCaseElv, "OnCase01", "clamp_blue", "SetSpeedDirAccel", "0.0", 0, -1);
+    EntityOutputs.AddOutput(bluPushingCaseElv, "OnDefault", "clamp_blue", "SetSpeedDirAccel", "0.77", 0, -1);
+
+    EntityOutputs.AddOutput(BLU_ROLLBACK, "OnTrue", "clamp_blue", "SetSpeedDirAccel", "-1.0", 0, -1);
+    EntityOutputs.AddOutput(BLU_ROLLBACK, "OnFalse", "clamp_blue", "SetSpeedDirAccel", "0.0", 0, -1);
+
     BlockBluCart(false);
 }
 
