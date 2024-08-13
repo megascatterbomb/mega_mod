@@ -1,5 +1,3 @@
-printl("MEGAMOD: arena_perks_overrides.nut started")
-
 function PerkGameStateVote::OnEnter() {
     // NetProps.SetPropInt(GAMERULES, "m_iRoundState", Constants.ERoundState.GR_STATE_RND_RUNNING);
 
@@ -15,7 +13,6 @@ function PerkGameStateVote::OnEnter() {
     });
     EntFireByHandle(GAME_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(GAME_TIMER, "Resume", "1", 0, null, null);
-    printl("MEGAMOD: Vote started with overrides")
 
     EntFire("arena_spawnpoints", "Disable", "", -1, null);
     EntFire("music_perk_phase", "PlaySound", "", 0, null);
@@ -32,8 +29,6 @@ function PerkGameStateVote::OnEnter() {
 function PerkGameStateRound::OnEnter() {
     EntFire("arena_spawnpoints", "Enable", "", -1, null);
     EntFire("vote_spawnpoints", "Disable", "", -1, null);
-
-    printl("MEGAMOD: Round started with overrides")
 
     GAME_TIMER.Kill();
     ::GAME_TIMER <- SpawnEntityFromTable("team_round_timer", {
@@ -119,5 +114,3 @@ function PerkGameStateRound::WinRound(winnerTeam) {
     EntFire("trigger_stun", "Kill", "", 0.1, null);
     ::PerkGamemode.ChangeState("round_end");
 }
-
-printl("MEGAMOD: arena_perks_overrides.nut finished")

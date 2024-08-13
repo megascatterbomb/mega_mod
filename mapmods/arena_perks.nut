@@ -1,7 +1,5 @@
 // Credit to Mr. Burguers for figuring this out and sharing how to do it in the TF2Maps discord.
 
-printl("MEGAMOD: arena_perks.nut started")
-
 local root = getroottable()
 local prefix = DoUniqueString("mega")
 local mega = root[prefix] <- {}
@@ -73,5 +71,3 @@ mega.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
     ::__CollectGameEventCallbacks(mega)
 }
 ::__CollectGameEventCallbacks(mega)
-
-printl("MEGAMOD: arena_perks.nut finished")

@@ -2,14 +2,16 @@
 
 local mods = [
     "arena_perks"
+    "plr_hightower"
 ];
 
 local mapName = GetMapName();
 local index = mods.find(mapName);
 
 if(index != null) {
-    printl("Found mod for " + mapName + ". Attempting to load...");
+    printl("MEGAMOD: Found mod for " + mapName + ". Attempting to load...");
     IncludeScript("mega_mod/mapmods/" + mapName + ".nut")
+    printl("MEGAMOD: " + mapName + ".nut started")
 } else {
-    printl("No mod found for " + mapName + ".");
+    printl("" + mapName + " is not listed within mega_mod.nut");
 }
