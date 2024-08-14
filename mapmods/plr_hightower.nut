@@ -44,8 +44,8 @@ function OnGameEvent_teamplay_round_start(params) {
     // Cart onboarding for elevator
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_begin"), "OnTrigger", "!self", "RunScriptCode", "BlockRedCart(true)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_blu_positioncart_relay_begin"), "OnTrigger", "!self", "RunScriptCode", "BlockBluCart(true)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorRed()", 1.05, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("clamp_blu_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorBlu()", 1.05, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorRed()", 0.95, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("clamp_blu_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorBlu()", 0.95, -1);
 
     // Clear out elevator logic
     MM_GetEntByName("clamp_logic_case_red").Kill();
@@ -53,7 +53,7 @@ function OnGameEvent_teamplay_round_start(params) {
 
     local plrTimer = MM_GetEntByName("plr_timer");
     EntityOutputs.RemoveOutput(plrTimer, "OnSetupFinished", "plr_timer", "Disable", "");
-    EntityOutputs.AddOutput(plrTimer, "OnSetupFinished", "plr_timer", "SetTime", "600", 0, -1);
+    EntityOutputs.AddOutput(plrTimer, "OnSetupFinished", "plr_timer", "SetTime", "30", 0, -1);
     EntityOutputs.AddOutput(plrTimer, "OnFinished", "!self", "RunScriptCode", "OvertimeHightower()", 0, -1);
 }
 
@@ -103,10 +103,6 @@ function OvertimeHightower() {
 
     UpdateRedCart(CASE_RED);
     UpdateBluCart(CASE_BLU);
-
-    EntityOutputs.RemoveOutput(plrTimer, "OnSetupFinished", "plr_timer", "Disable", "");
-    EntityOutputs.AddOutput(plrTimer, "OnSetupFinished", "plr_timer", "SetTime", "300", 0, -1);
-    EntityOutputs.AddOutput(plrTimer, "OnFinished", "!self", "RunScriptCode", "OvertimeHightower()", 0, -1);
 }
 
 function UpdateRedCart(caseNumber) {
@@ -149,28 +145,40 @@ function AdvanceRed() {
     EntFireByHandle(RED_CARTSPARKS, "StartSpark", "", 0.1, null, null);
     EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0.1, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
-    if(RED_ELV) EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    if(RED_ELV) {
+        EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    }
 }
 
 function StopRed() {
     EntFireByHandle(RED_CARTSPARKS, "StopSpark", "", 0.1, null, null);
     EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
-    if(RED_ELV) EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    if(RED_ELV) {
+        EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    }
 }
 
 function AdvanceBlu() {
     EntFireByHandle(BLU_CARTSPARKS, "StartSpark", "", 0.1, null, null);
     EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0.1, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
-    if(BLU_ELV) EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    if(BLU_ELV) {
+        EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    }
 }
 
 function StopBlu() {
     EntFireByHandle(BLU_CARTSPARKS, "StopSpark", "", 0.1, null, null);
     EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
-    if(BLU_ELV) EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    if(BLU_ELV) {
+        EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    }
 }
 
 function BlockRedCart(blocked) {
@@ -215,6 +223,9 @@ function SwitchToElevatorRed() {
     EntityOutputs.AddOutput(RED_ROLLBACK, "OnTrue", "clamp_red", "SetSpeedDirAccel", "-1.0", 0, -1);
     EntityOutputs.AddOutput(RED_ROLLBACK, "OnFalse", "clamp_red", "SetSpeedDirAccel", "0.0", 0, -1);
 
+    EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+    EntFireByHandle(RED_TRAIN, "TeleportToPathTrack", "plr_red_pathC_hillA3", 0, null, null);
+
     BlockRedCart(false);
 }
 
@@ -230,6 +241,9 @@ function SwitchToElevatorBlu() {
 
     EntityOutputs.AddOutput(BLU_ROLLBACK, "OnTrue", "clamp_blue", "SetSpeedDirAccel", "-1.0", 0, -1);
     EntityOutputs.AddOutput(BLU_ROLLBACK, "OnFalse", "clamp_blue", "SetSpeedDirAccel", "0.0", 0, -1);
+
+    EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+    EntFireByHandle(BLU_TRAIN, "TeleportToPathTrack", "plr_blu_pathC_hillA3", 0, null, null);
 
     BlockBluCart(false);
 }
