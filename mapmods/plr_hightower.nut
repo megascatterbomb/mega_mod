@@ -53,7 +53,7 @@ function OnGameEvent_teamplay_round_start(params) {
 
     local plrTimer = MM_GetEntByName("plr_timer");
     EntityOutputs.RemoveOutput(plrTimer, "OnSetupFinished", "plr_timer", "Disable", "");
-    EntityOutputs.AddOutput(plrTimer, "OnSetupFinished", "plr_timer", "SetTime", "30", 0, -1);
+    EntityOutputs.AddOutput(plrTimer, "OnSetupFinished", "plr_timer", "SetTime", "600", 0, -1);
     EntityOutputs.AddOutput(plrTimer, "OnFinished", "!self", "RunScriptCode", "OvertimeHightower()", 0, -1);
 }
 
