@@ -18,8 +18,8 @@
 ::BLU_PUSHZONE <- null;
 
 // logic_branch governing whether the cart is in a rollback zone or not
-::RED_ROLLBACK <- null;
-::BLU_ROLLBACK <- null;
+::RED_ROLLBACK_BRANCH <- null;
+::BLU_ROLLBACK_BRANCH <- null;
 
 // func_tracktrain for the cart itself
 ::RED_TRAIN <- null;
@@ -34,7 +34,11 @@
 ::BLOCK_RED <- false;
 ::BLOCK_BLU <- false;
 
-// Which crossing is the cart currently at? 0 means no crossing
+// Which crossing is the cart currently at?
+// Crossings should be numbered by the order they're encountered for the BLU cart, starting at 1.
+// 0 means the cart hasn't encountered a crossing.
+// >0 means the cart has reached/is going through a crossing.
+// <0 means the cart has completely passed through said crossing. It will keep this value until another crossing is reached.
 ::CROSSING_RED <- 0;
 ::CROSSING_BLU <- 0;
 
@@ -83,14 +87,14 @@ function StartOvertime() {
 
 function UpdateRedCart(caseNumber) {
     ::CASE_RED = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_RED) return;
+    if(!OVERTIME_ACTIVE || BLOCK_RED || (CROSSING_RED > 0 && CROSSING_RED == CROSSING_BLU)) return;
 
     if(CASE_RED == 0) {
         if(CASE_BLU == 0) {
             AdvanceRed();
             AdvanceBlu();
         } else if (!ROLLBACK_DISABLED) {
-            EntFireByHandle(RED_ROLLBACK, "Test", "", 0, null, null)
+            EntFireByHandle(RED_ROLLBACK_BRANCH, "Test", "", 0, null, null)
         } else {
             StopRed();
         }
@@ -101,14 +105,14 @@ function UpdateRedCart(caseNumber) {
 
 function UpdateBluCart(caseNumber) {
     ::CASE_BLU = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_BLU) return;
+    if(!OVERTIME_ACTIVE || BLOCK_BLU || (CROSSING_BLU > 0 && CROSSING_BLU == CROSSING_RED)) return;
 
     if(CASE_BLU == 0) {
         if(CASE_RED == 0) {
             AdvanceBlu();
             AdvanceRed();
         } else if (!ROLLBACK_DISABLED) {
-            EntFireByHandle(BLU_ROLLBACK, "Test", "", 0, null, null)
+            EntFireByHandle(BLU_ROLLBACK_BRANCH, "Test", "", 0, null, null)
         } else {
             StopBlu();
         }
@@ -118,29 +122,39 @@ function UpdateBluCart(caseNumber) {
 }
 
 function AdvanceRed() {
-    EntFireByHandle(RED_CARTSPARKS, "StartSpark", "", 0.1, null, null);
+    foreach(spark in RED_CARTSPARKS_ARRAY) {
+        EntFireByHandle(spark, "StartSpark", "", 0.1, null, null);
+    }
     EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0.1, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
 }
 
 function StopRed() {
-    EntFireByHandle(RED_CARTSPARKS, "StopSpark", "", 0.1, null, null);
+    foreach(spark in RED_CARTSPARKS_ARRAY) {
+        EntFireByHandle(spark, "StopSpark", "", 0.1, null, null);
+    }
     EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
 }
 
 function AdvanceBlu() {
-    EntFireByHandle(BLU_CARTSPARKS, "StartSpark", "", 0.1, null, null);
+    foreach(spark in BLU_CARTSPARKS_ARRAY) {
+        EntFireByHandle(spark, "StartSpark", "", 0.1, null, null);
+    }
     EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0.1, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
 }
 
 function StopBlu() {
-    EntFireByHandle(BLU_CARTSPARKS, "StopSpark", "", 0.1, null, null);
+    foreach(spark in BLU_CARTSPARKS_ARRAY) {
+        EntFireByHandle(spark, "StopSpark", "", 0.1, null, null);
+    }
     EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
 }
 
+// This is for situations where the game takes control of the cart, like onboarding the cart to the Hightower elevators.
+// Don't use these functions to handle crossings; use SetRedCrossing/SetBluCrossing instead.
 function BlockRedCart(blocked) {
     ::BLOCK_RED <- blocked;
     if(!BLOCK_RED) {
@@ -157,9 +171,19 @@ function BlockBluCart(blocked) {
     }
 }
 
+// These functions set the crossing value, then block the cart from being updated
+// if it's the first cart to reach that crossing.
+function SetRedCrossing(crossing) {
+    ::CROSSING_RED <- crossing;
+    BlockRedCart(CROSSING_RED > 0 && (CROSSING_RED >= CROSSING_BLU && CROSSING_RED > -CROSSING_BLU));
+}
+
+function SetBluCrossing(crossing) {
+    ::CROSSING_BLU <- crossing;
+    BlockRedCart(CROSSING_BLU > 0 && (CROSSING_BLU >= CROSSING_RED && CROSSING_BLU > -CROSSING_RED));
+}
+
 // After a time, we disable rollback zones to prevent theoretically infinite rounds.
-// Also disable when a cart reaches the elevator, otherwise it becomes impossible to maintain sync
-// between the two func_tracktrains.
 function DisableRollback() {
     if(ROLLBACK_DISABLED) return;
     ::ROLLBACK_DISABLED <- true;
