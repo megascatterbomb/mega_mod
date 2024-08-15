@@ -3,6 +3,8 @@ IncludeScript("mega_mod/common/plr_overtime.nut");
 
 function OnGameEvent_teamplay_round_start(params) {
 
+    InitGlobalVars();
+
     ::PLR_TIMER_NAME <- "plr_timer";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
@@ -29,10 +31,10 @@ function OnGameEvent_teamplay_round_start(params) {
     AddCaptureOutputsToEntity(MM_GetEntByName("plr_blu_pushingcase"), "Blu")
 
     // Ensure overtime works on the crossover.
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_branch"), "OnTrue", "!self", "RunScriptCode", "SetRedCrossing(1)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_relay"), "OnTrigger", "!self", "RunScriptCode", "SetRedCrossing(-1)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_branch"), "OnTrue", "!self", "RunScriptCode", "SetBluCrossing(1)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_relay"), "OnTrigger", "!self", "RunScriptCode", "SetBluCrossing(-1)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_start"), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(1)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_end"), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(-1)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_start"), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(1)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_end"), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(-1)", 0, -1);
 
     // Cart onboarding for elevator
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_begin"), "OnTrigger", "!self", "RunScriptCode", "BlockRedCart(true)", 0, -1);

@@ -1,50 +1,54 @@
 // REQUIRED GLOBAL VARIABLES
 // This file should be included at the very start of the map-specific file.
-// Everything to do with entities must be set by the map-specific file in OnGameEvent_teamplay_round_start().
+// Every global variable MUST be set by the map-specific file in OnGameEvent_teamplay_round_start() after a call to InitGlobalVars()
 
-// team_round_timer
-::PLR_TIMER <- null;
-::PLR_TIMER_NAME <- null;
+function InitGlobalVars() {
+    // team_round_timer
+    ::PLR_TIMER <- null;
+    ::PLR_TIMER_NAME <- null;
 
-// Array of all env_spark handles for each cart.
-::RED_CARTSPARKS_ARRAY <- null;
-::BLU_CARTSPARKS_ARRAY <- null;
+    // Array of all env_spark handles for each cart.
+    ::RED_CARTSPARKS_ARRAY <- null;
+    ::BLU_CARTSPARKS_ARRAY <- null;
 
-// info_particle_system for the cart's light
-::RED_FLASHINGLIGHT <- null;
-::BLU_FLASHINGLIGHT <- null;
+    // info_particle_system for the cart's light
+    ::RED_FLASHINGLIGHT <- null;
+    ::BLU_FLASHINGLIGHT <- null;
 
-// trigger_capture_area for the cart
-::RED_PUSHZONE <- null;
-::BLU_PUSHZONE <- null;
+    // trigger_capture_area for the cart
+    ::RED_PUSHZONE <- null;
+    ::BLU_PUSHZONE <- null;
 
-// logic_branch governing whether the cart is in a rollback zone or not
-::RED_ROLLBACK_BRANCH <- null;
-::BLU_ROLLBACK_BRANCH <- null;
+    // logic_branch governing whether the cart is in a rollback zone or not
+    ::RED_ROLLBACK_BRANCH <- null;
+    ::BLU_ROLLBACK_BRANCH <- null;
 
-// func_tracktrain for the cart itself
-::RED_TRAIN <- null;
-::BLU_TRAIN <- null;
+    // func_tracktrain for the cart itself
+    ::RED_TRAIN <- null;
+    ::BLU_TRAIN <- null;
 
-// Number of players on the cart, as decided by the logic_case (does not correspond to case numbers within the logic_case)
-// -1 means cart is blocked, anything >= 0 means the number of cappers.
-::CASE_RED <- 0
-::CASE_BLU <- 0
+    // Number of players on the cart, as decided by the logic_case (does not correspond to case numbers within the logic_case)
+    // -1 means cart is blocked, anything >= 0 means the number of cappers.
+    ::CASE_RED <- 0
+    ::CASE_BLU <- 0
 
-// Is the cart being controlled by something else? (e.g. is it being guided through a crossing?)
-::BLOCK_RED <- false;
-::BLOCK_BLU <- false;
+    // Is the cart being controlled by something else? (e.g. is it being guided through a crossing?)
+    ::BLOCK_RED <- false;
+    ::BLOCK_BLU <- false;
 
-// Which crossing is the cart currently at?
-// Crossings should be numbered by the order they're encountered for the BLU cart, starting at 1.
-// 0 means the cart hasn't encountered a crossing.
-// >0 means the cart has reached/is going through a crossing.
-// <0 means the cart has completely passed through said crossing. It will keep this value until another crossing is reached.
-::CROSSING_RED <- 0;
-::CROSSING_BLU <- 0;
+    // Which crossing is the cart currently at?
+    // Crossings should be numbered by the order they're encountered for the BLU cart, starting at 1.
+    // 0 means the cart hasn't encountered a crossing.
+    // >0 means the cart has reached/is going through a crossing.
+    // <0 means the cart has completely passed through said crossing. It will keep this value until another crossing is reached.
+    ::CROSSING_RED <- 0;
+    ::CROSSING_BLU <- 0;
 
-::OVERTIME_ACTIVE <- false;
-::ROLLBACK_DISABLED <- false;
+    ::OVERTIME_ACTIVE <- false;
+    ::ROLLBACK_DISABLED <- false;
+}
+
+InitGlobalVars();
 
 function AddCaptureOutputsToEntity(entity, team) {
     EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode", "Update" + team + "Cart(-1)", 0, -1); // Blocked
@@ -157,31 +161,61 @@ function StopBlu() {
 // This is for situations where the game takes control of the cart, like onboarding the cart to the Hightower elevators.
 // Don't use these functions to handle crossings; use SetRedCrossing/SetBluCrossing instead.
 function BlockRedCart(blocked) {
+    printl("RED CART BLOCKED: " + blocked);
     ::BLOCK_RED <- blocked;
-    if(!BLOCK_RED) {
-        UpdateRedCart(CASE_RED);
-        UpdateBluCart(CASE_BLU);
-    }
+    UpdateRedCart(CASE_RED);
+    UpdateBluCart(CASE_BLU);
 }
 
 function BlockBluCart(blocked) {
+    printl("BLU CART BLOCKED: " + blocked);
     ::BLOCK_BLU <- blocked;
-    if(!BLOCK_BLU) {
-        UpdateBluCart(CASE_BLU);
-        UpdateRedCart(CASE_RED);
-    }
+    UpdateBluCart(CASE_BLU);
+    UpdateRedCart(CASE_RED);
 }
 
 // These functions set the crossing value, then block the cart from being updated
 // if it's the first cart to reach that crossing.
 function SetRedCrossing(crossing) {
     ::CROSSING_RED <- crossing;
-    BlockRedCart(CROSSING_RED > 0 && (CROSSING_RED >= CROSSING_BLU && CROSSING_RED > -CROSSING_BLU));
+    // If we exited a crossing.
+    if(CROSSING_RED <= 0) {
+        BlockRedCart(false);
+        // If the other cart is waiting at the crossing we just exited.
+        if(CROSSING_RED = -CROSSING_BLU) {
+            BlockBluCart(false);
+        }
+    // If we entered a crossing and the other cart is going through the same crossing.
+    } else if (CROSSING_RED == CROSSING_BLU) {
+        BlockRedCart(true);
+    // If we entered a crossing and the other cart hasn't reached this crossing yet.
+    } else if (CROSSING_RED > abs(CROSSING_BLU)) {
+        BlockRedCart(true);
+    // If we entered a crossing and the other cart has already passed through the crossing.
+    } else {
+        BlockRedCart(false);
+    }
 }
 
 function SetBluCrossing(crossing) {
     ::CROSSING_BLU <- crossing;
-    BlockRedCart(CROSSING_BLU > 0 && (CROSSING_BLU >= CROSSING_RED && CROSSING_BLU > -CROSSING_RED));
+    // If we exited a crossing.
+    if(CROSSING_BLU <= 0) {
+        BlockBluCart(false);
+        // If the other cart is waiting at the crossing we just exited.
+        if(CROSSING_BLU = -CROSSING_RED) {
+            BlockRedCart(false);
+        }
+    // If we entered a crossing and the other cart is going through the same crossing.
+    } else if (CROSSING_BLU == CROSSING_RED) {
+        BlockBluCart(true);
+    // If we entered a crossing and the other cart hasn't reached this crossing yet.
+    } else if (CROSSING_BLU > abs(CROSSING_RED)) {
+        BlockBluCart(true);
+    // If we entered a crossing and the other cart has already passed through the crossing.
+    } else {
+        BlockBluCart(false);
+    }
 }
 
 // After a time, we disable rollback zones to prevent theoretically infinite rounds.
