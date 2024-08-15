@@ -50,7 +50,8 @@ function InitGlobalVars() {
 
 InitGlobalVars();
 
-function AddCaptureOutputsToEntity(entity, team) {
+// When a cart changes player count, call respective update function
+function AddCaptureOutputsToLogicCase(entity, team) {
     EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode", "Update" + team + "Cart(-1)", 0, -1); // Blocked
     EntityOutputs.AddOutput(entity, "OnCase02", "!self", "RunScriptCode", "Update" + team + "Cart(0)", 0, -1); // 0 cap
     EntityOutputs.AddOutput(entity, "OnCase03", "!self", "RunScriptCode", "Update" + team + "Cart(1)", 0, -1); // 1 cap
@@ -92,12 +93,12 @@ function StartOvertime() {
 
 function UpdateRedCart(caseNumber) {
     ::CASE_RED = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_RED || (CROSSING_RED > 0 && CROSSING_RED == CROSSING_BLU)) return;
+    if(!OVERTIME_ACTIVE || BLOCK_RED) return;
 
     if(CASE_RED == 0) {
         if(CASE_BLU == 0) {
-            AdvanceRed();
-            AdvanceBlu();
+            AdvanceRed(0.22);
+            AdvanceBlu(0.22);
         } else if (!ROLLBACK_DISABLED) {
             EntFireByHandle(RED_ROLLBACK_BRANCH, "Test", "", 0, null, null)
         } else {
@@ -110,12 +111,12 @@ function UpdateRedCart(caseNumber) {
 
 function UpdateBluCart(caseNumber) {
     ::CASE_BLU = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_BLU || (CROSSING_BLU > 0 && CROSSING_BLU == CROSSING_RED)) return;
+    if(!OVERTIME_ACTIVE || BLOCK_BLU) return;
 
     if(CASE_BLU == 0) {
         if(CASE_RED == 0) {
-            AdvanceBlu();
-            AdvanceRed();
+            AdvanceBlu(0.22);
+            AdvanceRed(0.22);
         } else if (!ROLLBACK_DISABLED) {
             EntFireByHandle(BLU_ROLLBACK_BRANCH, "Test", "", 0, null, null)
         } else {
@@ -126,12 +127,12 @@ function UpdateBluCart(caseNumber) {
     }
 }
 
-function AdvanceRed() {
+function AdvanceRed(speed) {
     foreach(spark in RED_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StartSpark", "", 0.1, null, null);
     }
     EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0.1, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
 }
 
 function StopRed() {
@@ -142,12 +143,12 @@ function StopRed() {
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
 }
 
-function AdvanceBlu() {
+function AdvanceBlu(speed) {
     foreach(spark in BLU_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StartSpark", "", 0.1, null, null);
     }
     EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0.1, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
 }
 
 function StopBlu() {
@@ -161,14 +162,12 @@ function StopBlu() {
 // This is for situations where the game takes control of the cart, like onboarding the cart to the Hightower elevators.
 // Don't use these functions to handle crossings; use SetRedCrossing/SetBluCrossing instead.
 function BlockRedCart(blocked) {
-    printl("RED CART BLOCKED: " + blocked);
     ::BLOCK_RED <- blocked;
     UpdateRedCart(CASE_RED);
     UpdateBluCart(CASE_BLU);
 }
 
 function BlockBluCart(blocked) {
-    printl("BLU CART BLOCKED: " + blocked);
     ::BLOCK_BLU <- blocked;
     UpdateBluCart(CASE_BLU);
     UpdateRedCart(CASE_RED);
@@ -188,13 +187,13 @@ function SetRedCrossing(crossing) {
     // If we entered a crossing and the other cart is going through the same crossing.
     } else if (CROSSING_RED == CROSSING_BLU) {
         BlockRedCart(true);
+        StopRed();
     // If we entered a crossing and the other cart hasn't reached this crossing yet.
     } else if (CROSSING_RED > abs(CROSSING_BLU)) {
         BlockRedCart(true);
-    // If we entered a crossing and the other cart has already passed through the crossing.
-    } else {
-        BlockRedCart(false);
+        EntFireByHandle(this, "RunScriptCode", "AdvanceRed(0.55)", 0.5, null, null);
     }
+    // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
 }
 
 function SetBluCrossing(crossing) {
@@ -209,13 +208,13 @@ function SetBluCrossing(crossing) {
     // If we entered a crossing and the other cart is going through the same crossing.
     } else if (CROSSING_BLU == CROSSING_RED) {
         BlockBluCart(true);
+        StopBlu();
     // If we entered a crossing and the other cart hasn't reached this crossing yet.
     } else if (CROSSING_BLU > abs(CROSSING_RED)) {
         BlockBluCart(true);
-    // If we entered a crossing and the other cart has already passed through the crossing.
-    } else {
-        BlockBluCart(false);
+        EntFireByHandle(this, "RunScriptCode", "AdvanceBlu(0.55)", 0.5, null, null);
     }
+    // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
 }
 
 // After a time, we disable rollback zones to prevent theoretically infinite rounds.

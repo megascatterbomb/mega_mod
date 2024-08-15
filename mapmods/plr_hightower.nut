@@ -26,26 +26,30 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_ELV <- null;
     ::BLU_ELV <- null;
 
-    // When a cart changes player count, call respective update function
-    AddCaptureOutputsToEntity(MM_GetEntByName("plr_red_pushingcase"), "Red");
-    AddCaptureOutputsToEntity(MM_GetEntByName("plr_blu_pushingcase"), "Blu")
+    AddCaptureOutputsToLogicCase(MM_GetEntByName("plr_red_pushingcase"), "Red");
+    AddCaptureOutputsToLogicCase(MM_GetEntByName("plr_blu_pushingcase"), "Blu")
 
-    // Ensure overtime works on the crossover.
+    // Crossover logic replacement
+    MM_GetEntByName("plr_red_crossover1_branch").Kill();
+    MM_GetEntByName("plr_red_crossover1_relay").Kill();
+    MM_GetEntByName("plr_blu_crossover1_branch").Kill();
+    MM_GetEntByName("plr_blu_crossover1_relay").Kill();
+
     EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_start"), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(1)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_end"), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(-1)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_start"), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(1)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_end"), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(-1)", 0, -1);
 
-    // Cart onboarding for elevator
+    // Elevator logic replacement
+    MM_GetEntByName("clamp_logic_case_red").Kill();
+    MM_GetEntByName("clamp_logic_case").Kill();
+
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_begin"), "OnTrigger", "!self", "RunScriptCode", "BlockRedCart(true)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_blu_positioncart_relay_begin"), "OnTrigger", "!self", "RunScriptCode", "BlockBluCart(true)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorRed()", 0.95, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_blu_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorBlu()", 0.95, -1);
 
-    // Clear out elevator logic
-    MM_GetEntByName("clamp_logic_case_red").Kill();
-    MM_GetEntByName("clamp_logic_case").Kill();
-
+    // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "SetTime", "600", 0, -1);
     EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
@@ -69,11 +73,11 @@ function StartOvertime() {
 ::AdvanceBluBase <- AdvanceBlu;
 ::StopBluBase <- StopBlu;
 
-function AdvanceRed() {
-    AdvanceRedBase();
+function AdvanceRed(speed) {
+    AdvanceRedBase(speed);
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
     }
 }
 
@@ -85,11 +89,11 @@ function StopRed() {
     }
 }
 
-function AdvanceBlu() {
-    AdvanceBluBase();
+function AdvanceBlu(speed) {
+    AdvanceBluBase(speed);
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
     }
 }
 
@@ -112,7 +116,7 @@ function SwitchToElevatorRed() {
     DisableRollback();
 
     local redPushingCaseElv = MM_GetEntByName("plr_red_pushingcase_elv");
-    AddCaptureOutputsToEntity(redPushingCaseElv, "Red");
+    AddCaptureOutputsToLogicCase(redPushingCaseElv, "Red");
     EntityOutputs.AddOutput(redPushingCaseElv, "OnCase01", "clamp_red", "SetSpeedDirAccel", "0.0", 0, -1);
     EntityOutputs.AddOutput(redPushingCaseElv, "OnDefault", "clamp_red", "SetSpeedDirAccel", "0.77", 0, -1);
 
@@ -133,7 +137,7 @@ function SwitchToElevatorBlu() {
     DisableRollback();
 
     local bluPushingCaseElv = MM_GetEntByName("plr_blu_pushingcase_elv");
-    AddCaptureOutputsToEntity(bluPushingCaseElv, "Blu");
+    AddCaptureOutputsToLogicCase(bluPushingCaseElv, "Blu");
     EntityOutputs.AddOutput(bluPushingCaseElv, "OnCase01", "clamp_blue", "SetSpeedDirAccel", "0.0", 0, -1);
     EntityOutputs.AddOutput(bluPushingCaseElv, "OnDefault", "clamp_blue", "SetSpeedDirAccel", "0.77", 0, -1);
 
