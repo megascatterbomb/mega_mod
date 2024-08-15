@@ -1,6 +1,9 @@
 ClearGameEventCallbacks();
+IncludeScript("mega_mod/common/plr_overtime.nut");
 
 function OnGameEvent_teamplay_round_start(params) {
+
+    ::PLR_TIMER = MM_GetEntByName("plr_timer");
 
     ::RED_CARTSPARKS <- MM_GetEntByName("plr_red_cartsparks");
     ::BLU_CARTSPARKS <- MM_GetEntByName("plr_blu_cartsparks");
@@ -16,20 +19,6 @@ function OnGameEvent_teamplay_round_start(params) {
 
     ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
     ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
-
-    ::CASE_RED <- 0
-    ::CASE_BLU <- 0
-
-    // Is the cart being controlled by something else? (e.g. crossing logic)
-    ::BLOCK_RED <- false;
-    ::BLOCK_BLU <- false;
-
-    // These are set once the cart is actually on the elevator.
-    ::RED_ELV <- null;
-    ::BLU_ELV <- null;
-
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
 
     // When a cart changes player count, call respective update function
     AddCaptureOutputsToEntity(MM_GetEntByName("plr_red_pushingcase"), "Red");
@@ -51,22 +40,14 @@ function OnGameEvent_teamplay_round_start(params) {
     MM_GetEntByName("clamp_logic_case_red").Kill();
     MM_GetEntByName("clamp_logic_case").Kill();
 
-    local plrTimer = MM_GetEntByName("plr_timer");
-    EntityOutputs.RemoveOutput(plrTimer, "OnSetupFinished", "plr_timer", "Disable", "");
-    EntityOutputs.AddOutput(plrTimer, "OnSetupFinished", "plr_timer", "SetTime", "600", 0, -1);
-    EntityOutputs.AddOutput(plrTimer, "OnFinished", "!self", "RunScriptCode", "OvertimeHightower()", 0, -1);
+    EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", "plr_timer", "Disable", "");
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "plr_timer", "SetTime", "600", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
 }
 
-function AddCaptureOutputsToEntity(entity, team) {
-    EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode", "Update" + team + "Cart(-1)", 0, -1); // Blocked
-    EntityOutputs.AddOutput(entity, "OnCase02", "!self", "RunScriptCode", "Update" + team + "Cart(0)", 0, -1); // 0 cap
-    EntityOutputs.AddOutput(entity, "OnCase03", "!self", "RunScriptCode", "Update" + team + "Cart(1)", 0, -1); // 1 cap
-    EntityOutputs.AddOutput(entity, "OnCase04", "!self", "RunScriptCode", "Update" + team + "Cart(2)", 0, -1); // 2 cap
-    EntityOutputs.AddOutput(entity, "OnDefault", "!self", "RunScriptCode", "Update" + team + "Cart(3)", 0, -1); // 3+ cap
-}
+::StartOvertimeBase <- StartOvertime;
 
-function OvertimeHightower() {
-
+function StartOvertime() {
     local redRollbackRelay = MM_GetEntByName("plr_red_rollback_relay");
     local bluRollbackRelay = MM_GetEntByName("plr_blu_rollback_relay");
 
@@ -74,77 +55,16 @@ function OvertimeHightower() {
     EntFireByHandle(redRollbackRelay, "Disable", "", 0, null, null);
     EntFireByHandle(bluRollbackRelay, "Disable", "", 0, null, null);
 
-    ::OVERTIME_ACTIVE <- true;
-    if(ROLLBACK_DISABLED) {
-        AnnounceRollbackDisabled();
-    } else {
-        local plrTimer = MM_GetEntByName("plr_timer");
-        plrTimer.Kill();
-        plrTimer = SpawnEntityFromTable("team_round_timer", {
-            reset_time = 1,
-            setup_length = 0,
-            start_paused = 0,
-            targetname = "plr_timer",
-            timer_length = 300,
-            "OnFinished#1" : "!self,RunScriptCode,DisableRollback(),0,1"
-        });
-        local text_tf = SpawnEntityFromTable("game_text_tf", {
-            message = "Overtime!",
-            icon = "timer_icon",
-            background = 0,
-            display_to_team = 0
-        });
-
-        EntFireByHandle(plrTimer, "ShowInHud", "1", 0, null, null);
-        EntFireByHandle(plrTimer, "Resume", "1", 0, null, null);
-        EntFireByHandle(text_tf, "Display", "", 0.1, self, self);
-        EntFireByHandle(text_tf, "Kill", "", 7, self, self);
-    }
-
-    UpdateRedCart(CASE_RED);
-    UpdateBluCart(CASE_BLU);
+    StartOvertimeBase();
 }
 
-function UpdateRedCart(caseNumber) {
-    ::CASE_RED = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_RED) return;
-
-    if(CASE_RED == 0) {
-        if(CASE_BLU == 0) {
-            AdvanceRed();
-            AdvanceBlu();
-        } else if (!ROLLBACK_DISABLED) {
-            EntFireByHandle(RED_ROLLBACK, "Test", "", 0, null, null)
-        } else {
-            StopRed();
-        }
-    } else if (CASE_BLU == 0) {
-        UpdateBluCart(0);
-    }
-}
-
-function UpdateBluCart(caseNumber) {
-    ::CASE_BLU = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_BLU) return;
-
-    if(CASE_BLU == 0) {
-        if(CASE_RED == 0) {
-            AdvanceBlu();
-            AdvanceRed();
-        } else if (!ROLLBACK_DISABLED) {
-            EntFireByHandle(BLU_ROLLBACK, "Test", "", 0, null, null)
-        } else {
-            StopBlu();
-        }
-    } else if (CASE_RED == 0) {
-        UpdateRedCart(0);
-    }
-}
+::AdvanceRedBase <- AdvanceRed;
+::StopRedBase <- StopRed;
+::AdvanceBluBase <- AdvanceBlu;
+::StopBluBase <- StopBlu;
 
 function AdvanceRed() {
-    EntFireByHandle(RED_CARTSPARKS, "StartSpark", "", 0.1, null, null);
-    EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0.1, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    AdvanceRedBase();
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
@@ -152,9 +72,7 @@ function AdvanceRed() {
 }
 
 function StopRed() {
-    EntFireByHandle(RED_CARTSPARKS, "StopSpark", "", 0.1, null, null);
-    EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    StopRedBase();
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
@@ -162,9 +80,7 @@ function StopRed() {
 }
 
 function AdvanceBlu() {
-    EntFireByHandle(BLU_CARTSPARKS, "StartSpark", "", 0.1, null, null);
-    EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0.1, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.22", 0.1, null, null);
+    AdvanceBluBase();
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.22", 0.1, null, null);
@@ -172,41 +88,11 @@ function AdvanceBlu() {
 }
 
 function StopBlu() {
-    EntFireByHandle(BLU_CARTSPARKS, "StopSpark", "", 0.1, null, null);
-    EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    StopBluBase();
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
     }
-}
-
-function BlockRedCart(blocked) {
-    ::BLOCK_RED <- blocked;
-    if(!BLOCK_RED) {
-        UpdateRedCart(CASE_RED);
-        UpdateBluCart(CASE_BLU);
-    }
-}
-
-function BlockBluCart(blocked) {
-    ::BLOCK_BLU <- blocked;
-    if(!BLOCK_BLU) {
-        UpdateBluCart(CASE_BLU);
-        UpdateRedCart(CASE_RED);
-    }
-}
-
-// After a time, we disable rollback zones to prevent theoretically infinite rounds.
-// Also disable when a cart reaches the elevator, otherwise it becomes impossible to maintain sync
-// between the two func_tracktrains.
-function DisableRollback() {
-    if(ROLLBACK_DISABLED) return;
-    ::ROLLBACK_DISABLED <- true;
-    if(!OVERTIME_ACTIVE) return;
-    AnnounceRollbackDisabled();
-    local plrTimer = MM_GetEntByName("plr_timer");
-    if(plrTimer) plrTimer.Kill();
 }
 
 // When the cart goes on the elevator, trigger necessary logic.
@@ -248,15 +134,4 @@ function SwitchToElevatorBlu() {
     BlockBluCart(false);
 }
 
-function AnnounceRollbackDisabled() {
-    local text_tf = SpawnEntityFromTable("game_text_tf", {
-        message = "Rollback zones disabled!",
-        icon = "timer_icon",
-        background = 0,
-        display_to_team = 0
-    });
-    EntFireByHandle(text_tf, "Display", "", 0.1, self, self);
-    EntFireByHandle(text_tf, "Kill", "", 7, self, self);
-}
-
-__CollectGameEventCallbacks(this)
+__CollectGameEventCallbacks(this);
