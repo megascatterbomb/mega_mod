@@ -182,7 +182,7 @@ function SetRedCrossing(crossing) {
         RED_PUSHZONE.AcceptInput("Enable", "", null, null);
         BlockRedCart(false);
         // If the other cart is waiting at the crossing we just exited.
-        if(CROSSING_RED = -CROSSING_BLU) {
+        if(CROSSING_RED == -CROSSING_BLU) {
             BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
             BlockBluCart(false);
         }
@@ -207,7 +207,7 @@ function SetBluCrossing(crossing) {
         BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
         BlockBluCart(false);
         // If the other cart is waiting at the crossing we just exited.
-        if(CROSSING_BLU = -CROSSING_RED) {
+        if(CROSSING_BLU == -CROSSING_RED) {
             RED_PUSHZONE.AcceptInput("Enable", "", null, null);
             BlockRedCart(false);
         }
