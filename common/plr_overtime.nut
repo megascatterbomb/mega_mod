@@ -4,6 +4,7 @@
 
 // team_round_timer
 ::PLR_TIMER <- null;
+::PLR_TIMER_NAME <- null;
 
 // Array of all env_spark handles for each cart.
 ::RED_CARTSPARKS_ARRAY <- null;
@@ -64,7 +65,7 @@ function StartOvertime() {
             reset_time = 1,
             setup_length = 0,
             start_paused = 0,
-            targetname = "plr_timer",
+            targetname = PLR_TIMER_NAME,
             timer_length = 300,
             "OnFinished#1" : "!self,RunScriptCode,DisableRollback(),0,1"
         });

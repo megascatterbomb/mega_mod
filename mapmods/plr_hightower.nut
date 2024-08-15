@@ -3,7 +3,8 @@ IncludeScript("mega_mod/common/plr_overtime.nut");
 
 function OnGameEvent_teamplay_round_start(params) {
 
-    ::PLR_TIMER = MM_GetEntByName("plr_timer");
+    ::PLR_TIMER_NAME <- "plr_timer";
+    ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
     ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_red_cartsparks");
     ::BLU_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_blu_cartsparks");
@@ -40,8 +41,8 @@ function OnGameEvent_teamplay_round_start(params) {
     MM_GetEntByName("clamp_logic_case_red").Kill();
     MM_GetEntByName("clamp_logic_case").Kill();
 
-    EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", "plr_timer", "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "plr_timer", "SetTime", "600", 0, -1);
+    EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "SetTime", "600", 0, -1);
     EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
 }
 
