@@ -21,6 +21,9 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
     ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
 
+    ::RED_ELV <- null;
+    ::BLU_ELV <- null;
+
     // When a cart changes player count, call respective update function
     AddCaptureOutputsToEntity(MM_GetEntByName("plr_red_pushingcase"), "Red");
     AddCaptureOutputsToEntity(MM_GetEntByName("plr_blu_pushingcase"), "Blu")
