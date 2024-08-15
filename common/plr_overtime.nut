@@ -179,19 +179,23 @@ function SetRedCrossing(crossing) {
     ::CROSSING_RED <- crossing;
     // If we exited a crossing.
     if(CROSSING_RED <= 0) {
+        RED_PUSHZONE.AcceptInput("Enable", "", null, null);
         BlockRedCart(false);
         // If the other cart is waiting at the crossing we just exited.
         if(CROSSING_RED = -CROSSING_BLU) {
+            BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
             BlockBluCart(false);
         }
     // If we entered a crossing and the other cart is going through the same crossing.
     } else if (CROSSING_RED == CROSSING_BLU) {
+        RED_PUSHZONE.AcceptInput("Disable", "", null, null);
         BlockRedCart(true);
         StopRed();
     // If we entered a crossing and the other cart hasn't reached this crossing yet.
     } else if (CROSSING_RED > abs(CROSSING_BLU)) {
+        RED_PUSHZONE.AcceptInput("Disable", "", null, null);
         BlockRedCart(true);
-        EntFireByHandle(this, "RunScriptCode", "AdvanceRed(0.55)", 0.5, null, null);
+        EntFireByHandle(RED_TRAIN, "RunScriptCode", "AdvanceRed(0.55)", 0.5, null, null);
     }
     // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
 }
@@ -200,19 +204,23 @@ function SetBluCrossing(crossing) {
     ::CROSSING_BLU <- crossing;
     // If we exited a crossing.
     if(CROSSING_BLU <= 0) {
+        BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
         BlockBluCart(false);
         // If the other cart is waiting at the crossing we just exited.
         if(CROSSING_BLU = -CROSSING_RED) {
+            RED_PUSHZONE.AcceptInput("Enable", "", null, null);
             BlockRedCart(false);
         }
     // If we entered a crossing and the other cart is going through the same crossing.
     } else if (CROSSING_BLU == CROSSING_RED) {
+        BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
         BlockBluCart(true);
         StopBlu();
     // If we entered a crossing and the other cart hasn't reached this crossing yet.
     } else if (CROSSING_BLU > abs(CROSSING_RED)) {
+        BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
         BlockBluCart(true);
-        EntFireByHandle(this, "RunScriptCode", "AdvanceBlu(0.55)", 0.5, null, null);
+        EntFireByHandle(BLU_TRAIN, "RunScriptCode", "AdvanceBlu(0.55)", 0.5, null, null);
     }
     // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
 }
