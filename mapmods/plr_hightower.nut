@@ -35,10 +35,13 @@ function OnGameEvent_teamplay_round_start(params) {
     MM_GetEntByName("plr_blu_crossover1_branch").Kill();
     MM_GetEntByName("plr_blu_crossover1_relay").Kill();
 
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_start"), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(1)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_red_crossover1_end"), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(-1)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_start"), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(1)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_crossover1_end"), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(-1)", 0, -1);
+    AddCrossing(
+        MM_GetEntByName("plr_red_crossover1_start"),
+        MM_GetEntByName("plr_red_crossover1_end"),
+        MM_GetEntByName("plr_blu_crossover1_start"),
+        MM_GetEntByName("plr_blu_crossover1_end"),
+        1
+    );
 
     // Elevator logic replacement
     MM_GetEntByName("clamp_logic_case_red").Kill();

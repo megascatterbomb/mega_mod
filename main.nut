@@ -1,7 +1,8 @@
 // Comment out any maps that you don't want to apply the mods to.
 
 local mods = [
-    "arena_perks"
+    "arena_perks",
+    "plr_bananabay",
     "plr_hightower"
 ];
 

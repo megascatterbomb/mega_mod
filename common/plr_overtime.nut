@@ -244,3 +244,30 @@ function AnnounceRollbackDisabled() {
     EntFireByHandle(text_tf, "Display", "", 0.1, self, self);
     EntFireByHandle(text_tf, "Kill", "", 7, self, self);
 }
+
+// The following functions are helpers to convert PLR maps from using team_train_watcher
+// to handle all cart movement to using logic entities.
+
+function AddRollbackZone(startPath, endPath) {
+    // TODO
+}
+
+function AddRollforwardZone(startPath, endPath) {
+    // TODO
+}
+
+function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) {
+    EntityOutputs.AddOutput(MM_GetEntByName(startPathRed), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(" + index + ")", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(endPathRed), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(" + -index + ")", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(startPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + index + ")", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(endPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + -index + ")", 0, -1);
+}
+
+// Returns the two logic cases as an array: [RED_case, BLU_case]
+function AddCartMovementLogicCases() {
+    // TODO: spawn two logic_case entities with the necessary outputs
+}
+
+function AddRollbackBranch() {
+
+}
