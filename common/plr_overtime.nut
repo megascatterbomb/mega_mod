@@ -59,10 +59,10 @@ InitGlobalVars();
 function CreateLogicCase(name, team) {
     local logicCase = SpawnEntityFromTable("logic_case", {
         targetname = name,
-        Case01 = -1,
-        Case02 = 0,
-        Case03 = 1,
-        Case04 = 2
+        Case01 = "-1",
+        Case02 = "0",
+        Case03 = "1",
+        Case04 = "2"
     });
     AddCaptureOutputsToLogicCase(logicCase, team);
     return logicCase;
@@ -122,18 +122,16 @@ function UpdateRedCart(caseNumber) {
         AdvanceRed(1);
     }
 
-    if(!OVERTIME_ACTIVE) return;
-
     if(CASE_RED == 0) {
-        if(CASE_BLU == 0) {
+        if(CASE_BLU == 0 && OVERTIME_ACTIVE) {
             AdvanceRed(0.22);
             if(!BLOCK_BLU) AdvanceBlu(0.22);
-        } else if (!ROLLBACK_DISABLED && RED_ROLLSTATE == -1) {
+        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && RED_ROLLSTATE == -1) {
             TriggerRollbackRed();
         } else {
             StopRed();
         }
-    } else if (CASE_BLU == 0) {
+    } else if (OVERTIME_ACTIVE && CASE_BLU == 0) {
         UpdateBluCart(0);
     }
 }
@@ -151,18 +149,16 @@ function UpdateBluCart(caseNumber) {
         AdvanceBlu(1);
     }
 
-    if(!OVERTIME_ACTIVE) return;
-
     if(CASE_BLU == 0) {
-        if(CASE_RED == 0) {
+        if(CASE_RED == 0 && OVERTIME_ACTIVE) {
             AdvanceBlu(0.22);
             if(!BLOCK_RED) AdvanceRed(0.22);
-        } else if (!ROLLBACK_DISABLED && BLU_ROLLSTATE == -1) {
+        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && BLU_ROLLSTATE == -1) {
             TriggerRollbackBlu();
         } else {
             StopBlu();
         }
-    } else if (CASE_RED == 0) {
+    } else if (OVERTIME_ACTIVE && CASE_RED == 0) {
         UpdateRedCart(0);
     }
 }

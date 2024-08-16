@@ -24,16 +24,23 @@ function OnGameEvent_teamplay_round_start(params) {
     ::BLU_ELV <- null;
 
     // Cart control logic replacement
+    MM_GetEntByName("template_elv_case_red").Kill();
+    MM_GetEntByName("template_elv_case_blu").Kill();
     MM_GetEntByName("plr_red_pushingcase").Kill();
     MM_GetEntByName("plr_blu_pushingcase").Kill();
-    MM_GetEntByName("plr_red_pushingcase_elv").Kill();
-    MM_GetEntByName("plr_blu_pushingcase_elv").Kill();
 
-    ::RED_LOGICCASE <- CreateLogicCase("plr_red_pushingcase", "Red");
-    ::BLU_LOGICCASE <- CreateLogicCase("plr_blu_pushingcase", "Blu");
+    ::RED_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_red", "Red");
+    ::BLU_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_blu", "Blu");
 
+    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
+    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
+
+    // First hills
     AddRollbackZone("plr_red_pathC_mid_35", "plr_red_pathC_mid_38", "plr_red_pathC_mid_34", "Red");
     AddRollbackZone("plr_blu_pathC_hillA38", "plr_blu_pathC_hillA22", "plr_blu_pathC_hillA19", "Blu");
+    // Elevators
+    AddRollbackZone("plr_red_pathC_hillA3", "plr_red_pathC_end_dummy", "plr_red_pathC_hillA2", "Red");
+    AddRollbackZone("plr_blu_pathC_hillA3", "plr_blu_pathC_end_dummy", "plr_blu_pathC_hillA2", "Blu");
 
     // Crossover logic replacement
     MM_GetEntByName("plr_red_crossover1_branch").Kill();
@@ -42,10 +49,10 @@ function OnGameEvent_teamplay_round_start(params) {
     MM_GetEntByName("plr_blu_crossover1_relay").Kill();
 
     AddCrossing(
-        MM_GetEntByName("plr_red_crossover1_start"),
-        MM_GetEntByName("plr_red_crossover1_end"),
-        MM_GetEntByName("plr_blu_crossover1_start"),
-        MM_GetEntByName("plr_blu_crossover1_end"),
+        "plr_red_crossover1_start",
+        "plr_red_crossover1_end",
+        "plr_blu_crossover1_start",
+        "plr_blu_crossover1_end",
         1
     );
 
@@ -143,10 +150,11 @@ function SwitchToElevatorRed() {
 
     DisableRollback();
 
-
-
     EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(RED_TRAIN, "TeleportToPathTrack", "plr_red_pathC_hillA3", 0, null, null);
+    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
+
+    ::UpdateRedCart <- UpdateRedElevator;
 
     BlockRedCart(false);
 }
@@ -160,8 +168,8 @@ function SwitchToElevatorBlu() {
 
     EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "TeleportToPathTrack", "plr_blu_pathC_hillA3", 0, null, null);
+    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
 
-    ::UpdateRedCart <- UpdateRedElevator;
     ::UpdateBluCart <- UpdateBluElevator;
 
     BlockBluCart(false);
@@ -176,18 +184,16 @@ function UpdateRedElevator(caseNumber) {
         AdvanceRed(0.77);
     }
 
-    if(!OVERTIME_ACTIVE) return;
-
     if(CASE_RED == 0) {
-        if(CASE_BLU == 0) {
+        if(CASE_BLU == 0 && OVERTIME_ACTIVE) {
             AdvanceRed(0.22);
             if(!BLOCK_BLU) AdvanceBlu(0.22);
-        } else if (!ROLLBACK_DISABLED && RED_ROLLSTATE == -1) {
+        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && RED_ROLLSTATE == -1) {
             TriggerRollbackRed();
         } else {
             StopRed();
         }
-    } else if (CASE_BLU == 0) {
+    } else if (OVERTIME_ACTIVE && CASE_BLU == 0) {
         UpdateBluCart(0);
     }
 }
@@ -201,18 +207,16 @@ function UpdateBluElevator(caseNumber) {
         AdvanceBlu(0.77);
     }
 
-    if(!OVERTIME_ACTIVE) return;
-
     if(CASE_BLU == 0) {
-        if(CASE_RED == 0) {
+        if(CASE_RED == 0 && OVERTIME_ACTIVE) {
             AdvanceBlu(0.22);
             if(!BLOCK_RED) AdvanceRed(0.22);
-        } else if (!ROLLBACK_DISABLED && BLU_ROLLSTATE == -1) {
+        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && BLU_ROLLSTATE == -1) {
             TriggerRollbackBlu();
         } else {
             StopBlu();
         }
-    } else if (CASE_RED == 0) {
+    } else if (OVERTIME_ACTIVE && CASE_RED == 0) {
         UpdateRedCart(0);
     }
 }
