@@ -55,7 +55,8 @@ function InitGlobalVars() {
 InitGlobalVars();
 
 // We use a logic case to capture the value obtained from OnNumCappersChanged2
-
+// name: targetname of logic_case
+// team: "Red" or "Blu"
 function CreateLogicCase(name, team) {
     local logicCase = SpawnEntityFromTable("logic_case", {
         targetname = name,
@@ -68,6 +69,8 @@ function CreateLogicCase(name, team) {
     return logicCase;
 }
 
+// entity: handle of logic_case
+// team: "Red" or "Blu"
 function AddCaptureOutputsToLogicCase(entity, team) {
     EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode", "Update" + team + "Cart(-1)", 0, -1); // Blocked
     EntityOutputs.AddOutput(entity, "OnCase02", "!self", "RunScriptCode", "Update" + team + "Cart(0)", 0, -1); // 0 cap
@@ -352,21 +355,23 @@ function AnnounceRollbackDisabled() {
 // to handling all cart movement with VScript.
 
 // startPath: The first path_track with "Part of an uphill path" checked.
-// endPath: The last path_track with "Part of an uphill path" checked.
+// endPath: The last path_track with "Part of an uphill path" checked. Use null for the end of the track.
 // disablePath: The path_track immediately before startPath that will be disabled when the cart enters the rollback zone.
+// team: "Red" or "Blu"
 function AddRollbackZone(startPath, endPath, disablePath, team) {
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", disablePath, "Disable", "", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self", "RunScriptCode", "RollbackStart" + team + "()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollbackEnd" + team + "()", 0, -1);
+    if(endPath) EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollbackEnd" + team + "()", 0, -1);
 }
 
 // startPath: The first path_track with "Part of a downhill path" checked.
-// endPath: The last path_track with "Part of a downhill path" checked.
+// endPath: The last path_track with "Part of a downhill path" checked. Use null for the end of the track.
 // disablePath: The path_track immediately before endPath that will be disabled when the cart leaves the rollforward zone.
+// team: "Red" or "Blu"
 function AddRollforwardZone(startPath, endPath, disablePath, team) {
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self", "RunScriptCode", "RollforwardStart" + team + "()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollforwardEnd" + team + "()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", disablePath, "Disable", "", 0, -1);
+    if(endPath) EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollforwardEnd" + team + "()", 0, -1);
+    if(endPath) EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", disablePath, "Disable", "", 0, -1);
 }
 
 function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) {
