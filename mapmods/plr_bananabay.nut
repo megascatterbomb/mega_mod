@@ -40,7 +40,16 @@ function OnGameEvent_teamplay_round_start(params) {
     AddRollforwardZone("minecart_bpath_48", "minecart_bpath_52", "minecart_bpath_51", "Blu");
     AddRollbackZone("minecart_bpath_57", "minecart_bpath_68", "minecart_bpath_56", "Blu");
     AddRollbackZone("minecart_bpath_77", "minecart_bpath_78", "minecart_bpath_76", "Blu");
-    AddRollbackZone("minecart_bpath_80", null, "minecart_path_88", "Blu");
+    AddRollbackZone("minecart_bpath_80", null, "minecart_bpath_88", "Blu");
+
+    // Update carts whenever trains move out of the way (carts waiting at final ramp don't autoresume)
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_red_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
+
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
 
     // team_train_watcher is no longer in charge.
     NetProps.SetPropBool(MM_GetEntByName("minecart_red_watcherA"), "m_bHandleTrainMovement", false);
