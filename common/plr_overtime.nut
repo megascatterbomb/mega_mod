@@ -120,6 +120,8 @@ function UpdateRedCart(caseNumber) {
         AdvanceRed(0.77);
     } else if(CASE_RED >= 3) {
         AdvanceRed(1);
+    } else if (CASE_RED == -1) {
+        StopRed();
     }
 
     if(CASE_RED == 0) {
@@ -147,6 +149,8 @@ function UpdateBluCart(caseNumber) {
         AdvanceBlu(0.77);
     } else if(CASE_BLU >= 3) {
         AdvanceBlu(1);
+    } else if (CASE_BLU == -1) {
+        StopBlu();
     }
 
     if(CASE_BLU == 0) {
