@@ -2,7 +2,7 @@
 
 local mods = [
     "arena_perks",
-    // "plr_bananabay",
+    "plr_bananabay",
     "plr_hightower"
 ];
 
