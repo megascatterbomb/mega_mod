@@ -17,17 +17,23 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone");
     ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone");
 
-    ::RED_ROLLBACK_BRANCH <- MM_GetEntByName("plr_red_rollback");
-    ::BLU_ROLLBACK_BRANCH <- MM_GetEntByName("plr_blu_rollback");
-
     ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
     ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
 
     ::RED_ELV <- null;
     ::BLU_ELV <- null;
 
-    AddCaptureOutputsToLogicCase(MM_GetEntByName("plr_red_pushingcase"), "Red");
-    AddCaptureOutputsToLogicCase(MM_GetEntByName("plr_blu_pushingcase"), "Blu")
+    // Cart control logic replacement
+    MM_GetEntByName("plr_red_pushingcase").Kill();
+    MM_GetEntByName("plr_blu_pushingcase").Kill();
+    MM_GetEntByName("plr_red_pushingcase_elv").Kill();
+    MM_GetEntByName("plr_blu_pushingcase_elv").Kill();
+
+    ::RED_LOGICCASE <- CreateLogicCase("plr_red_pushingcase", "Red");
+    ::BLU_LOGICCASE <- CreateLogicCase("plr_blu_pushingcase", "Blu");
+
+    AddRollbackZone("plr_red_pathC_mid_35", "plr_red_pathC_mid_38", "plr_red_pathC_mid_34", "Red");
+    AddRollbackZone("plr_blu_pathC_hillA38", "plr_blu_pathC_hillA22", "plr_blu_pathC_hillA19", "Blu");
 
     // Crossover logic replacement
     MM_GetEntByName("plr_red_crossover1_branch").Kill();
@@ -73,14 +79,16 @@ function StartOvertime() {
 
 ::AdvanceRedBase <- AdvanceRed;
 ::StopRedBase <- StopRed;
+::TriggerRollbackRedBase <- TriggerRollbackRed;
 ::AdvanceBluBase <- AdvanceBlu;
 ::StopBluBase <- StopBlu;
+::TriggerRollbackBluBase <- TriggerRollbackBlu;
 
 function AdvanceRed(speed) {
     AdvanceRedBase(speed);
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
     }
 }
 
@@ -88,7 +96,15 @@ function StopRed() {
     StopRedBase();
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
+    }
+}
+
+function TriggerRollbackRed() {
+    TriggerRollbackRedBase();
+    if(RED_ELV) {
+        EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "-1", 0, null, null);
     }
 }
 
@@ -96,7 +112,7 @@ function AdvanceBlu(speed) {
     AdvanceBluBase(speed);
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
     }
 }
 
@@ -104,9 +120,18 @@ function StopBlu() {
     StopBluBase();
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
     }
 }
+
+function TriggerRollbackBlu() {
+    TriggerRollbackBluBase();
+    if(BLU_ELV) {
+        EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "-1", 0, null, null);
+    }
+}
+
 
 // When the cart goes on the elevator, trigger necessary logic.
 // Also disables rollback, otherwise it becomes impossible to maintain sync
@@ -118,13 +143,7 @@ function SwitchToElevatorRed() {
 
     DisableRollback();
 
-    local redPushingCaseElv = MM_GetEntByName("plr_red_pushingcase_elv");
-    AddCaptureOutputsToLogicCase(redPushingCaseElv, "Red");
-    EntityOutputs.AddOutput(redPushingCaseElv, "OnCase01", "clamp_red", "SetSpeedDirAccel", "0.0", 0, -1);
-    EntityOutputs.AddOutput(redPushingCaseElv, "OnDefault", "clamp_red", "SetSpeedDirAccel", "0.77", 0, -1);
 
-    EntityOutputs.AddOutput(RED_ROLLBACK_BRANCH, "OnTrue", "clamp_red", "SetSpeedDirAccel", "-1.0", 0, -1);
-    EntityOutputs.AddOutput(RED_ROLLBACK_BRANCH, "OnFalse", "clamp_red", "SetSpeedDirAccel", "0.0", 0, -1);
 
     EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(RED_TRAIN, "TeleportToPathTrack", "plr_red_pathC_hillA3", 0, null, null);
@@ -139,18 +158,63 @@ function SwitchToElevatorBlu() {
 
     DisableRollback();
 
-    local bluPushingCaseElv = MM_GetEntByName("plr_blu_pushingcase_elv");
-    AddCaptureOutputsToLogicCase(bluPushingCaseElv, "Blu");
-    EntityOutputs.AddOutput(bluPushingCaseElv, "OnCase01", "clamp_blue", "SetSpeedDirAccel", "0.0", 0, -1);
-    EntityOutputs.AddOutput(bluPushingCaseElv, "OnDefault", "clamp_blue", "SetSpeedDirAccel", "0.77", 0, -1);
-
-    EntityOutputs.AddOutput(BLU_ROLLBACK_BRANCH, "OnTrue", "clamp_blue", "SetSpeedDirAccel", "-1.0", 0, -1);
-    EntityOutputs.AddOutput(BLU_ROLLBACK_BRANCH, "OnFalse", "clamp_blue", "SetSpeedDirAccel", "0.0", 0, -1);
-
     EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "TeleportToPathTrack", "plr_blu_pathC_hillA3", 0, null, null);
 
+    ::UpdateRedCart <- UpdateRedElevator;
+    ::UpdateBluCart <- UpdateBluElevator;
+
     BlockBluCart(false);
+}
+
+function UpdateRedElevator(caseNumber) {
+    ::CASE_RED = caseNumber;
+
+    if(BLOCK_RED) return;
+
+    if(CASE_RED >= 1) {
+        AdvanceRed(0.77);
+    }
+
+    if(!OVERTIME_ACTIVE) return;
+
+    if(CASE_RED == 0) {
+        if(CASE_BLU == 0) {
+            AdvanceRed(0.22);
+            if(!BLOCK_BLU) AdvanceBlu(0.22);
+        } else if (!ROLLBACK_DISABLED && RED_ROLLSTATE == -1) {
+            TriggerRollbackRed();
+        } else {
+            StopRed();
+        }
+    } else if (CASE_BLU == 0) {
+        UpdateBluCart(0);
+    }
+}
+
+function UpdateBluElevator(caseNumber) {
+    ::CASE_BLU = caseNumber;
+
+    if(BLOCK_BLU) return;
+
+    if(CASE_BLU >= 1) {
+        AdvanceBlu(0.77);
+    }
+
+    if(!OVERTIME_ACTIVE) return;
+
+    if(CASE_BLU == 0) {
+        if(CASE_RED == 0) {
+            AdvanceBlu(0.22);
+            if(!BLOCK_RED) AdvanceRed(0.22);
+        } else if (!ROLLBACK_DISABLED && BLU_ROLLSTATE == -1) {
+            TriggerRollbackBlu();
+        } else {
+            StopBlu();
+        }
+    } else if (CASE_RED == 0) {
+        UpdateRedCart(0);
+    }
 }
 
 __CollectGameEventCallbacks(this);

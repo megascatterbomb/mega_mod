@@ -5,7 +5,7 @@ function OnGameEvent_teamplay_round_start(params) {
 
     InitGlobalVars();
 
-    ::PLR_TIMER_NAME <- "";
+    ::PLR_TIMER_NAME <- "minecart_timer";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
     ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("minecart_red_cartsparks");
@@ -17,16 +17,9 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_PUSHZONE <- MM_GetEntByName("minecart_red_pushzone");
     ::BLU_PUSHZONE <- MM_GetEntByName("minecart_blu_pushzone");
 
-    // TODO: Create
-    ::RED_ROLLBACK_BRANCH <- MM_GetEntByName("");
-    ::BLU_ROLLBACK_BRANCH <- MM_GetEntByName("");
 
     ::RED_TRAIN <- MM_GetEntByName("minecart_red_train");
     ::BLU_TRAIN <- MM_GetEntByName("minecart_blu_train");
-
-    // TODO: Create
-    AddCaptureOutputsToLogicCase(MM_GetEntByName(""), "Red");
-    AddCaptureOutputsToLogicCase(MM_GetEntByName(""), "Blu")
 
     // team_train_watcher is no longer in charge.
     NetProps.SetPropBool(MM_GetEntByName("minecart_red_watcherA"), "m_bHandleTrainMovement", false);

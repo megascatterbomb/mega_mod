@@ -19,9 +19,13 @@ function InitGlobalVars() {
     ::RED_PUSHZONE <- null;
     ::BLU_PUSHZONE <- null;
 
-    // logic_branch governing whether the cart is in a rollback zone or not
-    ::RED_ROLLBACK_BRANCH <- null;
-    ::BLU_ROLLBACK_BRANCH <- null;
+    // logic_case which accepts OnNumCappersChanged2 inputs
+    ::RED_LOGICCASE <- null;
+    ::BLU_LOGICCASE <- null;
+
+    // 0 if on flat ground, -1 if rolling back, 1 if rolling forward
+    ::RED_ROLLSTATE <- 0;
+    ::BLU_ROLLSTATE <- 0;
 
     // func_tracktrain for the cart itself
     ::RED_TRAIN <- null;
@@ -50,7 +54,20 @@ function InitGlobalVars() {
 
 InitGlobalVars();
 
-// When a cart changes player count, call respective update function
+// We use a logic case to capture the value obtained from OnNumCappersChanged2
+
+function CreateLogicCase(name, team) {
+    local logicCase = SpawnEntityFromTable("logic_case", {
+        targetname = name,
+        Case01 = -1,
+        Case02 = 0,
+        Case03 = 1,
+        Case04 = 2
+    });
+    AddCaptureOutputsToLogicCase(logicCase, team);
+    return logicCase;
+}
+
 function AddCaptureOutputsToLogicCase(entity, team) {
     EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode", "Update" + team + "Cart(-1)", 0, -1); // Blocked
     EntityOutputs.AddOutput(entity, "OnCase02", "!self", "RunScriptCode", "Update" + team + "Cart(0)", 0, -1); // 0 cap
@@ -59,7 +76,6 @@ function AddCaptureOutputsToLogicCase(entity, team) {
     EntityOutputs.AddOutput(entity, "OnDefault", "!self", "RunScriptCode", "Update" + team + "Cart(3)", 0, -1); // 3+ cap
 }
 
-// Base logic for cart movement
 function StartOvertime() {
     ::OVERTIME_ACTIVE <- true;
     if(ROLLBACK_DISABLED) {
@@ -91,16 +107,29 @@ function StartOvertime() {
     UpdateBluCart(CASE_BLU);
 }
 
+// These functions determine the cart behaviour depending on number of pushing players.
+
 function UpdateRedCart(caseNumber) {
     ::CASE_RED = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_RED) return;
+
+    if(BLOCK_RED) return;
+
+    if(CASE_RED == 1) {
+        AdvanceRed(0.55);
+    } else if(CASE_RED == 2) {
+        AdvanceRed(0.77);
+    } else if(CASE_RED >= 3) {
+        AdvanceRed(1);
+    }
+
+    if(!OVERTIME_ACTIVE) return;
 
     if(CASE_RED == 0) {
         if(CASE_BLU == 0) {
             AdvanceRed(0.22);
-            AdvanceBlu(0.22);
-        } else if (!ROLLBACK_DISABLED) {
-            EntFireByHandle(RED_ROLLBACK_BRANCH, "Test", "", 0, null, null)
+            if(!BLOCK_BLU) AdvanceBlu(0.22);
+        } else if (!ROLLBACK_DISABLED && RED_ROLLSTATE == -1) {
+            TriggerRollbackRed();
         } else {
             StopRed();
         }
@@ -111,14 +140,25 @@ function UpdateRedCart(caseNumber) {
 
 function UpdateBluCart(caseNumber) {
     ::CASE_BLU = caseNumber;
-    if(!OVERTIME_ACTIVE || BLOCK_BLU) return;
+
+    if(BLOCK_BLU) return;
+
+    if(CASE_BLU == 1) {
+        AdvanceBlu(0.55);
+    } else if(CASE_BLU == 2) {
+        AdvanceBlu(0.77);
+    } else if(CASE_BLU >= 3) {
+        AdvanceBlu(1);
+    }
+
+    if(!OVERTIME_ACTIVE) return;
 
     if(CASE_BLU == 0) {
         if(CASE_RED == 0) {
             AdvanceBlu(0.22);
-            AdvanceRed(0.22);
-        } else if (!ROLLBACK_DISABLED) {
-            EntFireByHandle(BLU_ROLLBACK_BRANCH, "Test", "", 0, null, null)
+            if(!BLOCK_RED) AdvanceRed(0.22);
+        } else if (!ROLLBACK_DISABLED && BLU_ROLLSTATE == -1) {
+            TriggerRollbackBlu();
         } else {
             StopBlu();
         }
@@ -127,40 +167,103 @@ function UpdateBluCart(caseNumber) {
     }
 }
 
+// Called by other code to directly control the cart.
+
 function AdvanceRed(speed) {
     foreach(spark in RED_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StartSpark", "", 0.1, null, null);
+        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0.1, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
+    EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0, null, null);
+    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
 }
 
 function StopRed() {
     foreach(spark in RED_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StopSpark", "", 0.1, null, null);
+        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
+}
+
+function TriggerRollbackRed() {
+    foreach(spark in RED_CARTSPARKS_ARRAY) {
+        EntFireByHandle(spark, "StartSpark", "", 0, null, null);
+    }
+    EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
 }
 
 function AdvanceBlu(speed) {
     foreach(spark in BLU_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StartSpark", "", 0.1, null, null);
+        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0.1, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + speed, 0.1, null, null);
+    EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0, null, null);
+    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
 }
 
 function StopBlu() {
     foreach(spark in BLU_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StopSpark", "", 0.1, null, null);
+        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0.1, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0.1, null, null);
+    EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
+}
+
+function TriggerRollbackBlu() {
+    foreach(spark in BLU_CARTSPARKS_ARRAY) {
+        EntFireByHandle(spark, "StartSpark", "", 0, null, null);
+    }
+    EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
+}
+
+// Called by path_track as the cart enters and exits rollback/rollforward zones
+
+function RollbackStartRed() {
+    ::RED_ROLLSTATE <- -1;
+}
+
+function RollbackEndRed() {
+    ::RED_ROLLSTATE <- 0;
+}
+
+function RollforwardStartRed() {
+    ::RED_ROLLSTATE <- 1;
+    RED_PUSHZONE.AcceptInput("Disable", "", null, null);
+    BlockRedCart(true);
+    AdvanceRed(1);
+}
+
+function RollforwardEndRed() {
+    ::RED_ROLLSTATE <- 0;
+    BlockRedCart(false);
+    RED_PUSHZONE.AcceptInput("Enable", "", null, null);
+}
+
+function RollbackStartBlu() {
+    ::BLU_ROLLSTATE <- -1;
+}
+
+function RollbackEndBlu() {
+    ::BLU_ROLLSTATE <- 0;
+}
+
+function RollforwardStartBlu() {
+    ::BLU_ROLLSTATE <- 1;
+    BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
+    BlockBluCart(true);
+    AdvanceBlu(1);
+}
+
+function RollforwardEndBlu() {
+    ::BLU_ROLLSTATE <- 0;
+    BlockBluCart(false);
+    BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
 }
 
 // This is for situations where the game takes control of the cart, like onboarding the cart to the Hightower elevators.
 // Don't use these functions to handle crossings; use SetRedCrossing/SetBluCrossing instead.
+
 function BlockRedCart(blocked) {
     ::BLOCK_RED <- blocked;
     UpdateRedCart(CASE_RED);
@@ -246,14 +349,24 @@ function AnnounceRollbackDisabled() {
 }
 
 // The following functions are helpers to convert PLR maps from using team_train_watcher
-// to handle all cart movement to using logic entities.
+// to handling all cart movement with VScript.
 
-function AddRollbackZone(startPath, endPath) {
-    // TODO
+// startPath: The first path_track with "Part of an uphill path" checked.
+// endPath: The last path_track with "Part of an uphill path" checked.
+// disablePath: The path_track immediately before startPath that will be disabled when the cart enters the rollback zone.
+function AddRollbackZone(startPath, endPath, disablePath, team) {
+    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", disablePath, "Disable", "", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self", "RunScriptCode", "RollbackStart" + team + "()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollbackEnd" + team + "()", 0, -1);
 }
 
-function AddRollforwardZone(startPath, endPath) {
-    // TODO
+// startPath: The first path_track with "Part of a downhill path" checked.
+// endPath: The last path_track with "Part of a downhill path" checked.
+// disablePath: The path_track immediately before endPath that will be disabled when the cart leaves the rollforward zone.
+function AddRollforwardZone(startPath, endPath, disablePath, team) {
+    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self", "RunScriptCode", "RollforwardStart" + team + "()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollforwardEnd" + team + "()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", disablePath, "Disable", "", 0, -1);
 }
 
 function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) {
@@ -261,13 +374,4 @@ function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) 
     EntityOutputs.AddOutput(MM_GetEntByName(endPathRed), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(" + -index + ")", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName(startPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + index + ")", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName(endPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + -index + ")", 0, -1);
-}
-
-// Returns the two logic cases as an array: [RED_case, BLU_case]
-function AddCartMovementLogicCases() {
-    // TODO: spawn two logic_case entities with the necessary outputs
-}
-
-function AddRollbackBranch() {
-
 }
