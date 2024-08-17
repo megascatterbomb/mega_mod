@@ -55,6 +55,9 @@ function OnGameEvent_teamplay_round_start(params) {
     NetProps.SetPropBool(MM_GetEntByName("minecart_red_watcherA"), "m_bHandleTrainMovement", false);
     NetProps.SetPropBool(MM_GetEntByName("minecart_blu_watcherA"), "m_bHandleTrainMovement", false);
 
+    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "minecart_red_watcherA", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "minecart_blu_watcherA", "SetNumTrainCappers", "", 0, -1);
+
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "SetTime", "600", 0, -1);
