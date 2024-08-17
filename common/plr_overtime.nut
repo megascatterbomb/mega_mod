@@ -360,7 +360,6 @@ function AnnounceRollbackDisabled() {
 // team: "Red" or "Blu"
 function AddRollbackZone(startPath, endPath, disablePath, team) {
     local cartSparksName = (team == "Red" ? RED_CARTSPARKS_ARRAY : BLU_CARTSPARKS_ARRAY)[0].GetName();
-    printl(cartSparksName);
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", cartSparksName, "StopSpark", "", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", disablePath, "DisablePath", "", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self", "RunScriptCode", "RollbackStart" + team + "()", 0, -1);
