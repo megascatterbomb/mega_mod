@@ -47,9 +47,9 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_red_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0, -1);
 
     // team_train_watcher is no longer in charge.
     NetProps.SetPropBool(MM_GetEntByName("minecart_red_watcherA"), "m_bHandleTrainMovement", false);
