@@ -355,7 +355,7 @@ function AnnounceRollbackDisabled() {
 // to handling all cart movement with VScript.
 
 // startPath: The first path_track with "Part of an uphill path" checked.
-// endPath: The last path_track with "Part of an uphill path" checked. Use null for the end of the track.
+// endPath: The last path_track with "Part of an uphill path" checked. Use null for the end of the track if it should roll back after reaching it (e.g. banana bay)
 // disablePath: The path_track immediately before startPath that will be disabled when the cart enters the rollback zone.
 // team: "Red" or "Blu"
 function AddRollbackZone(startPath, endPath, disablePath, team) {
@@ -367,7 +367,7 @@ function AddRollbackZone(startPath, endPath, disablePath, team) {
 }
 
 // startPath: The first path_track with "Part of a downhill path" checked.
-// endPath: The last path_track with "Part of a downhill path" checked. Use null for the end of the track.
+// endPath: The last path_track with "Part of a downhill path" checked.
 // disablePath: The path_track immediately before endPath that will be disabled when the cart leaves the rollforward zone.
 // team: "Red" or "Blu"
 function AddRollforwardZone(startPath, endPath, disablePath, team) {

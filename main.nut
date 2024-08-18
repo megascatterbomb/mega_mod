@@ -3,7 +3,8 @@
 local mods = [
     "arena_perks",
     "plr_bananabay",
-    "plr_hightower"
+    "plr_hightower",
+    "plr_pipeline"
 ];
 
 local mapName = GetMapName();
