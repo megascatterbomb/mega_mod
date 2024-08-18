@@ -1,6 +1,6 @@
 # Megascatterbomb's server mods
 
-A collection of VScript mods for various maps that I think improve the overall gameplay experience.
+A collection of VScript mods for various maps that I think improve the overall gameplay experience. If you would like to play on a server with these mods, connect to `sooty-owl.chs.gg:6996`.
 
 Installation:
 - Copy the contents of the repo to `tf/scripts/vscripts/mega_mod`
