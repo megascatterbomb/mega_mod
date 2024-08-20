@@ -76,14 +76,20 @@ function OnGameEvent_teamplay_round_start(params) {
 
     SpawnEntityFromTable("prop_dynamic",
     {
-        origin = "-254 11518 272",
+        targetname = "mm_fixprop_1",
+        solid = "2",
+        disableshadows = "1",
+        origin = "-254 11517 272",
         angles= "0 180 0",
         model = "models/props_trainyard/train_billboard001.mdl"
     });
 
     SpawnEntityFromTable("prop_dynamic",
     {
-        origin = "254 11518 272",
+        targetname = "mm_fixprop_2",
+        solid = "2",
+        disableshadows = "1",
+        origin = "254 11516 272",
         angles = "0 180 -180",
         model = "models/props_trainyard/train_billboard001.mdl"
     });
@@ -108,6 +114,16 @@ function OnGameEvent_teamplay_round_start(params) {
         show_in_hud=  0,
         "OnFinished#1" : "!self,RunScriptCode,StartOvertime(),0,1"
     });
+
+    // team_train_watcher is no longer in charge.
+    NetProps.SetPropBool(MM_GetEntByName("plr_red_watcherA"), "m_bHandleTrainMovement", false);
+    NetProps.SetPropBool(MM_GetEntByName("plr_blu_watcherA"), "m_bHandleTrainMovement", false);
+
+    NetProps.SetPropBool(MM_GetEntByName("plr_red_watcherB"), "m_bHandleTrainMovement", false);
+    NetProps.SetPropBool(MM_GetEntByName("plr_blu_watcherB"), "m_bHandleTrainMovement", false);
+
+    NetProps.SetPropBool(MM_GetEntByName("plr_red_watcherC"), "m_bHandleTrainMovement", false);
+    NetProps.SetPropBool(MM_GetEntByName("plr_blu_watcherC"), "m_bHandleTrainMovement", false);
 
     // Multi-stage logic
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_B"), "OnStart", "!self", "RunScriptCode", "OnRound2Start()", 0, -1);
