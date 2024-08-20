@@ -75,26 +75,27 @@ function OnGameEvent_teamplay_round_start(params) {
     AddCrossing("plr_red_crossover3_start", "plr_red_pathC_29", "plr_blu_crossover3_start", "plr_blu_pathC_29", 3);
 
     // Fix invisible walls on stage 3 by putting a prop there
+    // Flag removal needed to stop sentries trying to shoot through the thin prop (thanks ficool2!)
 
     SpawnEntityFromTable("prop_dynamic",
     {
         targetname = "mm_fixprop_1",
-        solid = "2",
+        solid = "6",
         disableshadows = "1",
         origin = "-254 11517 272",
         angles= "0 180 0",
         model = "models/props_trainyard/train_billboard001.mdl"
-    });
+    }).RemoveEFlags(Constants.FEntityEFlags.EFL_DONTBLOCKLOS);
 
     SpawnEntityFromTable("prop_dynamic",
     {
         targetname = "mm_fixprop_2",
-        solid = "2",
+        solid = "6",
         disableshadows = "1",
         origin = "254 11516 272",
         angles = "0 180 -180",
         model = "models/props_trainyard/train_billboard001.mdl"
-    });
+    }).RemoveEFlags(Constants.FEntityEFlags.EFL_DONTBLOCKLOS);
 
     // Fix path_tracks using SetSpeedDirAccel instead of SetSpeedForwardModifier
 
