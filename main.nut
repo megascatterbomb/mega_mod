@@ -3,6 +3,7 @@
 local mods = [
     "arena_perks",
     "plr_bananabay",
+    "plr_hacksaw",
     "plr_hightower",
     "plr_nightfall_final",
     "plr_pipeline"

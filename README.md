@@ -19,7 +19,7 @@ When both teams die at exactly the same time (or lose to the time limit), both t
 
 ## Added Overtime
 
-Currently supported maps: `plr_bananabay`, `plr_hightower`, `plr_nightfall_final`, `plr_pipeline`.
+Currently supported maps: `plr_bananabay`, `plr_hacksaw`, `plr_hightower`, `plr_nightfall_final`, `plr_pipeline`.
 
 Stage 1 and 2 of Nightfall feature an overtime. This mod copies that logic into other maps using nothing but VScript, with some additional QoL features.
 
