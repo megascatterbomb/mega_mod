@@ -82,7 +82,7 @@ function OnGameEvent_teamplay_round_start(params) {
         targetname = "setup_timer_c",
         timer_length = 600,
         StartDisabled = 1,
-        show_in_hud=  0,
+        show_in_hud = 0,
         "OnFinished#1" : "!self,RunScriptCode,StartOvertime(),0,1",
     });
 
