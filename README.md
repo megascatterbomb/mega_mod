@@ -19,7 +19,7 @@ When both teams die at exactly the same time (or lose to the time limit), both t
 
 ## Added Overtime
 
-Currently supported maps: `plr_bananabay`, `plr_hightower`, `plr_pipeline`.
+Currently supported maps: `plr_bananabay`, `plr_hightower`, `plr_nightfall_final`, `plr_pipeline`.
 
 Stage 1 and 2 of Nightfall feature an overtime. This mod copies that logic into other maps using nothing but VScript, with some additional QoL features.
 
@@ -27,3 +27,6 @@ After 10 minutes, the map enters overtime. If neither cart is being pushed, they
 
 ### Map specific quirks:
 - On Hightower, rollback zones will be disabled if either cart is at the elevator and the round is in overtime. Unfortunately, Hightower's elevators are too jank for me to work around at this time.
+- Nightfall:
+  - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
+  - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.
