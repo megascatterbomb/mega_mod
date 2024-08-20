@@ -17,7 +17,7 @@ function OnGameEvent_teamplay_round_start(params) {
     ::BLU_FLASHINGLIGHT <- MM_GetEntByName("plr_blu_flashinglight");
 
     ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone");
-    ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzonez");
+    ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone");
 
     ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
     ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
