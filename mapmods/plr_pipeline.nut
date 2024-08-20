@@ -77,17 +77,13 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
 
     SpawnEntityFromTable("team_round_timer", {
-        setup_length = 10,
+        setup_length = 6,
         start_paused = 1,
         targetname = "setup_timer_c",
         timer_length = 600,
-        StartDisabled = 1
-        show_in_hud=  0
+        StartDisabled = 1,
+        show_in_hud=  0,
         "OnFinished#1" : "!self,RunScriptCode,StartOvertime(),0,1",
-        "OnSetupFinished#1" : "redbase3_door,Unlock,,0,1",
-        "OnSetupFinished#2" : "bluebase3_door,Unlock,,0,1",
-        "OnSetupFinished#3" : "redbase3_door,Open,,0.1,1",
-        "OnSetupFinished#4" : "bluebase3_door,Open,,0.1,1"
     });
 
     // Multi-stage logic
@@ -118,9 +114,6 @@ function OnRound2Start() {
 function OnRound3Start() {
 
     // if(PLR_TIMER) PLR_TIMER.Kill();
-
-    MM_GetEntByName("redbase3_door").AcceptInput("Lock", "", null, null);
-    MM_GetEntByName("bluebase3_door").AcceptInput("Lock", "", null, null);
 
     ::PLR_TIMER_NAME <- "setup_timer_c";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
