@@ -158,14 +158,14 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.RemoveOutput(MM_GetEntByName("plr_blu_pathA_end"), "OnPass", "plr_stageC_start_counter", "Add", "3");
     EntityOutputs.RemoveOutput(MM_GetEntByName("plr_blu_pathB_end"), "OnPass", "plr_stageC_start_counter", "Add", "3");
 
+    // Multi-stage logic
+    EntityOutputs.AddOutput(MM_GetEntByName("plr_round_B"), "OnStart", "!self", "RunScriptCode", "OnRound2Start()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("plr_round_C"), "OnStart", "!self", "RunScriptCode", "OnRound3Start()", 0, -1);
+
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_A"), "OnWonByTeam1", "!self", "RunScriptCode", "CountWinRed()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_A"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_B"), "OnWonByTeam1", "!self", "RunScriptCode", "CountWinRed()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_B"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
-
-    // Multi-stage logic
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_round_B"), "OnStart", "!self", "RunScriptCode", "OnRound2Start()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("plr_round_C"), "OnStart", "!self", "RunScriptCode", "OnRound3Start()", 0, -1);
 }
 
 function OnRound2Start() {
@@ -218,14 +218,17 @@ function OnRound3Start() {
     UpdateBluCart(0);
 }
 
+::CountWinRedBase <- CountWinRed;
+::CountWinBluBase <- CountWinBlu;
+
 function CountWinRed() {
+    CountWinRedBase();
     ::ROUND_WIN_COUNTER <- ROUND_WIN_COUNTER + 2;
 }
 
 function CountWinBlu() {
+    CountWinBluBase();
     ::ROUND_WIN_COUNTER <- ROUND_WIN_COUNTER + 3;
 }
-
-
 
 __CollectGameEventCallbacks(this);

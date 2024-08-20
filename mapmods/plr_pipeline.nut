@@ -89,6 +89,11 @@ function OnGameEvent_teamplay_round_start(params) {
     // Multi-stage logic
     EntityOutputs.AddOutput(MM_GetEntByName("round2"), "OnStart", "!self", "RunScriptCode", "OnRound2Start()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("round3"), "OnStart", "!self", "RunScriptCode", "OnRound3Start()", 0, -1);
+
+    EntityOutputs.AddOutput(MM_GetEntByName("round1"), "OnWonByTeam1", "!self", "RunScriptCode", "CountWinRed()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("round1"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("round2"), "OnWonByTeam1", "!self", "RunScriptCode", "CountWinRed()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("round2"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
 }
 
 function OnRound2Start() {

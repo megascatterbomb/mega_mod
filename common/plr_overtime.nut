@@ -48,6 +48,9 @@ function InitGlobalVars() {
     ::CROSSING_RED <- 0;
     ::CROSSING_BLU <- 0;
 
+    ::OVERTIME_SPEED_RED <- 0.22;
+    ::OVERTIME_SPEED_BLU <- 0.22;
+
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
 }
@@ -129,8 +132,8 @@ function UpdateRedCart(caseNumber) {
 
     if(CASE_RED == 0) {
         if(CASE_BLU == 0 && OVERTIME_ACTIVE) {
-            AdvanceRed(0.22);
-            if(!BLOCK_BLU) AdvanceBlu(0.22);
+            AdvanceRed(OVERTIME_SPEED_RED);
+            if(!BLOCK_BLU) AdvanceBlu(OVERTIME_SPEED_BLU);
         } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && RED_ROLLSTATE == -1) {
             TriggerRollbackRed();
         } else {
@@ -158,8 +161,8 @@ function UpdateBluCart(caseNumber) {
 
     if(CASE_BLU == 0) {
         if(CASE_RED == 0 && OVERTIME_ACTIVE) {
-            AdvanceBlu(0.22);
-            if(!BLOCK_RED) AdvanceRed(0.22);
+            AdvanceBlu(OVERTIME_SPEED_BLU);
+            if(!BLOCK_RED) AdvanceRed(OVERTIME_SPEED_RED);
         } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && BLU_ROLLSTATE == -1) {
             TriggerRollbackBlu();
         } else {
@@ -381,4 +384,15 @@ function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) 
     EntityOutputs.AddOutput(MM_GetEntByName(endPathRed), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(" + -index + ")", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName(startPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + index + ")", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName(endPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + -index + ")", 0, -1);
+}
+
+// Called whenever a team wins a stage in a multi-stage map.
+// Teams that win more get more of an advantage in overtime.
+
+function CountWinRed() {
+    ::OVERTIME_SPEED_RED <- OVERTIME_SPEED_RED + 0.02;
+}
+
+function CountWinBlu() {
+    ::OVERTIME_SPEED_BLU <- OVERTIME_SPEED_BLU + 0.02;
 }
