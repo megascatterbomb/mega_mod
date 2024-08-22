@@ -179,7 +179,7 @@ function AdvanceRed(speed) {
     foreach(spark in RED_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0, null, null);
+    if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
 }
 
@@ -187,7 +187,7 @@ function StopRed() {
     foreach(spark in RED_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
 }
 
@@ -195,7 +195,7 @@ function TriggerRollbackRed() {
     foreach(spark in RED_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StartSpark", "", 0, null, null);
     }
-    EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
 }
 
@@ -203,7 +203,7 @@ function AdvanceBlu(speed) {
     foreach(spark in BLU_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0, null, null);
+    if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
 }
 
@@ -211,7 +211,7 @@ function StopBlu() {
     foreach(spark in BLU_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
-    EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
 }
 
@@ -219,7 +219,7 @@ function TriggerRollbackBlu() {
     foreach(spark in BLU_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StartSpark", "", 0, null, null);
     }
-    EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
+    if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
 }
 
