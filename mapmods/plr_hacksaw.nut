@@ -24,16 +24,17 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
 
     // Some rollback zones are improperly marked. This removes the uphill spawnflag from the offending path_track entities
-    foreach(entName in [
-        "ssplr_red_pathA_start83",
-        "ssplr_red_pathA_start73",
-        "ssplr_red_pathA_start79",
-        "ssplr_blu_pathA_start87",
-        "ssplr_blu_pathA_start77",
-        "ssplr_blu_pathA_start89"
-    ]) {
-        EntFireByHandle(MM_GetEntByName(entName), "AddOutput", "spawnflags 0", 0, null, null);
-    }
+    // TODO: Find a way to update team_train_watcher entities to reflect these changes
+    // foreach(entName in [
+    //     "ssplr_red_pathA_start83",
+    //     "ssplr_red_pathA_start73",
+    //     "ssplr_red_pathA_start79",
+    //     "ssplr_blu_pathA_start87",
+    //     "ssplr_blu_pathA_start77",
+    //     "ssplr_blu_pathA_start89"
+    // ]) {
+    //     EntFireByHandle(MM_GetEntByName(entName), "AddOutput", "spawnflags 0", 0, null, null);
+    // }
 
     // Prevent SetSpeedForwardModifier for final ramp from triggering more than once
     // This fixes a weird bug where the cart humps the second-to-last path_track during rollback.
