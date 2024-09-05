@@ -36,7 +36,7 @@ function PerkGameStateRound::OnEnter() {
         setup_length = 0,
         start_paused = 0,
         targetname = "game_timer",
-        timer_length = 230,
+        timer_length = 170,
         "OnFinished#1" : "!self,RunScriptFile,mega_mod/mapmods/arena_perks_stalemate,0,1"
     });
     EntFireByHandle(GAME_TIMER, "ShowInHud", "1", 0, null, null);
