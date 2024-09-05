@@ -44,10 +44,10 @@ function MegaModRoundStart() {
     {
         local player = PlayerInstanceFromIndex(i)
         if (player == null) continue
-        if(player.GetTeam() == Constants.ETFTeam.TF_TEAM_RED && player.GetOrigin().x < 4000) {
+        if(player.GetTeam() == Constants.ETFTeam.TF_TEAM_RED && player.GetOrigin().y < 4000) {
             player.SetAbsOrigin(redSpawn);
             player.SetAbsAngles(redAngles);
-        } else if(player.GetTeam() == Constants.ETFTeam.TF_TEAM_BLUE && player.GetOrigin().x > -4000) {
+        } else if(player.GetTeam() == Constants.ETFTeam.TF_TEAM_BLUE && player.GetOrigin().y > -4000) {
             player.SetAbsOrigin(blueSpawn);
             player.SetAbsAngles(blueAngles);
         }
