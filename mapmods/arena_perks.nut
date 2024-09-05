@@ -5,6 +5,7 @@ local prefix = DoUniqueString("mega")
 local mega = root[prefix] <- {}
 
 mega.OnGameEvent_teamplay_round_start <- function (event) {
+    printl("MEGAMOD: ROUND START");
     EntFireByHandle(mainLogicEntity, "RunScriptCode", "MegaModRoundStart()", 0, null, null);
 }
 
@@ -42,8 +43,8 @@ function MegaModRoundStart() {
     local blueAngles = QAngle(0, 90, 0);
     for (local i = 1; i <= MaxClients().tointeger() ; i++)
     {
-        local player = PlayerInstanceFromIndex(i)
-        if (player == null) continue
+        local player = PlayerInstanceFromIndex(i);
+        if (player == null) continue;
         if(player.GetTeam() == Constants.ETFTeam.TF_TEAM_RED && player.GetOrigin().y < 4000) {
             player.SetAbsOrigin(redSpawn);
             player.SetAbsAngles(redAngles);
@@ -61,8 +62,7 @@ mega.OnGameEvent_player_death <- function (params) {
         return;
     local player = GetPlayerFromUserID(params.userid)
     local team = player.GetTeam();
-    MOST_RECENT_DEATH_TEAM <- team;
-    printl("MEGAMOD: Death registered for Team " + MOST_RECENT_DEATH_TEAM);
+    ::MOST_RECENT_DEATH_TEAM <- team;
 }
 
 mega.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
@@ -70,4 +70,4 @@ mega.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
     mega.ClearGameEventCallbacks()
     ::__CollectGameEventCallbacks(mega)
 }
-::__CollectGameEventCallbacks(mega)
+::__CollectGameEventCallbacks(mega);

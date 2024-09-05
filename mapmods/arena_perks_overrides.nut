@@ -78,7 +78,6 @@ function PerkGameStateRound::WinRound(winnerTeam) {
         EntFire("text_win_"+TeamName(winnerTeam), "Display", "", 0, null);
     } else {
         // MEGAMOD: Since round can end via timeout, award win to whichever team has more players alive
-
         local redAlive = GetAliveTeamPlayerCount(Constants.ETFTeam.TF_TEAM_RED);
         local bluAlive = GetAliveTeamPlayerCount(Constants.ETFTeam.TF_TEAM_BLUE);
         if(redAlive > bluAlive) {
@@ -91,7 +90,7 @@ function PerkGameStateRound::WinRound(winnerTeam) {
             winnerTeam = Constants.ETFTeam.TF_TEAM_BLUE;
 
         // MEGAMOD: If tied, award points to both teams (like vanilla perks), but award first to whichever team died last (makes overall wins from ties less arbitrary)
-        } else if(MOST_RECENT_DEATH_TEAM == Constants.ETFTeam.TF_TEAM_RED) {
+        } else if(::MOST_RECENT_DEATH_TEAM == Constants.ETFTeam.TF_TEAM_RED) {
             EntFireByHandle(PLAYER_DESTRUCTION_LOGIC, "ScoreRedPoints", "", 0, null, null);
             EntFireByHandle(PLAYER_DESTRUCTION_LOGIC, "ScoreBluePoints", "", 0.5, null, null);
             EntFire("text_win_none", "Display", "", 0, null);
