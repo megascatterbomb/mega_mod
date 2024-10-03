@@ -15,6 +15,12 @@ Time limit chosen so the 2:00 mark coincides with the unlocking of the point. If
 ## Made ties less arbitrary.
 When both teams die at exactly the same time (or the time limit introduced by this mod is reached), both teams get a point. This is necessary as the game can't last more than 5 rounds. However, if the score is 2-2 and there's a tie, the winning team is chosen arbitrarily. If this rare situation occurs, this mod makes the win slightly less arbitrary by awarding the win to whichever team most recently lost a player to death (implying their team lasted longer).
 
+# koth_lakeside_event
+
+## Reduced timers to 5:00 (from 7:00)
+
+Makes Merasmus burnout slightly less likely.
+
 # Payload Race
 
 ## Added Overtime
