@@ -5,7 +5,9 @@ local mods = [
     "koth_lakeside_event",
     "plr_bananabay",
     "plr_hacksaw",
+    "plr_hacksaw_event"
     "plr_hightower",
+    "plr_hightower_event",
     "plr_nightfall_final",
     "plr_pipeline"
 ];
