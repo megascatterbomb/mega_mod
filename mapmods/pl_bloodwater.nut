@@ -54,7 +54,7 @@ function OnGameEvent_teamplay_round_start(params)
         "random6"
         "random7"
     ]) {
-        ent.Kill();
+        MM_GetEntByName(ent).Kill();
         killed++;
     }
     // do the logic separately as they're not edicts but still consume CPU cycles needlessly.
@@ -64,7 +64,7 @@ function OnGameEvent_teamplay_round_start(params)
         "auch_case"
         "random_case"
     ]) {
-        ent.Kill();
+        MM_GetEntByName(ent).Kill();
     }
 
     // Remove duplicates next to clock
@@ -110,7 +110,7 @@ function OnGameEvent_teamplay_round_start(params)
         "island_explode_particle6"
         "island_explode_particle8"
     ]) {
-        ent.Kill();
+        MM_GetEntByName(ent).Kill();
         killed++;
     }
     // Sync last remaining particle to last remaining sound.
@@ -127,10 +127,10 @@ function OnGameEvent_teamplay_round_start(params)
     local torches = [];
     local torch = Entities.FindByClassname(null, "info_particle_system");
     while(torch != null) {
-        if (NetProps.GetPropString(torch, "m_iszEffectName") == "burning_torch"); {
+        if (NetProps.GetPropString(torch, "m_iszEffectName") == "burning_torch") {
             torches.push(torch);
         }
-        torch = Entities.FindByClassname(null, "env_sprite");
+        torch = Entities.FindByClassname(torch, "info_particle_system");
     }
     foreach (ent in torches) {
         ent.Kill();
@@ -141,10 +141,10 @@ function OnGameEvent_teamplay_round_start(params)
     local sprites = [];
     local sprite = Entities.FindByClassname(null, "env_sprite");
     while(sprite != null) {
-        if (sprite.GetName == "") {
+        if (sprite.GetName() == "") {
             sprites.push(sprite);
         }
-        sprite = Entities.FindByClassname(null, "env_sprite");
+        sprite = Entities.FindByClassname(sprite, "env_sprite");
     }
     foreach (ent in sprites) {
         ent.Kill();
@@ -165,7 +165,7 @@ function OnGameEvent_teamplay_round_start(params)
     local spotlight = Entities.FindByClassname(null, "point_spotlight");
     while(spotlight != null) {
         spotlights.push(spotlight);
-        spotlight = Entities.FindByClassname(null, "env_sprite");
+        spotlight = Entities.FindByClassname(spotlight, "point_spotlight");
     }
     foreach (ent in spotlights) {
         ent.Kill();
