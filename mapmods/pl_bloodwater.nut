@@ -97,7 +97,48 @@ function OnGameEvent_teamplay_round_start(params)
     EntityOutputs.AddOutput(MM_GetEntByName("zombie_event_thunder_timer"), "OnTimer", "zombie_event_thunder2", "PlaySound", "", 0, -1);
 
     // TODO
-    // very long pit sounds and matching triggers (-36)
+    // very long pit sounds and matching triggers (-37)
+    foreach (ent in [
+        "tele_tunnel_boss_laugh_1"
+        "tele_tunnel_boss_laugh_1" // there's two with this name
+        "tele_tunnel_boss_laugh_2"
+        "tele_tunnel_boss_laugh_3"
+        "tele_tunnel_boss_laugh_4"
+        "tele_tunnel_boss_laugh_5"
+        "tele_tunnel_boss_laugh_6"
+        "tele_tunnel_boss_laugh_7"
+        "tele_tunnel_boss_laugh_8"
+        "tele_tunnel_boss_laugh_9"
+        "tele_tunnel_boss_laugh_10"
+        "tele_tunnel_ghostmoan_1"
+        "tele_tunnel_ghostmoan_2"
+        "tele_tunnel_ghostmoan_3"
+        "tele_tunnel_ghostmoan_4"
+        "tele_tunnel_ghostmoan_5"
+        "tele_tunnel_ghostmoan_6"
+        "tele_tunnel_ghostmoan_7"
+        "tele_tunnel_ghostmoan_8"
+    ]) {
+        MM_GetEntByName(ent).Kill();
+        killed++;
+    }
+
+    local tunnel_triggers = [];
+    local tunnel_trigger = Entities.FindByClassname(null, "trigger_multiple");
+    while(tunnel_trigger != null) {
+        if (tunnel_trigger.GetName() == "") {
+            local origin = tunnel_trigger.GetOrigin();
+            if (origin.x > 110 && origin.y > 2345 && origin.z > -8382 &&
+                origin.x < 530 && origin.y < 2783 && origin.z < 5793) {
+                tunnel_triggers.push(tunnel_trigger);
+            }
+        }
+        tunnel_trigger = Entities.FindByClassname(tunnel_trigger, "trigger_multiple");
+    }
+    foreach (ent in tunnel_triggers) {
+        ent.Kill();
+        killed++;
+    }
 
     // VISUAL EFFECTS
     // excess island_explode_particle# (-7)
@@ -150,11 +191,11 @@ function OnGameEvent_teamplay_round_start(params)
         ent.Kill();
         killed++;
     }
-    // excess candles in red spawn (-20)
+    // excess candles in red spawn (-22)
     local candles = MM_GetEntArrayByName("particle_fire");
     foreach (ent in candles) {
         local origin = ent.GetOrigin();
-        if(origin.z < 6458.0) {
+        if(origin.z < 6458.0 || origin.x < 1200.0) {
             ent.Kill()
             killed++;
         }
