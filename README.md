@@ -21,6 +21,10 @@ When both teams die at exactly the same time (or the time limit introduced by th
 
 Makes Merasmus burnout slightly less likely.
 
+## pl_bloodwater
+
+Saved over 210 edicts by removing gameplay-irrelevant elements.
+
 # Payload Race
 
 ## Added Overtime
