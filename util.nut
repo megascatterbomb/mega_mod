@@ -11,3 +11,28 @@ function MM_GetEntArrayByName(name) {
     }
     return ents;
 }
+
+// Entity optimization
+function MM_KillAllByName(name) {
+    local killed = 0;
+    local ents = MM_GetEntArrayByName(name);
+    foreach (ent in ents) {
+        ent.Kill();
+        killed++;
+    }
+    return killed;
+}
+
+function MM_KillAllButOneByName(name) {
+    local killed = 0;
+    local ents = MM_GetEntArrayByName(name);
+    local skip = true;
+    foreach (ent in ents) {
+        if(!skip && ent) {
+            ent.Kill();
+            killed++;
+        }
+        skip = false;
+    }
+    return killed;
+}
