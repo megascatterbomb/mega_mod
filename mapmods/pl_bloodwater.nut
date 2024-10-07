@@ -5,22 +5,92 @@ ClearGameEventCallbacks();
 function OnGameEvent_teamplay_round_start(params)
 {
     local killed = 0;
-    // info_target in underworld
-    // replace with single info_target (-51)
-    // check target OnTick for players who have teleported there, then teleport them to the appropriate location (hardcode coords)
-    // remove pushtriggers at entrances (-3)
 
-    // TODO
-    // SPAWN_PURGATORY_RED <- Vector(0, 0, 0);
-    // SPAWN_PURGATORY_BLU <- Vector(0, 0, 0);
-    // SPAWN_LOOT_RED <- [Vector(634, 2096, -11960), QAngle(0, 180, 0)];
-    // SPAWN_LOOT_BLU <- [Vector(634, 2224, -11960), QAngle(0, 180, 0)];
-    // SPAWN_WARCRIMES_RED <- Vector(0, 0, 0);
-    // SPAWN_WARCRIMES_BLU <- Vector(0, 0, 0);
+    // kill all info_target in underworld (-51)
+    killed += MM_KillAllByName("spawn_purgatory");
+    killed += MM_KillAllByName("spawn_loot");
+    killed += MM_KillAllByName("spawn_warcrimes");
 
-    // killed += MM_KillAllByName("spawn_purgatory");
-    // killed += MM_KillAllByName("spawn_loot");
-    // killed += MM_KillAllByName("spawn_warcrimes");
+    killed -= 3;
+
+    ::SPAWN_PURGATORY_ORIGIN <- Vector(-12319, -11965, -11786);
+    ::SPAWN_LOOT_ORIGIN <- Vector(-12319, -10965, -11786);
+    ::SPAWN_WARCRIMES_ORIGIN <- Vector(-12319, -9965, -11786);
+
+    // replace with single info_target
+    SpawnEntityFromTable("info_target", {
+        targetname = "spawn_purgatory",
+        origin = "-12319 -11965 -11786",
+        angles = "0 0 0",
+    });
+    SpawnEntityFromTable("info_target", {
+        targetname = "spawn_loot",
+        origin = "-12319 -10965 -11786",
+        angles = "0 0 0",
+    })
+    SpawnEntityFromTable("info_target", {
+        targetname = "spawn_warcrimes",
+        origin = "-12319 -9965 -11786",
+        angles = "0 0 0",
+    })
+
+    // check target OnTick for players who have teleported there,
+    // then teleport them to the appropriate location (hardcode coords)
+
+    ::SPAWN_PURGATORY_RED <- [
+        [Vector(-1314, -2975, -11840), QAngle(0, 108, 0)],
+        [Vector(-1442, -2975, -11840), QAngle(0, 108, 0)],
+        [Vector(-1570, -2975, -11840), QAngle(0, 108, 0)],
+        [Vector(-737, -3067, -11761), QAngle(0, 45, 0)],
+        [Vector(-812, -2962, -11761), QAngle(0, 45, 0)]
+    ];
+    ::SPAWN_PURGATORY_BLU <- [
+        [Vector(-1378, -2975, -11840), QAngle(0, 108, 0)],
+        [Vector(-1506, -2975, -11840), QAngle(0, 108, 0)],
+        [Vector(-1634, -2975, -11840), QAngle(0, 108, 0)],
+        [Vector(-774, -3015, -11761), QAngle(0, 45, 0)],
+        [Vector(-849, -2910, -11761), QAngle(0, 45, 0)]
+    ];
+    ::SPAWN_LOOT_RED <- [[Vector(634, 2096, -11960), QAngle(0, 180, 0)]];
+    ::SPAWN_LOOT_BLU <- [[Vector(634, 2224, -11960), QAngle(0, 180, 0)]];
+    ::SPAWN_WARCRIMES_RED <- [
+        [Vector(-1055, -40, -12047), QAngle(0, 0, 0)],
+        [Vector(-928, -155, -12053), QAngle(0, 0, 0)],
+        [Vector(-1074, -249, -12069), QAngle(0, 0, 0)],
+        [Vector(-1201, -135, -12050), QAngle(0, 0, 0)],
+        [Vector(-1378, -16, -12053), QAngle(0, 0, 0)],
+        [Vector(-1403, 207, -12050), QAngle(0, 0, 0)],
+        [Vector(-1187, 337, -12047), QAngle(0, 0, 0)],
+        [Vector(-997, 333, -12047), QAngle(0, 0, 0)],
+        [Vector(-810, 224, -12059), QAngle(0, 0, 0)],
+        [Vector(-802, 72, -12063), QAngle(0, 0, 0)],
+        [Vector(-808, -235, -12069), QAngle(0, 0, 0)],
+        [Vector(-939, -353, -12093), QAngle(0, 0, 0)],
+        [Vector(-764, -464, -12130), QAngle(0, 0, 0)],
+        [Vector(-502, -1117, -12090), QAngle(0, 0, 0)],
+        [Vector(-362, -1234, -12079), QAngle(0, 0, 0)],
+        [Vector(-190, -1362, -12089), QAngle(0, 0, 0)],
+        [Vector(-94, -2222, -12191), QAngle(0, 0, 0)]
+    ];
+    ::SPAWN_WARCRIMES_BLU <- [
+        [Vector(-143, -2713, -12165), QAngle(0, 0, 0)],
+        [Vector(-286, -2481, -12165), QAngle(0, 0, 0)],
+        [Vector(-371, -2768, -12157), QAngle(0, 0, 0)],
+        [Vector(-538, -2636, -12166), QAngle(0, 0, 0)],
+        [Vector(-1299, -2675, -12027), QAngle(0, 0, 0)],
+        [Vector(-1414, -2535, -12023), QAngle(0, 0, 0)],
+        [Vector(-1641, -2641, -12003), QAngle(0, 0, 0)],
+        [Vector(-1822, -2828, -12012), QAngle(0, 0, 0)],
+        [Vector(-1953, -2654, -12025), QAngle(0, 0, 0)],
+        [Vector(-1604, -2452, -12035), QAngle(0, 0, 0)],
+        [Vector(-1830, -2450, -12038), QAngle(0, 0, 0)],
+        [Vector(-1972, -2191, -12082), QAngle(0, 0, 0)],
+        [Vector(-1902, -1425, -12093), QAngle(0, 0, 0)],
+        [Vector(-1706, -1274, -12080), QAngle(0, 0, 0)],
+        [Vector(-1560, -1116, -12103), QAngle(0, 0, 0)]
+    ];
+
+    AddThinkToEnt(MM_GetEntByName("gamerules"), "ThinkTeleport");
 
     // SOUND EFFECTS
     // remove duplicates at underworld skull  (-19)
@@ -96,7 +166,6 @@ function OnGameEvent_teamplay_round_start(params)
     EntityOutputs.RemoveOutput(MM_GetEntByName("zombie_event_thunder_timer"), "OnTimer", "zombie_event_thunder_case", "PickRandom", "");
     EntityOutputs.AddOutput(MM_GetEntByName("zombie_event_thunder_timer"), "OnTimer", "zombie_event_thunder2", "PlaySound", "", 0, -1);
 
-    // TODO
     // very long pit sounds and matching triggers (-37)
     foreach (ent in [
         "tele_tunnel_boss_laugh_1"
@@ -213,7 +282,65 @@ function OnGameEvent_teamplay_round_start(params)
         killed++;
     }
 
-    printl("MEGAMOD: Killed " + killed + " entities.")
+    printl("MEGAMOD: Killed " + killed + " entities.");
+}
+
+
+function ThinkTeleport() {
+    for (local i = 0; i < 3; i++) {
+        HandleTeleport(i);
+    }
+
+    return -1;
+}
+
+// type 0 = "PURGATORY", 1 = "LOOT", 2 = "WARCRIMES"
+function HandleTeleport(type) {
+    local maxplayers = MaxClients().tointeger()
+
+    for (local i = 1; i <= maxplayers ; i++)
+    {
+        local player = PlayerInstanceFromIndex(i);
+        if (player == null) continue;
+        local player_origin = player.GetOrigin();
+        local target_origin = [
+            SPAWN_PURGATORY_ORIGIN,
+            SPAWN_LOOT_ORIGIN,
+            SPAWN_WARCRIMES_ORIGIN
+        ][type];
+        if (abs(player_origin.x - target_origin.x) < 64 &&
+            abs(player_origin.y - target_origin.y) < 64 &&
+            abs(player_origin.z - target_origin.z) < 64
+        ) {
+            local team = player.GetTeam();
+            local destination = GetDestination(type, team);
+            local d_pos = destination[0];
+            local d_ang = destination[1];
+
+            player.SetAbsOrigin(d_pos);
+            player.SnapEyeAngles(d_ang);
+        }
+    }
+}
+
+function GetDestination(type, team) {
+    local red_destinations = [
+        SPAWN_PURGATORY_RED,
+        SPAWN_LOOT_RED,
+        SPAWN_WARCRIMES_RED
+    ];
+    local blu_destinations = [
+        SPAWN_PURGATORY_BLU,
+        SPAWN_LOOT_BLU,
+        SPAWN_WARCRIMES_BLU
+    ];
+    if (team == Constants.ETFTeam.TF_TEAM_RED) {
+        local n = RandomInt(0, red_destinations[type].len() - 1);
+        return red_destinations[type][n];
+    } else {
+        local n = RandomInt(0, blu_destinations[type].len() - 1);
+        return blu_destinations[type][n];
+    }
 }
 
 __CollectGameEventCallbacks(this);
