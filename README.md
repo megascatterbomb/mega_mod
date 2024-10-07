@@ -23,7 +23,7 @@ Makes Merasmus burnout slightly less likely.
 
 ## pl_bloodwater
 
-Saved over 210 edicts by removing gameplay-irrelevant elements.
+Saved over 300 edicts by removing gameplay-irrelevant elements.
 
 # Payload Race
 
