@@ -1,5 +1,7 @@
 ClearGameEventCallbacks();
 
+IncludeScript("mega_mod/common/no_truce.nut")
+
 function OnGameEvent_teamplay_round_start(params)
 {
     local red_timer = MM_GetEntByName("zz_red_koth_timer");

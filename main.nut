@@ -3,6 +3,7 @@
 local mods = [
     "arena_perks",
     "koth_lakeside_event",
+    "koth_viaduct_event",
     "pl_bloodwater",
     "plr_bananabay",
     "plr_hacksaw",
