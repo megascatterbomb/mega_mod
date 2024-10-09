@@ -17,7 +17,7 @@ When both teams die at exactly the same time (or the time limit introduced by th
 
 # koth_lakeside_event
 
-## Reduced timers to 5:00 (from 7:00)
+## Reduced timers to 3:00 (from 7:00)
 
 Makes Merasmus burnout slightly less likely.
 
