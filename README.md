@@ -1,9 +1,9 @@
 # Megascatterbomb's server mods
 
-A collection of VScript mods for various maps that I think improve the overall gameplay experience. If you would like to play on a server with these mods, connect to `sooty-owl.chs.gg:6996`.
+A collection of VScript mods for various maps that I think improve the overall gameplay experience. If you would like to play on a server with these mods, connect to `tf2.megascatterbomb.com`.
 
 Installation:
-- Copy the contents of the repo to `tf/scripts/vscripts/mega_mod`
+- Copy the contents of the repo to `tf/scripts/vscripts`
 - Add `script_execute mega_mod/main.nut` to the end of your server.cfg
 - You can comment out any maps you don't want to use the mod for within `main.nut`
 
