@@ -35,6 +35,10 @@ In multi-stage maps, each win on a previous stage will provide winning teams wit
   - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
   - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.
 
+# Tug of War (WIP)
+
+Tug of war can last forever, but not with this mod! After 5 minutes, the cart will move on its own towards the objective in favour of the cart owner's team. Every 30 seconds from then on, the cart's maximum speed will increase. Eventually, it'll be moving so fast that it can't help but be at either end of the track!
+
 # Miscellanious Fixes
 
 ## No truces on koth_lakeside_event & koth_viaduct_event
