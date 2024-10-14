@@ -14,7 +14,7 @@ function MM_OvertimeInit() {
     // EntityOutputs.AddOutput(MM_GetEntByName(RED_PATH_BASE), "OnPass", mm_cart_trucktrain.GetName(), "TeleportToPathTrack", RED_PATH_BASE, 0, -1);
     // EntityOutputs.AddOutput(MM_GetEntByName(BLU_PATH_BASE), "OnPass", mm_cart_trucktrain.GetName(), "TeleportToPathTrack", BLU_PATH_BASE, 0, -1);
 
-    EntFireByHandle(self, "RunScriptCode", "MM_OvertimeStart()", 300.0, null, null);
+    EntFireByHandle(self, "RunScriptCode", "MM_OvertimeStart()", 600.0, null, null);
 }
 
 function MM_OvertimeStart() {
@@ -38,6 +38,10 @@ function MM_OvertimeLoop() {
     NetProps.SetPropFloat(mm_cart_trucktrain, "m_maxSpeed", floor(oldSpeed * 1.1));
     NetProps.SetPropFloat(mm_cart_trucktrain, "m_flAccelSpeed", min(oldAccel + 5, 280));
     NetProps.SetPropFloat(mm_cart_trucktrain, "m_flDecelSpeed", min(oldDecel + 10, 600));
+
+    // Force cart speed update
+    prevSpeed = 2147483647;
+    nextRollbackTS = Time() + Epsilon * 2;
 
     EntFireByHandle(self, "RunScriptCode", "MM_OvertimeLoop()", 30.0, null, null);
 }
