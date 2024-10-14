@@ -42,19 +42,6 @@ function MM_OvertimeLoop() {
     EntFireByHandle(self, "RunScriptCode", "MM_OvertimeLoop()", 30.0, null, null);
 }
 
-function MM_TeleportToPoint(team) {
-    local dest;
-    if (team == TF_TEAM_RED) {
-        dest = RED_PATH_BASE;
-    } else if (team == TF_TEAM_BLUE) {
-        dest = BLU_PATH_BASE;
-    } else {
-        return;
-    }
-
-    mm_cart_trucktrain.AcceptInput("TeleportToPathTrack", dest, null, null);
-}
-
 // OVERRIDE: Needed to fix the rollback hud for short delays
 function UpdatePayloadHUD()
 {
