@@ -39,7 +39,13 @@ In multi-stage maps, each win on a previous stage will provide winning teams wit
 
 Tug of war can last forever, but not with this mod! After 5 minutes, the cart will move on its own towards the objective in favour of the cart owner's team. Every 30 seconds from then on, the cart's maximum speed will increase. Eventually, it'll be moving so fast that it can't help but be at either end of the track!
 
+The KOTH timer was increased to 3 minutes so that the round is unlikely to end before the anti-stalemate phase without sidelining the vanilla experience, as the anti-stalemate mechanics are really fun to play with.
+
 # Miscellanious Fixes
+
+## Cumulative cash on cp_freaky_fair
+
+Too often do people complain about capping on cp_freaky_fair, lest they lose their ability to ~~pay off the japanese mafia~~ purchase some insane combination of upgrades. To prevent this, the cash is preserved between rounds. Similar to midpoint, the final points now award $400 on capture.
 
 ## No truces on koth_lakeside_event & koth_viaduct_event
 
