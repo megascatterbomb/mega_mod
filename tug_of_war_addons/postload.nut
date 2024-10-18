@@ -53,7 +53,7 @@ function UpdatePayloadHUD()
 
     //Cart Position on the HUD
     local cartPos = GetPropFloat(team_train_watcher, "m_flTotalProgress");
-    cartPos = ceil(cartPos * 255);
+    cartPos = ceil(cartPos * 254);
     SetPropInt(pd_logic, "m_nBlueTargetPoints", cartPos);
 
     //Set Cart's Team Color
