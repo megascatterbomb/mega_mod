@@ -6,9 +6,10 @@ function OnGameEvent_teamplay_round_start(params)
 {
     Setup5CPKothTimer();
 
-    FlattenCaptureTimes();
+    ConfigureCaptureAreas();
 }
 
+// INIT FUNCTIONS
 
 // Kill old timer, swap in a KOTH one with matching times.
 function Setup5CPKothTimer() {
@@ -50,25 +51,31 @@ function Setup5CPKothTimer() {
     }
 }
 
-// Force all control points to have the longest capture time present on the map.
-function FlattenCaptureTimes() {
+function ConfigureCaptureAreas() {
     local maxTime = 0;
     for (local ent = null; ent = Entities.FindByClassname(ent, "trigger_capture_area");) {
         local capTime = NetProps.GetPropFloat(ent, "m_flCapTime");
         maxTime = capTime > maxTime ? capTime : maxTime;
     }
     for (local ent = null; ent = Entities.FindByClassname(ent, "trigger_capture_area");) {
+        // Force all control points to have the longest capture time present on the map.
         ent.AcceptInput("AddOutput", "area_time_to_cap " + maxTime, null,  null);
         ent.AcceptInput("SetControlPoint", NetProps.GetPropString(ent, "m_iszCapPointName"), null, null); // Prevent the capping HUD being jank (thanks ficool2)
+
+        // Check for end of round since the KOTH logic messes with the vanilla method.
+        EntityOutputs.AddOutput(ent, "OnCapTeam1", "!self", "RunScriptCode", "CheckEndOfRound()", 0, -1);
+        EntityOutputs.AddOutput(ent, "OnCapTeam2", "!self", "RunScriptCode", "CheckEndOfRound()", 0, -1);
     }
 }
+
+// RUNTIME FUNCTIONS
 
 // TODO: hook to points and test
 function CheckEndOfRound() {
     local winner = -1;
     // Check if all points are owned by the same team (returns if not).
     for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
-        local owner = NetProps.GetPropInt(cp, "m_iTeam");
+        local owner = cp.GetTeam()
         if (winner == -1) {
             winner = owner;
             continue;
