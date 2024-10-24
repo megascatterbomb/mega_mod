@@ -13,6 +13,9 @@ local mods = [
     "plr_hightower_event",
     "plr_nightfall_final",
     "plr_pipeline"
+
+    # Support for updated versions of workshop maps is not guaranteed
+    "workshop/plr_highertower.ugc899335714"
 ];
 
 local mapName = GetMapName();
