@@ -1,17 +1,17 @@
 // Comment out any maps that you don't want to apply the mods to.
 
 local mods = [
-    "arena_perks",
-    "cp_freaky_fair",
-    "koth_lakeside_event",
-    "koth_viaduct_event",
-    "pl_bloodwater",
-    "plr_bananabay",
-    "plr_hacksaw",
+    "arena_perks"
+    "cp_freaky_fair"
+    "koth_lakeside_event"
+    "koth_viaduct_event"
+    "pl_bloodwater"
+    "plr_bananabay"
+    "plr_hacksaw"
     "plr_hacksaw_event"
-    "plr_hightower",
-    "plr_hightower_event",
-    "plr_nightfall_final",
+    "plr_hightower"
+    "plr_hightower_event"
+    "plr_nightfall_final"
     "plr_pipeline"
 
     // Support for updated versions of workshop maps is not guaranteed
@@ -25,7 +25,7 @@ local index = mods.find(mapName);
 // if you only want to apply mods on some maps, do your own checks!
 local globalMods = [
     "5cp_anti_stalemate"
-]
+];
 
 if(index != null) {
     printl("MEGAMOD: Loading mega_mod/util.nut...");

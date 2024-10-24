@@ -1,13 +1,12 @@
 function ShouldApply() {
-
     local exceptionsAlways = [];
     local exceptionsNever = [];
 
     local mapName = GetMapName();
 
-    if (exceptionsNever.indexOf(mapName) != -1) {
+    if (exceptionsNever.find(mapName) != null) {
         return false;
-    } else if (exceptionsAlways.indexOf(mapName) != -1) {
+    } else if (exceptionsAlways.find(mapName) != null) {
         return true;
     }
 
@@ -16,7 +15,7 @@ function ShouldApply() {
     local countBlu = 0
 
     for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
-        local owner = NetProps.GetPropBool(cp, "m_iDefaultOwner");
+        local owner = NetProps.GetPropInt(cp, "m_iDefaultOwner");
         switch (owner) {
             case 0:
                 countNeutral++;
