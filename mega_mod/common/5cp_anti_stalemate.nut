@@ -25,16 +25,17 @@ function Setup5CPKothTimer() {
 
     SpawnEntityFromTable("game_round_win", {
         targetname = "zz_gamewin_red"
+        force_map_reset = true // prevents crashes
         TeamNum = 2
     });
     SpawnEntityFromTable("game_round_win", {
         targetname = "zz_gamewin_blue"
+        force_map_reset = true // prevents crashes
         TeamNum = 3
     });
 
-    // TODO: check if this crashes again
-    // EntityOutputs.AddOutput(MM_GetEntByName("zz_red_koth_timer"), "OnFinished", "zz_gamewin_red", "RoundWin", "", 0, -1);
-    // EntityOutputs.AddOutput(MM_GetEntByName("zz_blue_koth_timer"), "OnFinished", "zz_gamewin_blue", "RoundWin", "", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("zz_red_koth_timer"), "OnFinished", "zz_gamewin_red", "RoundWin", "", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("zz_blue_koth_timer"), "OnFinished", "zz_gamewin_blue", "RoundWin", "", 0, -1);
 }
 
 function MM_5CPTimeoutRed() {
