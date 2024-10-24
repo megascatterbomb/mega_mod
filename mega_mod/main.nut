@@ -27,10 +27,11 @@ local globalMods = [
     "5cp_anti_stalemate"
 ];
 
+printl("MEGAMOD: Loading mega_mod/util.nut...");
+IncludeScript("mega_mod/util.nut")
+printl("MEGAMOD: util.nut started");
+
 if(index != null) {
-    printl("MEGAMOD: Loading mega_mod/util.nut...");
-    IncludeScript("mega_mod/util.nut")
-    printl("MEGAMOD: util.nut started");
     printl("MEGAMOD: Found mod for " + mapName + ". Attempting to load...");
     IncludeScript("mega_mod/mapmods/" + mapName + ".nut")
     printl("MEGAMOD: " + mapName + ".nut started")
