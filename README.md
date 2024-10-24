@@ -7,6 +7,16 @@ Installation:
 - Add `script_execute mega_mod/main.nut` to the end of your server.cfg
 - You can comment out any maps you don't want to use the mod for within `main.nut`
 
+Project structure:
+- /common
+  - Script files that may be included by any map-specific mod or global mod when needed.
+- /global
+  - Script files that are included on maps without a map-specific mod. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/global/5cp_anti_stalemate.nut as an example).
+- /mapmods
+  - Script files that are included on a specific map, determined by the filename.
+- /tug_of_war_addons
+  - Addons that utilize the official addon support in the Tug-of-war VScript gamemode.
+
 # arena_perks
 
 ## Added a 2:50 time limit for each mini-round.
