@@ -4,6 +4,7 @@ ClearGameEventCallbacks();
 
 function OnGameEvent_teamplay_round_start(params)
 {
+    if (IsInWaitingForPlayers()) return;
     Setup5CPKothTimer();
 
     ConfigureCaptureAreas();
@@ -11,11 +12,22 @@ function OnGameEvent_teamplay_round_start(params)
 
 // INIT FUNCTIONS
 
-// Kill old timer, swap in a KOTH one with matching times.
+// Kill old timer, swap in a KOTH one.
 function Setup5CPKothTimer() {
     local oldTimer = Entities.FindByClassname(null, "team_round_timer");
     local time = NetProps.GetPropInt(oldTimer,  "m_nTimerInitialLength")
     oldTimer.Kill();
+
+    local mp_timelimit = Convars.GetInt("mp_timelimit");
+
+    if (mp_timelimit != null && mp_timelimit > 0) {
+        local remainingTime = (mp_timelimit * 60) - Time() + Convars.GetInt("mp_waitingforplayers_time");
+
+        if(remainingTime < time) {
+            time = ceil(remainingTime / 30) * 30;
+        }
+        if (time < 180) time = 180;
+    }
 
     ::MM_5CP_KOTH_LOGIC <- SpawnEntityFromTable("tf_logic_koth", {
         targetname = "tf_logic_koth"
