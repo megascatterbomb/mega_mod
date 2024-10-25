@@ -18,10 +18,12 @@ function Setup5CPKothTimer() {
     local time = NetProps.GetPropInt(oldTimer,  "m_nTimerInitialLength")
     oldTimer.Kill();
 
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     local mp_timelimit = Convars.GetInt("mp_timelimit");
 
+    // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
     if (mp_timelimit != null && mp_timelimit > 0) {
-        local remainingTime = (mp_timelimit * 60) - Time() + Convars.GetInt("mp_waitingforplayers_time");
+        local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
 
         if(remainingTime < time) {
             time = ceil(remainingTime / 30) * 30;
@@ -34,7 +36,6 @@ function Setup5CPKothTimer() {
         timer_length = time
     })
 
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     NetProps.SetPropBool(gamerules, "m_bPlayingKoth", true);
     MM_5CP_KOTH_LOGIC.AcceptInput("RoundSpawn", "", null, null);
 
