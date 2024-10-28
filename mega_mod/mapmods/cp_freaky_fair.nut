@@ -4,6 +4,8 @@ local root = getroottable();
 local prefix = DoUniqueString("mega");
 local mega = root[prefix] <- {};
 
+IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
+
 ::MM_CREDITS_RED <- 0;
 ::MM_CREDITS_BLU <- 0;
 
@@ -35,21 +37,14 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
             AwardCreditsToTeamBase(team, amount);
         }.bindenv(MM_GetEntByName("scripto").GetScriptScope());
 
+        // Set both team's credit values to the greater of the two.
+        ::MM_CREDITS_RED <- MM_CREDITS_RED > MM_CREDITS_BLU ? MM_CREDITS_RED : MM_CREDITS_BLU;
+        ::MM_CREDITS_BLU <- MM_CREDITS_RED;
+
         AwardCreditsToTeamBase(Constants.ETFTeam.TF_TEAM_RED, MM_CREDITS_RED);
         AwardCreditsToTeamBase(Constants.ETFTeam.TF_TEAM_BLUE, MM_CREDITS_BLU);
 
-        // Misc changes
-
-        local captureArea = Entities.FindByClassname(null, "trigger_capture_area");
-
-        while (captureArea != null) {
-            if (NetProps.GetPropString(captureArea, "m_iszCapPointName") !=  "cap_middle") {
-                // Grant credits for final point capture.
-                EntityOutputs.AddOutput(captureArea, "OnCapTeam1", "scripto", "RunScriptCode", "AwardCreditsToTeam(2,400)", 0, -1);
-                EntityOutputs.AddOutput(captureArea, "OnCapTeam2", "scripto", "RunScriptCode", "AwardCreditsToTeam(3,400)", 0, -1);
-            }
-            captureArea = Entities.FindByClassname(captureArea, "trigger_capture_area");
-        }
+        MM_5CP_Activate();
 
     }.bindenv(MM_GetEntByName("scripto").GetScriptScope())
 

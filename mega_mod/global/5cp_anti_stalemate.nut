@@ -39,4 +39,13 @@ function ShouldApply() {
 
 if (ShouldApply()) {
     IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
+
+    ClearGameEventCallbacks();
+
+    function OnGameEvent_teamplay_round_start(params)
+    {
+        MM_5CP_Activate();
+    }
+
+    __CollectGameEventCallbacks(this);
 }

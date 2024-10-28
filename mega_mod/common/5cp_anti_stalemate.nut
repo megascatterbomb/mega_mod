@@ -1,14 +1,6 @@
-ClearGameEventCallbacks();
-
-::MM_5CP_POINT_COUNT <- 5;
-::MM_5CP_HAS_SETUP <- false;
-
-function OnGameEvent_teamplay_round_start(params)
-{
-    MM_5CP_Activate();
-}
-
 function MM_5CP_Activate() {
+    ::MM_5CP_POINT_COUNT <- 5;
+    ::MM_5CP_HAS_SETUP <- false;
     if (IsInWaitingForPlayers()) return;
 
     Setup5CPKothTimer();
@@ -32,6 +24,9 @@ function Setup5CPKothTimer() {
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     local mp_timelimit = Convars.GetInt("mp_timelimit");
 
+    local MM_5CP_TIME_UPPER_LIMIT = 600;
+    local MM_5CP_TIME_LOWER_LIMIT = 300;
+
     // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
     if (mp_timelimit != null && mp_timelimit > 0) {
         local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
@@ -39,8 +34,9 @@ function Setup5CPKothTimer() {
         if(remainingTime < time) {
             time = ceil(remainingTime / 30) * 30;
         }
-        if (time < 180) time = 180;
     }
+    if (time > MM_5CP_TIME_UPPER_LIMIT) time = MM_5CP_TIME_UPPER_LIMIT;
+    if (time < MM_5CP_TIME_LOWER_LIMIT) time = MM_5CP_TIME_LOWER_LIMIT;
 
     ::MM_5CP_KOTH_LOGIC <- SpawnEntityFromTable("tf_logic_koth", {
         targetname = "tf_logic_koth"
@@ -142,5 +138,3 @@ function CheckEndOfRound() {
         EntFireByHandle(MM_GetEntByName("zz_gamewin_blue"), "RoundWin", "", 0, null, null);
     }
 }
-
-__CollectGameEventCallbacks(this);
