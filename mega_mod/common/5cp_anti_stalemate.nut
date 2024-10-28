@@ -1,12 +1,17 @@
 ClearGameEventCallbacks();
 
-::MM_5CP_HAS_5_POINTS <- false;
+::MM_5CP_POINT_COUNT <- 5;
+::MM_5CP_HAS_SETUP <- false;
 
 function OnGameEvent_teamplay_round_start(params)
 {
-    if (IsInWaitingForPlayers()) return;
-    Setup5CPKothTimer();
+    MM_5CP_Activate();
+}
 
+function MM_5CP_Activate() {
+    if (IsInWaitingForPlayers()) return;
+
+    Setup5CPKothTimer();
     ConfigureCaptureAreas();
 }
 
@@ -15,7 +20,12 @@ function OnGameEvent_teamplay_round_start(params)
 // Kill old timer, swap in a KOTH one.
 function Setup5CPKothTimer() {
     local oldTimer = Entities.FindByClassname(null, "team_round_timer");
-    local time = NetProps.GetPropInt(oldTimer,  "m_nTimerInitialLength")
+    if (NetProps.GetPropInt(oldTimer, "m_nSetupTimeLength") > 0 && !MM_5CP_HAS_SETUP) {
+        ::MM_5CP_HAS_SETUP <- true;
+        HandleSetup();
+        return;
+    }
+    local time = NetProps.GetPropInt(oldTimer, "m_nTimerInitialLength");
     oldTimer.Kill();
 
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
@@ -64,12 +74,26 @@ function Setup5CPKothTimer() {
     }
 }
 
+function HandleSetup() {
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    NetProps.SetPropBool(gamerules, "m_bPlayingKoth", false);
+    local logic = MM_GetEntByName("tf_logic_koth");
+    if (logic) logic.Kill();
+
+    local oldTimer = Entities.FindByClassname(null, "team_round_timer");
+    local setupTime = NetProps.GetPropInt(oldTimer, "m_nSetupTimeLength");
+    EntityOutputs.AddOutput(oldTimer, "OnSetupFinished", "!self", "RunScriptCode", "Setup5CPKothTimer()", 0, -1);
+}
+
 function ConfigureCaptureAreas() {
     local maxTime = 0;
+    local count = 0;
     for (local ent = null; ent = Entities.FindByClassname(ent, "trigger_capture_area");) {
         local capTime = NetProps.GetPropFloat(ent, "m_flCapTime");
         maxTime = capTime > maxTime ? capTime : maxTime;
+        count++;
     }
+    ::MM_5CP_POINT_COUNT <- count;
     for (local ent = null; ent = Entities.FindByClassname(ent, "trigger_capture_area");) {
         // Force all control points to have the longest capture time present on the map.
         ent.AcceptInput("AddOutput", "area_time_to_cap " + maxTime, null,  null);
@@ -83,12 +107,11 @@ function ConfigureCaptureAreas() {
 
 // RUNTIME FUNCTIONS
 
-// TODO: hook to points and test
 function CheckEndOfRound() {
     local winner = -1;
     // Check if all points are owned by the same team (returns if not).
     for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
-        local owner = cp.GetTeam()
+        local owner = cp.GetTeam();
         if (winner == -1) {
             winner = owner;
             continue;
@@ -97,8 +120,10 @@ function CheckEndOfRound() {
         }
     }
     if (winner == 2) {
+        NetProps.SetPropInt(MM_GetEntByName("zz_gamewin_red"), "m_iWinReason", 1);
         EntFireByHandle(MM_GetEntByName("zz_gamewin_red"), "RoundWin", "", 0, null, null);
     } else if (winner == 3) {
+        NetProps.SetPropInt(MM_GetEntByName("zz_gamewin_blue"), "m_iWinReason", 1);
         EntFireByHandle(MM_GetEntByName("zz_gamewin_blue"), "RoundWin", "", 0, null, null);
     }
 }

@@ -8,8 +8,9 @@ function ShouldApply() {
         return false;
     } else if (exceptionsAlways.find(mapName) != null) {
         return true;
+    } else if (!startswith(mapName,  "cp_")) {
+        return false;
     }
-
     local countNeutral = 0;
     local countRed = 0;
     local countBlu = 0

@@ -17,6 +17,16 @@ Project structure:
 - /tug_of_war_addons
   - Addons that utilize the official addon support in the Tug-of-war VScript gamemode.
 
+# 5CP Anti-stalemate
+
+Due to a lack of effective time limit, control point maps tend to be stalematey as hell. This mod makes the following changes:
+- A pair of KOTH-style timers replaces the usual round timer. These timers activate depending on which team owns the middle point.
+- The team timers are initialized to the same starting time as the vanilla round timer (10 minutes on most maps, sometimes less, never more).
+- No time is ever added to either team's timer during the course of the round.
+- If `mp_timelimit` is set, the team timers will start at a lower value to prevent rounds dragging on long past the intended finish time.
+- If a team gets their timer to 0, they win.
+- All control points have their capture times increased to match the maximum cap time present within the map.
+
 # arena_perks
 
 ## Added a 2:50 time limit for each mini-round.
