@@ -13,6 +13,7 @@ function MM_5CP_Activate() {
 
     Setup5CPKothTimer();
     ConfigureCaptureAreas();
+    LockMidAtStart();
 }
 
 // INIT FUNCTIONS
@@ -102,6 +103,20 @@ function ConfigureCaptureAreas() {
         // Check for end of round since the KOTH logic messes with the vanilla method.
         EntityOutputs.AddOutput(ent, "OnCapTeam1", "!self", "RunScriptCode", "CheckEndOfRound()", 0, -1);
         EntityOutputs.AddOutput(ent, "OnCapTeam2", "!self", "RunScriptCode", "CheckEndOfRound()", 0, -1);
+    }
+}
+
+// Identify the middle point and lock it for the first 30 seconds of a round.
+function LockMidAtStart() {
+    if (MM_5CP_HAS_SETUP) return;
+    for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
+        local owner = NetProps.GetPropInt(cp, "m_iDefaultOwner");
+        local isLocked = NetProps.GetPropBool(cp, "m_bLocked");
+        if (owner == 0) {
+            cp.AcceptInput("SetLocked", "1", null, null);
+            cp.AcceptInput("SetUnlockTime", "35", null, null);
+            break;
+        }
     }
 }
 

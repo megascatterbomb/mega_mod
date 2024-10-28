@@ -9,7 +9,7 @@ Installation:
 
 Project structure:
 - /common
-  - Script files that may be included by any map-specific mod or global mod when needed.
+  - Script files that may be included by any map-specific mod or global mod when needed. Typically contains templates that may require map-specific setup.
 - /global
   - Script files that are included on maps without a map-specific mod. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/global/5cp_anti_stalemate.nut as an example).
 - /mapmods
@@ -25,7 +25,9 @@ Due to a lack of effective time limit, control point maps tend to be stalematey 
 - No time is ever added to either team's timer during the course of the round.
 - If `mp_timelimit` is set, the team timers will start at a lower value to prevent rounds dragging on long past the intended finish time.
 - If a team gets their timer to 0, they win.
+- The middle point is initially locked for the first 35 seconds of the round.
 - All control points have their capture times increased to match the maximum cap time present within the map.
+  - There are a couple exceptions (e.g `cp_well`) as they set `team_numcap_2`/`team_numcap_3` to a value other than 1, meaning some point's capture times are raised more than others.
 
 # arena_perks
 
