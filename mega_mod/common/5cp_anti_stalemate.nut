@@ -4,6 +4,7 @@ function MM_5CP_Activate() {
     if (IsInWaitingForPlayers()) return;
 
     Setup5CPKothTimer();
+    AttachMid();
     ConfigureCaptureAreas();
     LockMidAtStart();
 }
@@ -59,7 +60,10 @@ function Setup5CPKothTimer() {
 
     EntityOutputs.AddOutput(MM_GetEntByName("zz_red_koth_timer"), "OnFinished", "zz_gamewin_red", "RoundWin", "", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("zz_blue_koth_timer"), "OnFinished", "zz_gamewin_blue", "RoundWin", "", 0, -1);
+}
 
+function AttachMid() {
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     // Identify the neutral point and get it to handle KOTH I/O.
     for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
         local owner = NetProps.GetPropInt(cp, "m_iDefaultOwner");
@@ -127,7 +131,8 @@ function CheckEndOfRound() {
             winner = owner;
             continue;
         } else if (winner != owner) {
-            return;
+            winner = -1;
+            break;
         }
     }
     if (winner == 2) {

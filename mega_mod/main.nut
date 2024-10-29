@@ -3,6 +3,7 @@
 local mods = [
     "arena_perks"
     "cp_freaky_fair"
+    "cp_standin_final"
     "koth_lakeside_event"
     "koth_viaduct_event"
     "pl_bloodwater"

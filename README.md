@@ -29,6 +29,8 @@ Due to a lack of effective time limit, control point maps tend to be stalematey 
 - All control points have their capture times increased to match the maximum cap time present within the map.
   - There are a couple exceptions (e.g `cp_well`) as they set `team_numcap_2`/`team_numcap_3` to a value other than 1, meaning some point's capture times are raised more than others.
 
+With these changes, the team defending last will have an easier time defending, but if they want to win, they have to push at least past mid.
+
 # arena_perks
 
 ## Added a 2:50 time limit for each mini-round.
@@ -67,7 +69,7 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 
 ## Cumulative cash on cp_freaky_fair
 
-Too often do people complain about capping on cp_freaky_fair, lest they lose their ability to ~~pay off the japanese mafia~~ purchase some insane combination of upgrades. To prevent this, the cash is preserved between rounds. Similar to midpoint, the final points now award $400 on capture.
+Too often do people complain about capping on cp_freaky_fair, lest they lose their ability to ~~pay off the japanese mafia~~ purchase some insane combination of upgrades. To prevent this, the cash is preserved between rounds.
 
 ## No truces on koth_lakeside_event & koth_viaduct_event
 
