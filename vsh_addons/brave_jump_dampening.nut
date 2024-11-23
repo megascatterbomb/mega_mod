@@ -95,6 +95,12 @@ function BraveJumpTrait::Perform()
     RunWithDelay("BraveJumpNotifyJump(-1)", null, jumpCooldown + 2);
 }
 
+function BraveJumpTrait::NotifyJump()
+{
+    local boss = GetBossPlayers()[0];
+    ClientPrint(boss, 4, "Double jump while in the air!");
+}
+
 function BraveJumpNotifyJump(secondsLeft) {
     local boss = GetBossPlayers()[0];
     if(secondsLeft < 0) {
