@@ -1,5 +1,5 @@
 function ShouldApply() {
-    local exceptionsAlways = [];
+    local exceptionsAlways = ["ctf_haarp"];
     local exceptionsNever = [];
 
     local mapName = GetMapName();
