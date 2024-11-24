@@ -5,9 +5,9 @@ characterTraitsClasses.push(class extends CharacterTrait
     {
         local currentGlow = GetPropBool(player, "m_bGlowEnabled");
         local mercsAlive = GetAliveMercCount();
-        if(!currentGlow && (mercsAlive == 1 || haleBuff)){
+        if(!currentGlow && (mercsAlive == 1)){
             SetPropBool( player, "m_bGlowEnabled", true );
-        } else if (currentGlow && !haleBuff && (mercsAlive > 1 || GetPropInt(player, "m_iTeamNum") == 3)) {
+        } else if (currentGlow && (mercsAlive > 1 || GetPropInt(player, "m_iTeamNum") == 3)) {
             SetPropBool( player, "m_bGlowEnabled", false );
         }
     }
@@ -18,9 +18,9 @@ class BossGlowOnMercBuffTrait extends BossTrait {
     {
         local currentGlow = GetPropBool(player, "m_bGlowEnabled");
         local mercsAlive = GetAliveMercCount();
-        if(!currentGlow && (mercsAlive == 1 || mercBuff)){
+        if(!currentGlow && (mercsAlive == 1)){
             SetPropBool( player, "m_bGlowEnabled", true );
-        } else if (!IsAnyBossAlive() || (currentGlow && !mercBuff && mercsAlive > 1 )) {
+        } else if (!IsAnyBossAlive() || (currentGlow && mercsAlive > 1 )) {
             SetPropBool( player, "m_bGlowEnabled", false );
         }
     }
