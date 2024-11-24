@@ -16,8 +16,24 @@ Project structure:
   - Script files that are included on a specific map, determined by the filename.
 - /tug_of_war_addons
   - Addons that utilize the official addon support in the Tug-of-war VScript gamemode.
+- /vsh_addons
+  - Addons that utilize the official addon support in the Versus Saxton Hale VScript gamemode.
 
-# 5CP Anti-stalemate
+# General Improvements
+
+## Instant Respawn
+
+In certain scenarios, it is benefit to respawn the dead players on one or both teams to improve the gameplay experience.
+
+- In all gamemodes:
+  - Upon round end, the losing team will be respawned purely so they can be massacred by the winning team.
+- In Attack/Defend and Payload maps:
+  - Both teams are respawned at the end of setup time.
+  - RED team is respawned whenever a control point is captured. This helps prevent steamrolls.
+
+# Gamemode Improvements
+
+## 5CP Anti-stalemate
 
 Due to a lack of effective time limit, control point maps tend to be stalematey as hell. This mod makes the following changes:
 - A pair of KOTH-style timers replaces the usual round timer. These timers activate depending on which team owns the middle point.
@@ -31,17 +47,9 @@ Due to a lack of effective time limit, control point maps tend to be stalematey 
 
 With these changes, the team defending last will have an easier time defending, but if they want to win, they have to push at least past mid.
 
-# arena_perks
+## Payload Race
 
-## Added a 2:50 time limit for each mini-round.
-Time limit chosen so the 2:00 mark coincides with the unlocking of the point. If the time limit is reached, then whichever team has more players alive wins. If both teams have the same amount of living players, then it's a tie.
-
-## Made ties less arbitrary.
-When both teams die at exactly the same time (or the time limit introduced by this mod is reached), both teams get a point. This is necessary as the game can't last more than 5 rounds. However, if the score is 2-2 and there's a tie, the winning team is chosen arbitrarily. If this rare situation occurs, this mod makes the win slightly less arbitrary by awarding the win to whichever team most recently lost a player to death (implying their team lasted longer).
-
-# Payload Race
-
-## Added Overtime
+### Added Overtime
 
 Currently supported maps: `plr_bananabay`, `plr_hacksaw`, `plr_hacksaw_event`, `plr_hightower`, `plr_hightower_event`, `plr_nightfall_final`, `plr_pipeline`, [`plr_highertower`](https://steamcommunity.com/sharedfiles/filedetails/?id=899335714).
 
@@ -59,16 +67,17 @@ In multi-stage maps, each win on a previous stage will provide winning teams wit
   - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
   - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.
 
-# Tug of War (WIP)
+## Tug of War
 
 Tug of war can last forever, but not with this mod! After 5 minutes, the cart will move on its own towards the objective in favour of the cart owner's team. Every 30 seconds from then on, the cart's maximum speed will increase. Eventually, it'll be moving so fast that it can't help but be at either end of the track!
 
 The KOTH timer was increased to 3 minutes so that the round is unlikely to end before the anti-stalemate phase without sidelining the vanilla experience, as the anti-stalemate mechanics are really fun to play with.
 
-# Versus Saxton Hale
+## Versus Saxton Hale
 
-## New Features:
+### New Features:
 - Damage logging:
+  - Market gardens, backstabs, and telefrags are logged in chat.
   - On death: the damage dealt by the player is broadcast in chat.
     - If the dead ringer is used, a fake message is displayed to Hale only.
     - Insults the player if they do 0 damage.
@@ -76,7 +85,8 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     - The top 3 players' damage is listed.
     - The total damage by all players is displayed.
     - Damage by other sources (e.g. Distillery grinder) is listed separately.
-    - Shows a percentage of how much health RED Team managed to chip away.
+    - Winners of RPS are displayed in gold.
+    - Shows a percentage of how much health the Mercs managed to chip away.
 - Anti-AFK measures:
   - If a player fails to send a keyboard input for 60 seconds, they are killed.
   - When this happens, Hale's health is reduced to compensate, as though the idle player was never there in the first place.
@@ -86,20 +96,18 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
   - The streak increments by 1 for every 200 damage dealt to Hale.
   - This does NOT produce any killstreak notifications, but it does enable the visual effects of Professional Killstreak items.
 - Player Glows:
-  - Mercs can be seen when they're the last merc standing or when Hale caps the point.
-  - Hale can be seen through walls when facing the last merc or when mercs cap the point.
+  - The last mercenary and Hale can see each other through walls.
   - Prevents that one guy from hiding in a corner for the whole round.
 
-
-## Changes:
+### Changes:
 - Legend:
-  - $n$ is the number of RED players still alive.
-  - $N$ is the number of RED players at the start of the round.
+  - $n$ is the number of Mercs still alive.
+  - $N$ is the number of Mercs players at the start of the round.
   - $H$ is the max health of Hale.
 - Hale's health:
-  - Changed the formula to match that used in [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613), but with a lower (and cleaner) cutoff for linear scaling.
+  - Changed the formula to match that used in [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613), but with a cleaner curve.
 
-    | Mercs   (N)| Old Formula         |
+    | Mercs   (N)| Vanilla Formula     |
     |:-----------|:--------------------|
     | 1          | $H = 1000$          |
     | 2 - 5      | $H = 40N^2 + 1300$  |
@@ -108,25 +116,21 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     | Mercs   (N)| New Formula                               |
     |:-----------|:------------------------------------------|
     | 1          | $H = 1000$                                |
-    | 2 - 6      | $H = 41N^2 + 2350(0.3 + N/10)$ |
+    | 2 - 6      | $H = 41N^2 + 2350(0.3 + N/10)$            |
     | 7 - 23     | $H = 41N^2 + 2350$                        |
     | 24+        | $H = 2000(N-23) + 24000$                  |
 
 - Brave Jump:
-  - Added a 3 second cooldown. Has a supporting hud element.
+  - Added a 3 second cooldown. Uses HUD_PRINTCENTER to notify the user.
 - Round timer:
   - Setup Time:
     - Extended for high player counts so players can spread out and/or recover from large lag spikes.
     - Old value: 16 seconds.
-    - New value: $max(16, N/3)$ seconds.
-      - Peaks at 33 seconds for 100 players.
+    - New value: $(N/3)$ seconds, clamped between 16 and 32 seconds.
   - Time before point unlocks:
-    - Old value: 4 minutes (drops to 1 minute once only 5 players are alive).
-    - New behaviour: Starts at $max(30, 10N)$ seconds, then clamped down to $max(60, 15n)$ seconds during the round (updated on round start and player death).
+    - Old behaviour: Starts at 4 minutes, drops to 1 minute once only 5 players are alive.
+    - New behaviour: Starts at $max(30, 10N)$ seconds, then clamped down to $max(30, 15n)$ seconds during the round (updated on round start and player death).
   - Stalemate 3 minutes after the point unlocks remains in place, unless the point is captured.
-- Weapons:
-  - Market Gardener and Backstab damage (and anything else using `CalcStabDamage()`) capped at 5000.
-    - Affects very high playercounts only.
 - Rock-Paper-Scissors:
   - Deals 1 million damage to Hale.
     - The default value is only 100k; not enough to cover the maximum possible Hale health.
@@ -135,21 +139,29 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
   - Fixed check to prevent low damage (<=30) hits killing low health (<=30) players.
 - Control Point:
   - Capturing the point no longer instantly ends the round:
-    - If RED caps, they get guaranteed crits on all weapons and a powerful 5 second health regen.
+    - If the Mercs cap, they get guaranteed crits on all weapons and a powerful 5 second health regen.
     - If Hale caps, the cooldown on all of his special abilities is reduced to 5 seconds.
   - On capture, the stalemate timer is disabled entirely and the point locks itself permanently.
   - The round will eventually end due to Hale's health changing over time:
-    - When RED caps, Hale's health will tick down faster and faster. This guarantees his death if he doesn't manage to kill all of RED team first.
+    - When the Mercs cap, Hale's health will tick down faster and faster. This guarantees his death if he doesn't manage to kill all of the Mercs first.
     - When Hale caps, his health will tick up faster and faster until it reaches max health, at which point Hale wins the round.
   - The health gained/lost each second starts at 1, then increases by 1 every second.
-  - If RED has the point and Hale doesn't do any damage to RED for 30 seconds, an additional 1.05 multiplier is added onto the health drain *each second*.
+  - If the Mercs have the point and Hale doesn't do any damage to the Mercs for 30 seconds, an additional 1.05 multiplier is added onto the health drain *each second*.
     - For example This means a $1.05^{15} = 2.08$ multiplier to the health drain per tick after 45 seconds of not dealing damage. The multiplier resets to 1.0 once Hale deals damage.
-    - The reverse is also true if Hale owns the point and the mercs don't deal damage to Hale for 30 seconds; Hale's health will regenerate faster via a similar multiplier.
+    - The reverse is also true; if Hale owns the point and the mercs don't deal damage to Hale for 30 seconds, Hale's health will regenerate faster.
     - This multiplier resets the moment the team that has the point takes damage from the other team.
   - These changes prevent either side from getting an undeserved victory, as the opponent still has a *slim* chance of winning after the capture.
   - Capturing the point produces exciting gameplay to finish a round as opposed to a sudden cutoff.
 
-# Miscellanious Fixes
+# Map Specific/Miscellanious Fixes
+
+## arena_perks
+
+### Added a 2:50 time limit for each mini-round.
+Time limit chosen so the 2:00 mark coincides with the unlocking of the point. If the time limit is reached, then whichever team has more players alive wins. If both teams have the same amount of living players, then it's a tie.
+
+### Made ties less arbitrary.
+When both teams die at exactly the same time (or the time limit introduced by this mod is reached), both teams get a point. This is necessary as the game can't last more than 5 rounds. However, if the score is 2-2 and there's a tie, the winning team is chosen arbitrarily. If this rare situation occurs, this mod makes the win slightly less arbitrary by awarding the win to whichever team most recently lost a player to death (implying their team lasted longer).
 
 ## Cumulative cash on cp_freaky_fair
 
