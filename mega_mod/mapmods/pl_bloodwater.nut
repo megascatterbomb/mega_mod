@@ -1,4 +1,5 @@
 ClearGameEventCallbacks();
+IncludeScript("mega_mod/global/respawn_mod.nut");
 
 // Kill a lot of gameplay-irrelevant entities to save edicts.
 // Total estimated savings: ~300
