@@ -8,10 +8,9 @@ function BroadcastDamageOnDeath(attacker, victim, deadRinger = false) {
     local damage = GetRoundDamage(victim);
 
     local target = deadRinger ? GetBossPlayers()[0] : null;
-    if (victim.GetTeam() == 2)
-        ClientPrint(target, 3, "\x07FF3F3F" + name +" \x01dealt \x07FF3F3F"+damage+" \x01damage to Hale before dying."+(damage ? "" : " \x01How embarrassing!"));
-    if (victim.GetTeam() == 3)
-        ClientPrint(target, 3, "\x0799CCFF" + name +" \x01dealt \x0799CCFF"+damage+" \x01damage to Hale before dying."+(damage ? "" : " \x01How embarrassing!"));
+    ClientPrint(target, 3, COLOR_MERCS + name +" \x01dealt "
+        + COLOR_MERCS + damage + " \x01damage to Hale before dying."
+        + (damage ? "" : " \x01How embarrassing!"));
 }
 
 // Broadcast top players at end of round.
@@ -38,14 +37,11 @@ function BroadcastBestPlayers()
         return;
     }
     local playerDamage = 0;
-    if (TF_TEAM_BOSS == 2)
-        {
-            ClientPrint(null, 3, "\x07FF3F3FSaxton \x01killed \x07FF3F3F" + (startMercCount - GetAliveMercCount()) + "/" + startMercCount + "\x01 mercs. Top players this round:");
-        }
-    if (TF_TEAM_BOSS == 3)
-        {
-            ClientPrint(null, 3, "\x0799CCFFSaxton \x01killed \x0799CCFF" + (startMercCount - GetAliveMercCount()) + "/" + startMercCount + "\x01 mercs. Top players this round:");
-        }
+
+    ClientPrint(null, 3, COLOR_BOSS + "Saxton \x01killed "
+        + COLOR_BOSS + (startMercCount - GetAliveMercCount()) + "/"
+        + startMercCount + "\x01 mercs. Top players this round:");
+
     for(local i = 0; i < damageBoard.len(); i++) {
         if (damageBoard[i][0].IsValid() == false) {
             continue;
@@ -59,10 +55,10 @@ function BroadcastBestPlayers()
         local percent = floor(100 * damage / maxHealth);
         playerDamage += damage;
         if(i < topN && damage > 0) {
-            if (playerTeam == 2)
-                ClientPrint(null, 3, "\x01#"+(i+1)+": \x07FF3F3F" + name + "\x01 dealt \x07FF3F3F" + damage + "\x01 damage (\x07FF3F3F" + percent + "%\x01)");
-            if (playerTeam == 3)
-                ClientPrint(null, 3, "\x01#"+(i+1)+": \x0799CCFF" + name + "\x01 dealt \x0799CCFF" + damage + "\x01 damage (\x0799CCFF" + percent + "%\x01)");
+            ClientPrint(null, 3, "\x01#"+(i+1)+": "
+            + COLOR_MERCS + name + "\x01 dealt "
+            + COLOR_MERCS + damage + "\x01 damage ("
+            + COLOR_MERCS + percent + "%\x01)");
         }
     }
     local netDamage = maxHealth - currentHealth;

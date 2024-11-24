@@ -1,6 +1,10 @@
 ::maxHealth <- 100000; // Don't initialize to zero or else you get random divide by zeroes.
 ::currentHealth <- 100000;
 
+::COLOR_MERCS <- TF_TEAM_MERCS == 2 ? "\x07FF3F3F" : "\x0799CCFF"
+::COLOR_BOSS <- TF_TEAM_BOSS == 2 ? "\x07FF3F3F" : "\x0799CCFF"
+::COLOR_SPECIAL <- "\x07FCD303"
+
 // Helper to erase listeners we want to replace.
 function EraseListener(event, order, indexToRemove)
 {
