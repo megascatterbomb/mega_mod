@@ -26,6 +26,7 @@ local index = mods.find(mapName);
 // if you only want to apply mods on some maps, do your own checks!
 local globalMods = [
     "5cp_anti_stalemate"
+    "respawn_mod"
 ];
 
 printl("MEGAMOD: Loading mega_mod/util.nut...");

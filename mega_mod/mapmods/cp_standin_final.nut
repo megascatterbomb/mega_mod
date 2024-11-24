@@ -1,9 +1,9 @@
 ClearGameEventCallbacks();
+IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
+IncludeScript("mega_mod/global/respawn_mod.nut");
 
 function OnGameEvent_teamplay_round_start(params)
 {
-    IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
-
     // Override to prevent point I/O being attached to non-existent mid
     function AttachMid() {
         // Do nothing

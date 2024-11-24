@@ -5,7 +5,7 @@ local prefix = DoUniqueString("mega")
 local mega = root[prefix] <- {}
 
 mega.OnGameEvent_teamplay_round_start <- function (event) {
-    printl("MEGAMOD: ROUND START");
+    printl("MEGAMOD: Loading custom arena_perks logic...");
     EntFireByHandle(mainLogicEntity, "RunScriptCode", "MegaModRoundStart()", 0, null, null);
 }
 
