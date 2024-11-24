@@ -102,7 +102,7 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 ### Changes:
 - Legend:
   - $n$ is the number of Mercs still alive.
-  - $N$ is the number of Mercs players at the start of the round.
+  - $N$ is the number of Mercs at the start of the round.
   - $H$ is the max health of Hale.
 - Hale's health:
   - Changed the formula to match that used in [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613), but with a cleaner curve.
