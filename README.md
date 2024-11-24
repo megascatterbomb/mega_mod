@@ -21,9 +21,9 @@ Project structure:
 
 # General Improvements
 
-## Instant Respawn
+## Force Team Respawn when appropriate
 
-In certain scenarios, it is benefit to respawn the dead players on one or both teams to improve the gameplay experience.
+In certain scenarios, it is beneficial to respawn the dead players on one or both teams to improve the gameplay experience.
 
 - In all gamemodes:
   - Upon round end, the losing team will be respawned purely so they can be massacred by the winning team.
