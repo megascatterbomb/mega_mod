@@ -112,7 +112,7 @@ function LockMidAtStart() {
     for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
         local owner = NetProps.GetPropInt(cp, "m_iDefaultOwner");
         local isLocked = NetProps.GetPropBool(cp, "m_bLocked");
-        if (owner == 0) {
+        if (owner == 0 && isLocked == false) {
             cp.AcceptInput("SetLocked", "1", null, null);
             cp.AcceptInput("SetUnlockTime", "35", null, null);
             break;
