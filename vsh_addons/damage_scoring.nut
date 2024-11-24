@@ -55,10 +55,14 @@ function BroadcastBestPlayers()
         local percent = floor(100 * damage / maxHealth);
         playerDamage += damage;
         if(i < topN && damage > 0) {
-            ClientPrint(null, 3, "\x01#"+(i+1)+": "
+            local isRPSWinner = damageBoard[i][0] == VSH_RPS_WINNER;
+            local color = isRPSWinner ? COLOR_SPECIAL : COLOR_MERCS;
+            local out = "\x01#"+(i+1)+": "
             + COLOR_MERCS + name + "\x01 dealt "
-            + COLOR_MERCS + damage + "\x01 damage ("
-            + COLOR_MERCS + percent + "%\x01)");
+            + color + damage + "\x01 damage ("
+            + color + percent + "%\x01)";
+            local out = isRPSWinner ? COLOR_SPECIAL + "(RPS) " + out : out;
+            ClientPrint(null, 3, out);
         }
     }
     local netDamage = maxHealth - currentHealth;
@@ -97,7 +101,7 @@ AddListener("dead_ringer", 0, function(attacker, victim, params)
 AddListener("round_end", 5, function (winnerTeam)
 {
     // Slight delay as the game can take an extra tick to account for all damage stuff sometimes.
-    RunWithDelay("BroadcastBestPlayers()", null, 0.05);
+    RunWithDelay("BroadcastBestPlayers()", null, 0);
 });
 
 // OVERRIDE: Ensure death message gets printed to Hale when dead ringer is used.

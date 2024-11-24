@@ -1,3 +1,5 @@
+::VSH_RPS_WINNER <- null;
+
 // OVERRIDE: Increase RPS damage to 1 Million to account for very high hale health
 function TauntHandlerTrait::OnRPS(winner, loser, params)
 {
@@ -8,6 +10,7 @@ function TauntHandlerTrait::OnRPS(winner, loser, params)
     {
         lostByRPS = true;
         voiceLine = RandomInt(1, 2) == 1 ? "rps_lose" : "rps_lose_"+["rock","paper","scissors"][params.loser_rps];
+        ::VSH_RPS_WINNER <- winner;
         RunWithDelay2(this, 3, function(winner, loser) {
             if (!IsValidPlayer(loser))
                 return;
