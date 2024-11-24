@@ -45,6 +45,12 @@ Due to a lack of effective time limit, control point maps tend to be stalematey 
 
 With these changes, the team defending last will have an easier time defending, but if they want to win, they have to push at least past mid.
 
+### Map specific quirks:
+
+On `cp_standin_final`, the same anti-stalemate functionality is present, with these changes:
+- The team with the active KOTH timer is determined by which team owns more points. If tied, both timers pause.
+- To win by point captures, all three points must be uncontested.
+
 ## Payload Race
 
 ### Added Overtime
@@ -145,7 +151,11 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     - When Hale caps, his health will tick up faster and faster until it reaches max health, at which point Hale wins the round.
   - The health gained/lost each second starts at 1, then increases by 1 every second.
   - If the Mercs have the point and Hale doesn't do any damage to the Mercs for 30 seconds, an additional 1.05 multiplier is added onto the health drain *each second*.
-    - For example This means a $1.05^{15} = 2.08$ multiplier to the health drain per tick after 45 seconds of not dealing damage. The multiplier resets to 1.0 once Hale deals damage.
+    - For example, after 45 seconds:
+      - Hale will take 45 damage per second.
+      - Then a $1.05^{15} = 2.08$ multiplier is applied to the health drain as Hale has not dealt damage for 45 seconds.
+      - The final damage per tick is ~94 damage per tick.
+    - The multiplier resets to 1.0 once Hale deals damage.
     - The reverse is also true; if Hale owns the point and the mercs don't deal damage to Hale for 30 seconds, Hale's health will regenerate faster.
     - This multiplier resets the moment the team that has the point takes damage from the other team.
   - These changes prevent either side from getting an undeserved victory, as the opponent still has a *slim* chance of winning after the capture.
