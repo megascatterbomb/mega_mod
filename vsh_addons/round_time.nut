@@ -27,7 +27,7 @@ AddListener("setup_start", -10, function ()
 {
     // We clamp to prevent the "mission begins in 30 seconds" from playing.
     local setupTime = clampCeiling(32, clampFloor(16, ceil(validMercs.len() / 3.0)));
-    VSH_API_VALUES.setup_length <- setupTime - 5;
+    VSH_API_VALUES.setup_length <- setupTime;
     EntFireByHandle(team_round_timer, "SetTime", "" + (setupTime - 5), 0, null, null);
     EntFireByHandle(team_round_timer, "Pause", "", 0, null, null);
     EntFireByHandle(team_round_timer, "Resume", "", 5, null, null);
