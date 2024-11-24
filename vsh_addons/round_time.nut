@@ -41,7 +41,7 @@ function PlayRoundStartVO()
     local boss = GetRandomBossPlayer();
     if (boss == null)
         return;
-    local startDelay = clampFloor(0, API_GetFloat("setup_length") - 14);
+    local startDelay = clampFloor(0, API_GetFloat("setup_length") - 16);
     if (API_GetBool("long_setup_lines") && RandomInt(1, 10) <= 4)
         PlayAnnouncerVODelayed(boss, "round_start_long", startDelay);
     else
