@@ -1,4 +1,4 @@
-function ShouldApplyToAll() {
+function ShouldApply() {
     local exceptionsAlways = [];
     local exceptionsNever = [];
 
@@ -8,8 +8,6 @@ function ShouldApplyToAll() {
         return false;
     } else if (exceptionsAlways.find(mapName) != null) {
         return true;
-    } else if (startswith(mapName, "arena_") || startswith(mapName, "vsh_") || startswith(mapName, "zi_")) {
-        return null;
     } else if (!startswith(mapName,  "pl_") && !startswith(mapName,  "cp_")) {
         return false;
     }
@@ -39,8 +37,7 @@ function ShouldApplyToAll() {
     return true;
 }
 
-local shouldApply = ShouldApplyToAll();
-if (shouldApply == null) return;
+if (!ShouldApply()) return;
 
 IncludeScript("mega_mod/common/respawn_mod.nut");
 
@@ -52,7 +49,7 @@ local mod_respawns = root[prefix] <- {};
 mod_respawns.OnGameEvent_teamplay_round_start <- function (event) {
     if(IsInWaitingForPlayers()) return;
     printl("MEGAMOD: Loading respawn mod...");
-    MM_Respawn_Mod(shouldApply);
+    MM_Respawn_Mod();
 }
 
 mod_respawns.ClearGameEventCallbacks <- ::ClearGameEventCallbacks

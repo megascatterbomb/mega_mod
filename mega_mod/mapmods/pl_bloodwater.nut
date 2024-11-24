@@ -3,8 +3,6 @@ ClearGameEventCallbacks();
 // Kill a lot of gameplay-irrelevant entities to save edicts.
 // Total estimated savings: ~300
 
-IncludeScript("mega_mod/global/respawn_mod.nut");
-
 function OnGameEvent_teamplay_round_start(params)
 {
     local killed = 0;

@@ -5,7 +5,6 @@ local prefix = DoUniqueString("mega");
 local mega = root[prefix] <- {};
 
 IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
-IncludeScript("mega_mod/global/respawn_mod.nut");
 
 ::MM_CREDITS_RED <- 0;
 ::MM_CREDITS_BLU <- 0;

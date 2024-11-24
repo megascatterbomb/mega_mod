@@ -1,18 +1,16 @@
-function MM_Respawn_Mod(applyAll) {
+function MM_Respawn_Mod() {
     ::MM_RESPAWN_DELAY <- 0.2;
+    ::MM_RESPAWN_DISABLE <- false;
 
     MM_RespawnEndOfRound();
-
-    if (!applyAll) return;
-
     MM_RespawnSetupEnd();
     MM_RespawnRedOnCap();
 }
 
 function MM_RespawnEndOfRound() {
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
-    EntityOutputs.AddOutput(gamerules, "OnWonByTeam1", "!self", "RunScriptCode", "MM_RespawnTeam(3)", MM_RESPAWN_DELAY, -1);
-    EntityOutputs.AddOutput(gamerules, "OnWonByTeam2", "!self", "RunScriptCode", "MM_RespawnTeam(2)", MM_RESPAWN_DELAY, -1);
+    EntityOutputs.AddOutput(gamerules, "OnWonByTeam1", "!self", "RunScriptCode", "::MM_RESPAWN_DISABLE <- true", 0, -1);
+    EntityOutputs.AddOutput(gamerules, "OnWonByTeam2", "!self", "RunScriptCode", "::MM_RESPAWN_DISABLE <- true", 0, -1);
 }
 
 function MM_RespawnSetupEnd() {
@@ -29,7 +27,7 @@ function MM_RespawnRedOnCap() {
 }
 
 function MM_RespawnTeam(team) {
-    if (team != 2 && team != 3) return;
+    if (MM_RESPAWN_DISABLE || (team != 2 && team != 3)) return;
     local spawner = Entities.CreateByClassname("game_forcerespawn");
     spawner.AcceptInput("ForceTeamRespawn", "" + team, null, null);
     spawner.Kill();

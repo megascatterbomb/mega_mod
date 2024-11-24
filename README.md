@@ -25,8 +25,6 @@ Project structure:
 
 In certain scenarios, it is beneficial to respawn the dead players on one or both teams to improve the gameplay experience.
 
-- In all gamemodes:
-  - Upon round end, the losing team will be respawned purely so they can be massacred by the winning team.
 - In Attack/Defend and Payload maps:
   - Both teams are respawned at the end of setup time.
   - RED team is respawned whenever a control point is captured. This helps prevent steamrolls.
