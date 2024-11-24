@@ -47,6 +47,17 @@ characterTraitsClasses[22].OnDamageDealt <-  function(victim, params) {
                 ClientPrint(null, 3, "\x0799CCFF" + attackerName + " \x07FCD303gardened \x01Hale!")
         }
 }
+characterTraitsClasses[27].OnDamageDealt <-  function(victim, params) {
+    if (params.damage_custom == TF_DMG_CUSTOM_TELEFRAG)
+        {
+            local attackerName = GetPropString(player, "m_szNetname");
+            params.damage = vsh_vscript.CalcStabDamage(victim) * 2;
+            if (player.GetTeam() == 2)
+                ClientPrint(null, 3, "\x07FF3F3F" + attackerName + " \x07FCD303telefragged \x01Hale!")
+            if (player.GetTeam() == 3)
+                ClientPrint(null, 3, "\x0799CCFF" + attackerName + " \x07FCD303telefragged \x01Hale!")
+        }
+}
 
 if (IsDedicatedServer() == true){
     local host = GetListenServerHost()}
