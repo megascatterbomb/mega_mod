@@ -182,3 +182,7 @@ Self-explanatory. Ghost Fort's timer was also reduced to 3:00 (from 7:00).
 ## Edict optimization on pl_bloodwater
 
 Saved over 300 edicts by removing gameplay-irrelevant elements.
+
+## Fix pl_emerge not counting captures in scoreboard.
+
+In Payload, The team scores are supposed to reflect how many control points that team has captured. That setting isn't enabled in Emerge; this mod fixes that.
