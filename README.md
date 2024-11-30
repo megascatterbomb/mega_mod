@@ -187,4 +187,4 @@ Saved over 300 edicts by removing gameplay-irrelevant elements.
 
 In Payload, The team scores are supposed to reflect how many control points that team has captured.
 - In pl_emerge, that setting simply isn't enabled; this mod turns it on.
-- In pl_cactuscanyon_redux_final2, some of the outputs that trigger point captures trigger twice; adding a slight delay fixes this.
+- In [pl_cactuscanyon_redux_final2](https://steamcommunity.com/sharedfiles/filedetails/?id=2579644293), some of the outputs that trigger point captures trigger twice; adding a slight delay fixes this.

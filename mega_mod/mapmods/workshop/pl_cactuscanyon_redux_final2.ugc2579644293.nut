@@ -1,3 +1,5 @@
+// https://steamcommunity.com/sharedfiles/filedetails/?id=2579644293
+
 ClearGameEventCallbacks();
 
 IncludeScript("mega_mod/global/respawn_mod.nut");
