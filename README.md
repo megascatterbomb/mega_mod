@@ -183,6 +183,8 @@ Self-explanatory. Ghost Fort's timer was also reduced to 3:00 (from 7:00).
 
 Saved over 300 edicts by removing gameplay-irrelevant elements.
 
-## Fix pl_emerge not counting captures in scoreboard.
+## Fix captures not being counted correctly in scoreboard.
 
-In Payload, The team scores are supposed to reflect how many control points that team has captured. That setting isn't enabled in Emerge; this mod fixes that.
+In Payload, The team scores are supposed to reflect how many control points that team has captured.
+- In pl_emerge, that setting simply isn't enabled; this mod turns it on.
+- In pl_cactuscanyon_redux_final2, some of the outputs that trigger point captures trigger twice; adding a slight delay fixes this.

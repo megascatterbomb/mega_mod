@@ -17,6 +17,7 @@ local mods = [
     "plr_pipeline"
 
     // Support for updated versions of workshop maps is not guaranteed
+    "workshop/pl_cactuscanyon_redux_final2.ugc2579644293"
     "workshop/plr_highertower.ugc899335714"
 ];
 
