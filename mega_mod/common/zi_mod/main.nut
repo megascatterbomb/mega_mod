@@ -1,12 +1,194 @@
 function MM_Zombie_Infection() {
-
+    MM_OverrideSetupFinished();
     MM_OverrideDeath();
 
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    if (gamerules != null)  {
+        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 0, null, null);
+        EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 0, null, null);
+    }
     // TODO: Fixed value for round timer
     // TODO: Remove BASE Jumper nerf
     // TODO: Reduce effect of jumper weapon nerf.
     // TODO: Endgame/Overtime before survivor victory.
     // TODO: Prevent players from becoming zombies twice in a row
+}
+
+// OVERRIDE: replacement for infection.nut::OnGameEvent_teamplay_setup_finished
+function MM_OverrideSetupFinished() {
+    local logic_script = Entities.FindByClassname(null, "logic_script");
+    local scope = logic_script.GetScriptScope();
+
+    scope.OnGameEvent_teamplay_setup_finished <- function ( params )
+    {
+        ::bGameStarted <- true;
+
+        local _iPlayerCountRed    = PlayerCount( TF_TEAM_RED );
+        local _numStartingZombies = -1;
+
+        // -------------------------------------------------- //
+        // select players to become zombies                   //
+        // -------------------------------------------------- //
+
+        if ( !bNewFirstWaveBehaviour )
+        {
+            if ( ( _iPlayerCountRed <= 1 ) && ( DEBUG_MODE < 1 ) )
+            {
+                // not enough players, force game over
+                local _hGameWin = SpawnEntityFromTable( "game_round_win",
+                {
+                    win_reason      = "0",
+                    force_map_reset = "1",
+                    TeamNum         = "2", // TF_TEAM_RED
+                    switch_teams    = "0"
+                });
+
+                EntFireByHandle( _hGameWin, "RoundWin", "", 0, null, null );
+                ::bGameStarted <- false;
+                return;
+            }
+            else if ( _numStartingZombies == -1 )
+            {
+                if ( _iPlayerCountRed <= 4 )
+                {
+                    _numStartingZombies = 1;
+                }
+                else if ( _iPlayerCountRed <= 8 )
+                {
+                    _numStartingZombies = 2;
+                }
+                else if ( _iPlayerCountRed <= 12 )
+                {
+                    _numStartingZombies = 3;
+                }
+                else if ( _iPlayerCountRed < 18 )
+                {
+                    _numStartingZombies = 4;
+                }
+                else // 18 or more players
+                {
+                    _numStartingZombies = RoundUp( _iPlayerCountRed / STARTING_ZOMBIE_FAC );
+                }
+            }
+
+            local _szZombieNetNames  =  "";
+            local _zombieArr         =  GetRandomPlayers( _numStartingZombies );
+
+            if ( _zombieArr.len() == 0 )
+                return;
+
+            // ------------------------------------------ //
+            // convert the picked players to zombies      //
+            // ------------------------------------------ //
+
+            for ( local i = 0; i < _zombieArr.len(); i++ )
+            {
+                local _id          =  GetPlayerUserID     ( _zombieArr[ i ] );
+                local _nextPlayer  =  GetPlayerFromUserID ( _id );
+
+                if ( _nextPlayer == null )
+                    continue;
+
+                local _sc = _nextPlayer.GetScriptScope();
+
+                // ------------------------------------------- //
+                // make sure heavy doesn't get stuck in t-pose //
+                // ------------------------------------------- //
+
+                if ( _nextPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS )
+                {
+                    if ( _nextPlayer.GetActiveWeapon().GetClassname() == "tf_weapon_minigun" )
+                    {
+                        SetPropInt( _nextPlayer.GetActiveWeapon(), "m_iWeaponState", 0 );
+                    };
+                };
+
+                // remove player conditions that will cause problems
+                // when switching to zombie
+                _nextPlayer.ClearProblematicConds();
+
+                // reset all gamemode specific variables
+                _nextPlayer.ResetInfectionVars();
+
+                ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
+
+                // remove all of the player's existing items
+                _nextPlayer.RemovePlayerWearables();
+
+                // add the zombie cosmetics/skin modifications
+                _nextPlayer.GiveZombieCosmetics();
+                _nextPlayer.GiveZombieFXWearable();
+
+                SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_nextPlayer) });
+
+                // add the pending zombie flag
+                // the actual zombie conversion is handled in the player's think script
+                _sc.m_iFlags <- ( ( _sc.m_iFlags | ZBIT_PENDING_ZOMBIE ) );
+
+                // don't delay zombie conversion when the player is alive.
+                _nextPlayer.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, INSTANT );
+                _nextPlayer.SetNextActTime ( ZOMBIE_ABILITY_CAST, 0.1 );
+
+                // ------------------------------------------- //
+                // build string for chat notification          //
+                // ------------------------------------------- //
+
+                if ( i == 0 ) // first player in the message
+                {
+                    _szZombieNetNames = "\x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB";
+                }
+                else if ( i ==  ( _zombieArr.len() - 1 ) ) // last player in the message
+                {
+                    if ( _zombieArr.len() > 1 )
+                    {
+                        _szZombieNetNames += ( "\x07FBECCB " + STRING_UI_AND + " \x07FF3F3F" );
+                    }
+                    else
+                    {
+                        _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" );
+                    };
+
+                    _szZombieNetNames += ( NetName( _nextPlayer ) + "\x07FBECCB" );
+                }
+                else // players in the middle get commas
+                {
+                    _szZombieNetNames += ( "\x07FBECCB, \x07FF3F3F" + NetName( _nextPlayer ) + "\x07FBECCB" );
+                };
+            };
+
+            local _szFirstInfectedAnnounceMSG = "";
+
+            if ( _zombieArr.len() > 1 ) // set the first infected announce message
+            {
+                _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
+                                                    STRING_UI_CHAT_FIRST_WAVE_MSG_PLURAL );
+            }
+            else
+            {
+                _szFirstInfectedAnnounceMSG = format( _szZombieNetNames +
+                                                    STRING_UI_CHAT_FIRST_WAVE_MSG );
+            };
+
+            local _hNextRespawnRoom = null;
+            while ( _hNextRespawnRoom = Entities.FindByClassname( _hNextRespawnRoom, "func_respawnroom" ) )
+            {
+                if ( _hNextRespawnRoom && _hNextRespawnRoom.GetTeam() == TF_TEAM_RED )
+                {
+                    EntFireByHandle( _hNextRespawnRoom, "SetInactive", "", 0.0, null, null );
+                };
+            };
+
+            // MEGAMOD: Force round time to 2 minutes.
+            local _hRoundTimer = Entities.FindByClassname( null, "team_round_timer" );
+            EntFireByHandle(_hRoundTimer, "SetTime", "120", 0, null, null);
+            EntFireByHandle(_hRoundTimer, "SetMaxTime", "120", 0, null, null);
+
+            PlayGlobalBell( false );
+
+            // show the first infected announce message to all players
+            PrintToChat( _szFirstInfectedAnnounceMSG );
+        }
+    };
 }
 
 // OVERRIDE: replacement for infection.nut::OnGameEvent_player_death
@@ -15,7 +197,7 @@ function MM_OverrideDeath() {
     local logic_script = Entities.FindByClassname(null, "logic_script");
     local scope = logic_script.GetScriptScope();
 
-    scope.OnGameEvent_player_death <- function (params) function OnGameEvent_player_death( params )
+    scope.OnGameEvent_player_death <- function ( params )
     {
         local _hPlayer      =  GetPlayerFromUserID ( params.userid );
         local _hKiller      =  GetPlayerFromUserID ( params.attacker );
@@ -152,7 +334,7 @@ function MM_OverrideDeath() {
             try { _sc.m_hZombieFXWearable.Destroy() } catch ( e ) {}
 
             // MEGAMOD: Instantly respawn the zombie.
-            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0, null, _hPlayer);
+            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
 
             return; // zombie death event ends here
         }
@@ -211,13 +393,13 @@ function MM_OverrideDeath() {
                 _hRoundTimer = SpawnEntityFromTable( "team_round_timer",
                 {
                     auto_countdown       = "0",
-                    max_length           = "360",
+                    max_length           = "120",
                     reset_time           = "1",
                     setup_length         = "30",
                     show_in_hud          = "1",
                     show_time_remaining  = "1",
                     start_paused         = "0",
-                    timer_length         = "360",
+                    timer_length         = "120",
                     StartDisabled        = "0",
                 } );
             }
@@ -232,7 +414,7 @@ function MM_OverrideDeath() {
             EntFireByHandle( _hRoundTimer, "AddTime", ADDITIONAL_SEC_PER_PLAYER.tostring(), 0, null, null );
         } else {
             // MEGAMOD: If game hasn't started, instantly respawn.
-            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0, null, _hPlayer);
+            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
         }
     };
 }
