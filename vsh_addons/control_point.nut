@@ -18,6 +18,7 @@ function PrepareStalemate()
     RunWithDelay("DisplayStalemateAlert()", null, delay - 60);
 
     // Don't need to gate, entity is disabled when point captured.
+    RunWithDelay("EntFireByHandle(team_round_timer, `SetMaxTime`, `60`, 0, null, null)", null, delay - 60);
     RunWithDelay("EntFireByHandle(team_round_timer, `SetTime`, `60`, 0, null, null)", null, delay - 60);
 
     RunWithDelay("PlayAnnouncerVODelayedGated(5)", null, delay - 6);
