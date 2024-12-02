@@ -1,17 +1,80 @@
 function MM_Zombie_Infection() {
-    MM_OverrideSetupFinished();
-    MM_OverrideDeath();
-
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     if (gamerules != null)  {
         EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 0, null, null);
         EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 0, null, null);
+
+        gamerules.ValidateScriptScope();
+        local gamerules_scope = gamerules.GetScriptScope();
+        if (!("zi_chosen_zombies" in gamerules_scope)) {
+            gamerules_scope["zi_chosen_zombies"] <- [];
+        }
     }
-    // TODO: Fixed value for round timer
+
+    MM_OverrideSetupFinished();
+    MM_OverrideDeath();
+    MM_OverrideZombieSelection();
     // TODO: Remove BASE Jumper nerf
     // TODO: Reduce effect of jumper weapon nerf.
     // TODO: Endgame/Overtime before survivor victory.
-    // TODO: Prevent players from becoming zombies twice in a row
+}
+
+// OVERRIDE: replacement for functions.nut::GetRandomPlayers
+function MM_OverrideZombieSelection() {
+    // MEGAMOD: Zombie selection will always ignore zombies from last round if possible.
+    ::GetRandomPlayers <- function( _howMany = 1 )
+    {
+        local _playerArr = [];
+        local _lowPriorityPlayerArr = [];
+
+        local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+        local gamerules_scope = gamerules.GetScriptScope();
+
+        // gamerules_scope["zi_chosen_zombies"].map(function(p) {
+        //     printl(p);
+        //     return true;
+        // });
+
+        printl("# of low prio players " + gamerules_scope["zi_chosen_zombies"].len())
+
+        foreach ( _hPlayer in GetAllPlayers() )
+        {
+            if ( _hPlayer != null /* &&  ( _hPlayer.GetFlags() & FL_FAKECLIENT ) == 0 */  ) {
+                if (gamerules_scope["zi_chosen_zombies"].find(_hPlayer.entindex()) != null) {
+                    // printl("Deprioritizing " + NetName(_hPlayer));
+                    _lowPriorityPlayerArr.append(_hPlayer);
+                } else {
+                    _playerArr.append( _hPlayer )
+                };
+            }
+        };
+
+        local availablePlayers = _playerArr.len() + _lowPriorityPlayerArr.len();
+        _howMany = ( _howMany <= availablePlayers ) ? _howMany : availablePlayers;
+
+        local _selectedPlayers = [];
+
+        for ( local i = 0; i < _howMany; i++ )
+        {
+            if (_playerArr.len() == 0) break;
+            local _randomID = RandomInt ( 0, _playerArr.len() - 1 );
+            _selectedPlayers.append     ( _playerArr[ _randomID ] );
+            _playerArr.remove           ( _randomID );
+        };
+
+        for (local i = _selectedPlayers.len(); i < _howMany; i++ ) {
+            if (_lowPriorityPlayerArr.len() == 0) break;
+            local _randomID = RandomInt ( 0, _lowPriorityPlayerArr.len() - 1 );
+            _selectedPlayers.append     ( _lowPriorityPlayerArr[ _randomID ] );
+            _playerArr.remove           ( _randomID );
+        }
+
+        gamerules_scope["zi_chosen_zombies"] <- _selectedPlayers.map(function(p) {
+            // printl(p.entindex());
+            return p.entindex();
+        });
+        return _selectedPlayers;
+    };
 }
 
 // OVERRIDE: replacement for infection.nut::OnGameEvent_teamplay_setup_finished
