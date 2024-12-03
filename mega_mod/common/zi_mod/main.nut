@@ -413,7 +413,7 @@ function MM_ZI_OverrideDeath() {
             // MEGAMOD: Instantly respawn the zombie.
             // BLU's respawnwavetime is set to 999999 to facilitate overtime. To make respawns not instant, change this delay.
             if (!MM_ZI_ROUND_FINISHED && !MM_ZI_OVERTIME) {
-                DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
+                DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 0.1, null, _hPlayer);
             } else if (!MM_ZI_ROUND_FINISHED && MM_ZI_OVERTIME) {
                 EntFireByHandle(self, "RunScriptCode", "MM_ZI_ShouldSurvivorsWin()", 0, null, null);
             }
@@ -499,7 +499,7 @@ function MM_ZI_OverrideDeath() {
             EntFireByHandle( _hRoundTimer, "AddTime", ADDITIONAL_SEC_PER_PLAYER.tostring(), 0, null, null );
         } else {
             // MEGAMOD: If game hasn't started, instantly respawn.
-            if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
+            if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 0.1, null, _hPlayer);
         }
     };
 }
@@ -603,6 +603,11 @@ function MM_ZI_OverrideShouldZombiesWin() {
     };
 }
 
+::MM_ZI_ForceRespawn <- function (player) {
+    if (MM_ZI_OVERTIME || MM_ZI_ROUND_FINISHED) return;
+    player.ForceRespawn();
+}
+
 function MM_ZI_PrepareForOvertime() {
     // As there is no situation where the ZI codebase calls a game_round_win entity
     // in the map, we can safely nuke all game_round_wins from the map.
@@ -612,6 +617,7 @@ function MM_ZI_PrepareForOvertime() {
     }
     local timer = Entities.FindByClassname(null, "team_round_timer");
     EntityOutputs.AddOutput(timer, "OnFinished", "!self", "RunScriptCode", "MM_ZI_EnableOvertime()", 0, -1);
+    PrecacheScriptSound ( "Game.Overtime" );
 }
 
 function MM_ZI_EnableOvertime() {
@@ -619,6 +625,37 @@ function MM_ZI_EnableOvertime() {
     ::MM_ZI_OVERTIME <- true;
     local timer = Entities.FindByClassname(null, "team_round_timer");
     timer.Kill();
+
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    // Delay so our settings overwrite those set by logic_auto ents.
+    EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "999999", 0, null, null);
+    EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 0, null, null);
+
+    // Respawn all dead survivors so they can participate in overtime.
+    foreach( _hNextPlayer in GetAllPlayers() ) {
+        if (_hNextPlayer.GetTeam() == 2 && GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
+            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hNextPlayer);
+        }
+    }
+
+    ClientPrint(null, 3, "\x07FCD303Infection has stopped spreading. Kill the remaining Zombies!\x01");
+
+    local overtime_sound =
+    {
+        team  = 255,
+        sound = "Game.Overtime"
+    };
+    SendGlobalGameEvent ( "teamplay_broadcast_audio", overtime_sound );
+
+    // Kill all respawn visualizers to stop zombies stalling in spawn.
+    for (local vis = null; vis = Entities.FindByClassname(vis, "func_respawnroomvisualizer");) {
+        vis.Kill()
+    }
+    // Kill all respawn rooms to stop zombies from class-changing during overtime.
+    for (local respawn = null; respawn = Entities.FindByClassname(respawn, "func_respawnroom");) {
+        respawn.Kill()
+    }
+
     local logic_script = Entities.FindByClassname(null, "logic_script");
     EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
 }
@@ -631,7 +668,7 @@ function MM_ZI_EnableOvertime() {
     foreach( _hNextPlayer in GetAllPlayers() ) {
         if (_hNextPlayer.GetTeam() == 3 && GetPropInt(_hNextPlayer, "m_lifeState") == 0 && floor(MM_ZI_OVERTIME_DAMAGE) >= 1) {
             _hNextPlayer.TakeDamageCustom(null, _hNextPlayer, null,
-                Vector(Epsilon, Epsilon, Epsilon), Vector(Epsilon, Epsilon, Epsilon),
+                Vector(Epsilon, Epsilon, Epsilon), _hNextPlayer.GetOrigin(),
                 floor(MM_ZI_OVERTIME_DAMAGE), DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
         }
     }
