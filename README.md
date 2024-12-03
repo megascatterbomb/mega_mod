@@ -92,9 +92,10 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     - Winners of RPS are displayed in gold.
     - Shows a percentage of how much health the Mercs managed to chip away.
 - Anti-AFK measures:
-  - If a player fails to send a keyboard input for 60 seconds, they are killed.
+  - If a player fails to send a keyboard input for 60 seconds, they are "fired" (killed).
   - When this happens, Hale's health is reduced to compensate, as though the idle player was never there in the first place.
-  - Chat messages are sent to the idle player to give them an opportunity to come back before the idle-death.
+    - Damage dealt by players before going AFK is factored into the damage caluclation to prevent metagaming. 
+  - Chat messages are sent to the idle player to give them an opportunity to come back before they're "fired".
 - Killstreaks:
   - Killstreaks now increment as the mercenaries deal damage to Hale.
   - The streak increments by 1 for every 200 damage dealt to Hale.
@@ -104,62 +105,46 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
   - Prevents that one guy from hiding in a corner for the whole round.
 
 ### Changes:
-- Legend:
-  - $n$ is the number of Mercs still alive.
-  - $N$ is the number of Mercs at the start of the round.
-  - $H$ is the max health of Hale.
-- Hale's health:
-  - Changed the formula to match that used in [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613), but with a cleaner curve.
+- **Legend**: 
+  - $n$: Mercs alive
+  - $N$: Mercs at round start
+  - $H$: Hale's max health
 
-    | Mercs   (N)| Vanilla Formula     |
-    |:-----------|:--------------------|
-    | 1          | $H = 1000$          |
-    | 2 - 5      | $H = 40N^2 + 1300$  |
-    | 6+         | $H = 40N^2 + 2000$  |
+- **Hale's Health**:
+  - Updated formula based on [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613).
 
-    | Mercs   (N)| New Formula                               |
-    |:-----------|:------------------------------------------|
-    | 1          | $H = 1000$                                |
-    | 2 - 6      | $H = 41N^2 + 2350(0.3 + N/10)$            |
-    | 7 - 23     | $H = 41N^2 + 2350$                        |
-    | 24+        | $H = 2000(N-23) + 24000$                  |
+    | Mercs (N) | Vanilla Formula     |
+    |:----------|:--------------------|
+    | 1         | $H = 1000$          |
+    | 2 - 5     | $H = 40N^2 + 1300$  |
+    | 6+        | $H = 40N^2 + 2000$  |
 
-- Brave Jump:
-  - Added a 3 second cooldown. Uses HUD_PRINTCENTER to notify the user.
-- Round timer:
-  - Setup Time:
-    - Extended for high player counts so players can spread out and/or recover from large lag spikes.
-    - Old value: 16 seconds.
-    - New value: $(N/3)$ seconds, clamped between 16 and 32 seconds.
-  - Time before point unlocks:
-    - Old behaviour: Starts at 4 minutes, drops to 1 minute once only 5 players are alive.
-    - New behaviour: Starts at $max(30, 10N)$ seconds, then clamped down to $max(30, 15n)$ seconds during the round (updated on round start and player death).
-  - Stalemate 3 minutes after the point unlocks remains in place, unless the point is captured.
-- Rock-Paper-Scissors:
-  - Deals 1 million damage to Hale.
-    - The default value is only 100k; not enough to cover the maximum possible Hale health.
-  - Comically high knockback on Hale's ragdoll when he dies.
-- Mighty Slam:
-  - Fixed check to prevent low damage (<=30) hits killing low health (<=30) players.
-- Control Point:
-  - Capturing the point no longer instantly ends the round:
-    - If the Mercs cap, they get guaranteed crits on all weapons and a powerful 5 second health regen.
-    - If Hale caps, the cooldown on all of his special abilities is reduced to 5 seconds.
-  - On capture, the stalemate timer is disabled entirely and the point locks itself permanently.
-  - The round will eventually end due to Hale's health changing over time:
-    - When the Mercs cap, Hale's health will tick down faster and faster. This guarantees his death if he doesn't manage to kill all of the Mercs first.
-    - When Hale caps, his health will tick up faster and faster until it reaches max health, at which point Hale wins the round.
-  - The health gained/lost each second starts at 1, then increases by 1 every second.
-  - If the Mercs have the point and Hale doesn't do any damage to the Mercs for 30 seconds, an additional 1.05 multiplier is added onto the health drain *each second*.
-    - For example, after 45 seconds:
-      - Hale will take 45 damage per second.
-      - Then a $1.05^{15} = 2.08$ multiplier is applied to the health drain as Hale has not dealt damage for 45 seconds.
-      - The final damage per tick is ~94 damage per tick.
-    - The multiplier resets to 1.0 once Hale deals damage.
-    - The reverse is also true; if Hale owns the point and the mercs don't deal damage to Hale for 30 seconds, Hale's health will regenerate faster.
-    - This multiplier resets the moment the team that has the point takes damage from the other team.
-  - These changes prevent either side from getting an undeserved victory, as the opponent still has a *slim* chance of winning after the capture.
-  - Capturing the point produces exciting gameplay to finish a round as opposed to a sudden cutoff.
+    | Mercs (N) | New Formula                             |
+    |:----------|:----------------------------------------|
+    | 1         | $H = 1000$                              |
+    | 2 - 6     | $H = 41N^2 + 2350(0.3 + N/10)$          |
+    | 7 - 23    | $H = 41N^2 + 2350$                      |
+    | 24+       | $H = 2000(N-23) + 24000$                |
+
+- **Gameplay Tweaks**:
+  - **Brave Jump**: 3 second cooldown, center HUD notification.
+  - **Round Timer**:
+    - Setup: Adjusts to player count, 16-32s.
+    - Point Unlock: Starts at $max(30, 10N)$ seconds, clamps to $max(30, 15n)$ seconds on player death.
+  - **Rock-Paper-Scissors**: 1M damage to Hale, high ragdoll knockback.
+  - **Mighty Slam**: Fixes code that's supposed to prevent low damage hits from being lethal.
+
+- **Control Point**:
+  - Captures don't end rounds immediately; instead grant bonuses to the capping team.
+  - **Mercs Cap**: Guaranteed crits and a brief health regen.
+  - **Hale Caps**: Ability cooldowns reduced to 5s.
+  - After capture, Hale's health adjusts over time, ensuring a dynamic finish:
+    - **Mercs**: Hale's health is drained until he dies.
+    - **Hale**: Hale's health regenerates until it reaches maximum, at which point Hale wins.
+  - Rate of health drain/regen increases over time.
+  - Point capture now leads to an engaging endgame, avoiding abrupt and unfair victories.
+
+## Zombie Infection
 
 # Map Specific/Miscellanious Fixes
 
