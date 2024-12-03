@@ -626,19 +626,21 @@ function MM_ZI_EnableOvertime() {
     local timer = Entities.FindByClassname(null, "team_round_timer");
     timer.Kill();
 
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
-    // Delay so our settings overwrite those set by logic_auto ents.
-    EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "999999", 0, null, null);
-    EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 0, null, null);
-
     // Respawn all dead survivors so they can participate in overtime.
+    // No longer needed as we respawn all dead survivors in ::MM_ZI_ShouldSurvivorsWin
+    // foreach( _hNextPlayer in GetAllPlayers() ) {
+    //     if (_hNextPlayer.GetTeam() == 2 && GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
+    //         DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hNextPlayer);
+    //     }
+    // }
+
     foreach( _hNextPlayer in GetAllPlayers() ) {
-        if (_hNextPlayer.GetTeam() == 2 && GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
-            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hNextPlayer);
+        if (_hNextPlayer.GetTeam() == 3 || GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
+            ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for you. Kill the remaining Survivors to win!\x01");
+        } else {
+            ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for Zombies. Kill the remaining Zombies to win!\x01");
         }
     }
-
-    ClientPrint(null, 3, "\x07FCD303Infection has stopped spreading. Kill the remaining Zombies!\x01");
 
     local overtime_sound =
     {
@@ -685,7 +687,17 @@ function MM_ZI_EnableOvertime() {
             return;
         }
     }
+    local exit = false;
     // We only get here if there are no living zombies.
+    // Check if there are dead survivors that can become zombies. If so: respawn them.
+    foreach (_hNextPlayer in GetAllPlayers()) {
+        if ( _hNextPlayer.GetTeam() == 2 && GetPropInt( _hNextPlayer, "m_lifeState" ) != 0 ) {
+            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0, null, _hNextPlayer);
+            exit = true;
+        }
+    }
+    if (exit) return;
+
     local _hGameWin = SpawnEntityFromTable( "game_round_win",
     {
         win_reason      = "0",
