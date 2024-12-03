@@ -11,11 +11,15 @@ function MM_Zombie_Infection() {
         }
     }
 
+    ::MM_ZI_ROUND_FINISHED <- false;
+
     MM_OverrideSetupFinished();
     MM_OverrideDeath();
     MM_OverrideZombieSelection();
-    // TODO: Remove BASE Jumper nerf
-    // TODO: Reduce effect of jumper weapon nerf.
+    MM_OverrideRoundEnd();
+    MM_OverrideWeaponMods();
+    MM_OverrideShouldZombiesWin();
+
     // TODO: Endgame/Overtime before survivor victory.
 }
 
@@ -397,13 +401,15 @@ function MM_OverrideDeath() {
             try { _sc.m_hZombieFXWearable.Destroy() } catch ( e ) {}
 
             // MEGAMOD: Instantly respawn the zombie.
-            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
+            if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
 
             return; // zombie death event ends here
         }
 
         if ( ::bGameStarted ) // if the game is started, a dying survivor becomes a zombie
         {
+            if (MM_ZI_ROUND_FINISHED) return;
+
             // player was survivor, killed by a zombie and wasn't suicide
             if ( _hKiller && _hKiller.GetClassname() == "player" && _hKiller.GetTeam() == TF_TEAM_BLUE && _hPlayerTeam == TF_TEAM_RED )
             {
@@ -481,3 +487,183 @@ function MM_OverrideDeath() {
         }
     };
 }
+
+// OVERRIDE: functions.nut::ShouldZombiesWin
+function MM_OverrideShouldZombiesWin() {
+    ::ShouldZombiesWin <- function( _hPlayer )
+    {
+        local _iValidSurvivors = 0;
+        local _iValidPlayers   = 0;
+
+        // count all valid survivors to see if the game should end
+        for ( local i = 1; i <= MaxPlayers; i++ )
+        {
+            local _player = PlayerInstanceFromIndex( i );
+
+            if ( _player != null )
+            {
+                _iValidPlayers++;
+
+                // if the player is valid, on survivor (red) team, alive, and not the player who just died
+                if ( ( _player != null ) &&
+                     ( _player.GetTeam() == TF_TEAM_RED ) &&
+                     ( GetPropInt( _player, "m_lifeState" ) == ALIVE ) && _player != _hPlayer )
+                {
+                     _iValidSurvivors++;
+                };
+            };
+        };
+
+        if ( _iValidPlayers == 0 ) // GetAllPlayers didn't find any players, should never happen
+        {
+            return;
+        };
+
+        if ( _iValidSurvivors == 3 )
+        {
+            ClientPrint( null, HUD_PRINTTALK, format( STRING_UI_CHAT_LAST_SURV_YELLOW, _iValidSurvivors, STRING_UI_MINI_CRITS ) );
+        };
+
+        // check if zombies have killed enough survivors to win
+        if ( _iValidSurvivors <= MAX_SURVIVORS_FOR_ZOMBIE_WIN )
+        {
+            local _hGameWin = SpawnEntityFromTable( "game_round_win",
+            {
+                win_reason      = "0",
+                force_map_reset = "1",
+                TeamNum         = "3", // TF_TEAM_BLUE
+                switch_teams    = "0"
+            } );
+
+            // the zombies have won the round.
+            ::bGameStarted <- false;
+            EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
+        }
+        else
+        {
+            if ( _iValidSurvivors == 1 ) // last guy
+            {
+                foreach( _hNextPlayer in GetAllPlayers() )
+                {
+                    if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && GetPropInt( _hNextPlayer, "m_lifeState" ) == ALIVE )
+                    {
+                        if ( _hNextPlayer == null || _hNextPlayer == _hPlayer )
+                            continue;
+
+                        ClientPrint( null, HUD_PRINTTALK, format( STRING_UI_CHAT_LAST_SURV_GREEN, NetName( _hNextPlayer ), STRING_UI_CRITS ) );
+
+                        _hNextPlayer.GetScriptScope().m_bLastManStanding <- true;
+                        // MEGAMOD: Apply Last three buffs as well as last man standing buff
+                        _hNextPlayer.GetScriptScope().m_bLastThree       <- true;
+
+                        // MEGAMOD: Do not disable BASE Jumper.
+                        // if (_hNextPlayer.GetPlayerClass() == TF_CLASS_SOLDIER || _hNextPlayer.GetPlayerClass() == TF_CLASS_DEMOMAN)
+                        // {
+                        //     local _bDestroyedParachuteResult = _hNextPlayer.HasThisWeapon( 1101, true );
+                        // }
+
+                        _hNextPlayer.AddCond( TF_COND_CRITBOOSTED );
+                    };
+                };
+            }
+            else if ( ( _iValidSurvivors < 4 ) && ( _iValidSurvivors > 1 ) ) // last 3 get minicrits
+            {
+                foreach( _hNextPlayer in GetAllPlayers() )
+                {
+                    if ( _hNextPlayer.GetTeam() == TF_TEAM_RED && GetPropInt( _hNextPlayer, "m_lifeState" ) == ALIVE )
+                    {
+                        if ( _hNextPlayer == null )
+                            continue;
+
+                        _hNextPlayer.GetScriptScope().m_bLastThree <- true;
+                        _hNextPlayer.AddCond( TF_COND_OFFENSEBUFF );
+                        continue;
+                    };
+                };
+            };
+        };
+
+        return;
+    };
+}
+
+function MM_OverrideRoundEnd() {
+    local logic_script = Entities.FindByClassname(null, "logic_script");
+    local scope = logic_script.GetScriptScope();
+
+    scope.OnGameEvent_teamplay_round_win <- function ( params ) {
+        ::MM_ZI_ROUND_FINISHED <- true;
+    }
+}
+
+// OVERRIDE: functions.nut::CTFPlayer_ModifyJumperWeapons
+function MM_OverrideWeaponMods() {
+    printl("Loading modified jumper script.");
+    CTFPlayer["ModifyJumperWeapons"] <-  function () {
+        printl("Running modified jumper script.");
+        if ( this.GetPlayerClass() == TF_CLASS_SOLDIER )
+        {
+            if ( this.HasThisWeapon( 237 ) ) // rocket jumper
+            {
+                /*local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", 1 );
+
+                _hWeapon.AddAttribute ( "maxammo primary reduced", 0.0, -1 );
+                SetPropIntArray       ( this, "m_iAmmo", 0, 1 );
+
+                _hWeapon.ReapplyProvision();
+                return;*/
+                for ( local i = 0; i < TF_WEAPON_COUNT; i++ )
+                {
+                    local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", i )
+
+                    if ( _hWeapon == null )
+                        return;
+
+                    if ( GetPropInt( _hWeapon, STRING_NETPROP_ITEMDEF ) != 237 )
+                        continue;
+
+                    // MEGAMOD: reserve ammo of 4
+                    _hWeapon.AddAttribute ( "maxammo primary reduced", 0.0667, -1 );
+                    SetPropIntArray       ( this, "m_iAmmo", 4, 1 );
+
+                    _hWeapon.ReapplyProvision();
+                    return;
+                }
+            };
+        };
+
+        if ( this.GetPlayerClass() == TF_CLASS_DEMOMAN )
+        {
+            if ( this.HasThisWeapon( 265 ) ) // sticky jumper
+            {
+                /*local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", 2 );
+
+                _hWeapon.AddAttribute ( "hidden secondary max ammo penalty", 0.02, -1 );
+                SetPropIntArray       ( this, "m_iAmmo", 0, 2 );
+
+                _hWeapon.ReapplyProvision();
+                return;*/
+                for ( local i = 0; i < TF_WEAPON_COUNT; i++ )
+                {
+                    local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", i )
+
+                    if ( _hWeapon == null )
+                        return;
+
+                    if ( GetPropInt( _hWeapon, STRING_NETPROP_ITEMDEF ) != 265 )
+                        continue;
+
+                    // MEGAMOD: reserve ammo of 8
+                    _hWeapon.AddAttribute ( "hidden secondary max ammo penalty", 0.11, -1 );
+                    SetPropIntArray       ( this, "m_iAmmo", 8, 2 );
+
+                    _hWeapon.ReapplyProvision();
+                    return;
+                }
+            };
+        };
+    };
+}
+
+// We can't beat the vanilla function's execution, so we load the modified function ahead of time.
+MM_OverrideWeaponMods();
