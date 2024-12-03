@@ -473,19 +473,20 @@ function MM_ZI_OverrideDeath() {
             // no round timer on the level, let's make one
             if ( _hRoundTimer == null )
             {
-                // create an infection specific timer
-                _hRoundTimer = SpawnEntityFromTable( "team_round_timer",
-                {
-                    auto_countdown       = "0",
-                    max_length           = "120",
-                    reset_time           = "1",
-                    setup_length         = "30",
-                    show_in_hud          = "1",
-                    show_time_remaining  = "1",
-                    start_paused         = "0",
-                    timer_length         = "120",
-                    StartDisabled        = "0",
-                } );
+                // MEGAMOD: Don't do this. Every map has its own timer.
+                // // create an infection specific timer
+                // _hRoundTimer = SpawnEntityFromTable( "team_round_timer",
+                // {
+                //     auto_countdown       = "0",
+                //     max_length           = "120",
+                //     reset_time           = "1",
+                //     setup_length         = "30",
+                //     show_in_hud          = "1",
+                //     show_time_remaining  = "1",
+                //     start_paused         = "0",
+                //     timer_length         = "120",
+                //     StartDisabled        = "0",
+                // } );
             }
             else
             {
