@@ -74,7 +74,7 @@ function AdjustHaleHealth(booted)
 
     if(healthPenalty <= 0) return;
 
-    boss.TakeDamageCustom(null, boss, null, Vector(0.000001, 0.000001, 0.000001), Vector(0.000001, 0.000001, 0.000001), healthPenalty, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
+    boss.TakeDamageCustom(null, boss, null, Vector(Epsilon, Epsilon, Epsilon), Vector(Epsilon, Epsilon, Epsilon), healthPenalty, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
 
     // Need this because all the damage modifiers in the VScript fuck with the calculations.
     local actualNewHealth = boss.GetHealth();

@@ -117,7 +117,7 @@ function EndgameInterval(killHale)
     // Do the damage
     if(killHale) {
         local vecPunch = GetPropVector(boss, "m_Local.m_vecPunchAngle");
-        boss.TakeDamageCustom(boss, boss, null, Vector(0.000001, 0.000001, 0.000001), Vector(0.000001, 0.000001, 0.000001), damageOrHealing, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
+        boss.TakeDamageCustom(boss, boss, null, Vector(Epsilon, Epsilon, Epsilon), Vector(Epsilon, Epsilon, Epsilon), damageOrHealing, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
         SetPropVector(boss, "m_Local.m_vecPunchAngle", vecPunch);
     } else if(!killHale && newHealth >= maxHealth) {
         healthHealed = healthHealed + maxHealth - oldHealth;

@@ -1,8 +1,9 @@
 function MM_Zombie_Infection() {
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     if (gamerules != null)  {
-        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 0, null, null);
-        EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 0, null, null);
+        // Delay so our settings overwrite those set by logic_auto ents.
+        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 5, null, null);
+        EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 5, null, null);
 
         gamerules.ValidateScriptScope();
         local gamerules_scope = gamerules.GetScriptScope();
@@ -12,19 +13,21 @@ function MM_Zombie_Infection() {
     }
 
     ::MM_ZI_ROUND_FINISHED <- false;
+    ::MM_ZI_OVERTIME <- false;
+    ::MM_ZI_OVERTIME_DAMAGE <- 0;
 
-    MM_OverrideSetupFinished();
-    MM_OverrideDeath();
-    MM_OverrideZombieSelection();
-    MM_OverrideRoundEnd();
-    MM_OverrideWeaponMods();
-    MM_OverrideShouldZombiesWin();
+    MM_ZI_OverrideSetupFinished();
+    MM_ZI_OverrideDeath();
+    MM_ZI_OverrideZombieSelection();
+    MM_ZI_OverrideRoundEnd();
+    MM_ZI_OverrideWeaponMods();
+    MM_ZI_OverrideShouldZombiesWin();
 
-    // TODO: Endgame/Overtime before survivor victory.
+    MM_ZI_PrepareForOvertime();
 }
 
 // OVERRIDE: replacement for functions.nut::GetRandomPlayers
-function MM_OverrideZombieSelection() {
+function MM_ZI_OverrideZombieSelection() {
     // MEGAMOD: Zombie selection will always ignore zombies from last round if possible.
     ::GetRandomPlayers <- function( _howMany = 1 )
     {
@@ -82,9 +85,16 @@ function MM_OverrideZombieSelection() {
 }
 
 // OVERRIDE: replacement for infection.nut::OnGameEvent_teamplay_setup_finished
-function MM_OverrideSetupFinished() {
+function MM_ZI_OverrideSetupFinished() {
     local logic_script = Entities.FindByClassname(null, "logic_script");
     local scope = logic_script.GetScriptScope();
+
+    // Some maps might set gamerules at the end of setup time. This is just a safety check.
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    if (gamerules != null)  {
+        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 1, null, null);
+        EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 1, null, null);
+    }
 
     scope.OnGameEvent_teamplay_setup_finished <- function ( params )
     {
@@ -259,7 +269,7 @@ function MM_OverrideSetupFinished() {
 }
 
 // OVERRIDE: replacement for infection.nut::OnGameEvent_player_death
-function MM_OverrideDeath() {
+function MM_ZI_OverrideDeath() {
 
     local logic_script = Entities.FindByClassname(null, "logic_script");
     local scope = logic_script.GetScriptScope();
@@ -401,7 +411,12 @@ function MM_OverrideDeath() {
             try { _sc.m_hZombieFXWearable.Destroy() } catch ( e ) {}
 
             // MEGAMOD: Instantly respawn the zombie.
-            if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
+            // BLU's respawnwavetime is set to 999999 to facilitate overtime. To make respawns not instant, change this delay.
+            if (!MM_ZI_ROUND_FINISHED && !MM_ZI_OVERTIME) {
+                DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
+            } else if (!MM_ZI_ROUND_FINISHED && MM_ZI_OVERTIME) {
+                EntFireByHandle(self, "RunScriptCode", "MM_ZI_ShouldSurvivorsWin()", 0, null, null);
+            }
 
             return; // zombie death event ends here
         }
@@ -483,13 +498,13 @@ function MM_OverrideDeath() {
             EntFireByHandle( _hRoundTimer, "AddTime", ADDITIONAL_SEC_PER_PLAYER.tostring(), 0, null, null );
         } else {
             // MEGAMOD: If game hasn't started, instantly respawn.
-            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
+            if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0.1, null, _hPlayer);
         }
     };
 }
 
 // OVERRIDE: functions.nut::ShouldZombiesWin
-function MM_OverrideShouldZombiesWin() {
+function MM_ZI_OverrideShouldZombiesWin() {
     ::ShouldZombiesWin <- function( _hPlayer )
     {
         local _iValidSurvivors = 0;
@@ -587,7 +602,66 @@ function MM_OverrideShouldZombiesWin() {
     };
 }
 
-function MM_OverrideRoundEnd() {
+function MM_ZI_PrepareForOvertime() {
+    // As there is no situation where the ZI codebase calls a game_round_win entity
+    // in the map, we can safely nuke all game_round_wins from the map.
+    // This prevents the vanilla win behaviour for survivors.
+    for (local win = null; win = Entities.FindByClassname(win, "game_round_win");) {
+        win.Kill();
+    }
+    local timer = Entities.FindByClassname(null, "team_round_timer");
+    EntityOutputs.AddOutput(timer, "OnFinished", "!self", "RunScriptCode", "MM_ZI_EnableOvertime()", 0, -1);
+}
+
+function MM_ZI_EnableOvertime() {
+    printl("MEGAMOD: Entering overtime...");
+    ::MM_ZI_OVERTIME <- true;
+    local timer = Entities.FindByClassname(null, "team_round_timer");
+    timer.Kill();
+    local logic_script = Entities.FindByClassname(null, "logic_script");
+    EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+}
+
+::MM_ZI_OvertimeSecondTick <- function() {
+    MM_ZI_ShouldSurvivorsWin();
+
+    if (!bGameStarted || MM_ZI_ROUND_FINISHED) return;
+
+    foreach( _hNextPlayer in GetAllPlayers() ) {
+        if (_hNextPlayer.GetTeam() == 3 && GetPropInt(_hNextPlayer, "m_lifeState") == 0 && floor(MM_ZI_OVERTIME_DAMAGE) >= 1) {
+            _hNextPlayer.TakeDamageCustom(null, _hNextPlayer, null,
+                Vector(Epsilon, Epsilon, Epsilon), Vector(Epsilon, Epsilon, Epsilon),
+                floor(MM_ZI_OVERTIME_DAMAGE), DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
+        }
+    }
+
+    ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE + 0.1;
+
+    local logic_script = Entities.FindByClassname(null, "logic_script");
+    EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+}
+
+::MM_ZI_ShouldSurvivorsWin <- function () {
+    foreach (_hNextPlayer in GetAllPlayers()) {
+        if ( _hNextPlayer.GetTeam() == 3 && GetPropInt( _hNextPlayer, "m_lifeState" ) == 0 ) {
+            return;
+        }
+    }
+    // We only get here if there are no living zombies.
+    local _hGameWin = SpawnEntityFromTable( "game_round_win",
+    {
+        win_reason      = "0",
+        force_map_reset = "1",
+        TeamNum         = "2", // TF_TEAM_RED
+        switch_teams    = "0"
+    } );
+
+    // the zombies have won the round.
+    ::bGameStarted <- false;
+    EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
+}
+
+function MM_ZI_OverrideRoundEnd() {
     local logic_script = Entities.FindByClassname(null, "logic_script");
     local scope = logic_script.GetScriptScope();
 
@@ -597,10 +671,10 @@ function MM_OverrideRoundEnd() {
 }
 
 // OVERRIDE: functions.nut::CTFPlayer_ModifyJumperWeapons
-function MM_OverrideWeaponMods() {
-    printl("Loading modified jumper script.");
+function MM_ZI_OverrideWeaponMods() {
+    // printl("Loading modified jumper script.");
     CTFPlayer["ModifyJumperWeapons"] <-  function () {
-        printl("Running modified jumper script.");
+        // printl("Running modified jumper script.");
         if ( this.GetPlayerClass() == TF_CLASS_SOLDIER )
         {
             if ( this.HasThisWeapon( 237 ) ) // rocket jumper
@@ -666,4 +740,4 @@ function MM_OverrideWeaponMods() {
 }
 
 // We can't beat the vanilla function's execution, so we load the modified function ahead of time.
-MM_OverrideWeaponMods();
+MM_ZI_OverrideWeaponMods();
