@@ -603,8 +603,8 @@ function MM_ZI_OverrideShouldZombiesWin() {
     };
 }
 
-::MM_ZI_ForceRespawn <- function (player) {
-    if (MM_ZI_OVERTIME || MM_ZI_ROUND_FINISHED) return;
+::MM_ZI_ForceRespawn <-  function(player, allowInOvertime = false) {
+    if ((!allowInOvertime && MM_ZI_OVERTIME) || MM_ZI_ROUND_FINISHED) return;
     player.ForceRespawn();
 }
 
@@ -636,14 +636,13 @@ function MM_ZI_EnableOvertime() {
 
     foreach( _hNextPlayer in GetAllPlayers() ) {
         if (_hNextPlayer.GetTeam() == 3 || GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
-            ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for you. Kill the remaining Survivors to win!\x01");
+            ClientPrint(_hNextPlayer, 3, "\x0738F3ABNo more respawns for you. Kill the remaining Survivors to win!\x01");
         } else {
             ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for Zombies. Kill the remaining Zombies to win!\x01");
         }
     }
 
-    local overtime_sound =
-    {
+    local overtime_sound = {
         team  = 255,
         sound = "Game.Overtime"
     };
@@ -692,7 +691,7 @@ function MM_ZI_EnableOvertime() {
     // Check if there are dead survivors that can become zombies. If so: respawn them.
     foreach (_hNextPlayer in GetAllPlayers()) {
         if ( _hNextPlayer.GetTeam() == 2 && GetPropInt( _hNextPlayer, "m_lifeState" ) != 0 ) {
-            DoEntFire("!self", "RunScriptCode", "self.ForceRespawn()", 0, null, _hNextPlayer);
+            DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self, true)", 0, null, _hNextPlayer);
             exit = true;
         }
     }
@@ -708,6 +707,7 @@ function MM_ZI_EnableOvertime() {
 
     // the zombies have won the round.
     ::bGameStarted <- false;
+    ::MM_ZI_ROUND_FINISHED <- true;
     EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
 }
 
