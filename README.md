@@ -113,25 +113,25 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 - **Hale's Health**:
   - Updated formula based on [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613).
 
-    | Mercs (N) | Vanilla Formula     |
-    |:----------|:--------------------|
-    | 1         | $H = 1000$          |
-    | 2 - 5     | $H = 40N^2 + 1300$  |
-    | 6+        | $H = 40N^2 + 2000$  |
+    | Mercs (N) | Vanilla Formula     | Resulting Health ($H(N)$) |
+    |:----------|:--------------------|:--------------------------|
+    | 1         | $H = 1000$          | H(1) = 1000               |
+    | 2 - 5     | $H = 40N^2 + 1300$  | H(2) = 1400; H(5) = 2300  |
+    | 6+        | $H = 40N^2 + 2000$  | H(6) = 3400; H(12) = 7700;<br>H(23) = 23100; H(31) = 40400;<br>H(63) = 160700; H(99) = 394000 |
 
-    | Mercs (N) | New Formula                             |
-    |:----------|:----------------------------------------|
-    | 1         | $H = 1000$                              |
-    | 2 - 6     | $H = 41N^2 + 2350(0.3 + N/10)$          |
-    | 7 - 23    | $H = 41N^2 + 2350$                      |
-    | 24+       | $H = 2000(N-23) + 24000$                |
+    | Mercs ($N$) | New Formula                    | Resulting Health ($H(N)$)|
+    |:----------|:-------------------------------|:---------------------------|
+    | 1         | $H = 1000$                     | H(1) = 1000                |
+    | 2 - 6     | $H = 41N^2 + 2350(0.3 + N/10)$ | H(2) = 1300; H(6) = 3500   |
+    | 7 - 23    | $H = 41N^2 + 2350$             | H(7) = 4300; H(12) = 8200;<br>H(23) = 24000 |
+    | 24+       | $H = 2000(N-23) + 24000$       | H(24) = 26000; H(31) = 40000;<br>H(63) = 104000; H(99) = 176000 |
 
 - **Gameplay Tweaks**:
   - **Brave Jump**: 3 second cooldown, center HUD notification.
   - **Round Timer**:
     - Setup: Adjusts to player count, 16-32s.
     - Point Unlock: Starts at $max(30, 10N)$ seconds, clamps to $max(30, 15n)$ seconds on player death.
-  - **Rock-Paper-Scissors**: 1M damage to Hale, high ragdoll knockback.
+  - **Rock-Paper-Scissors**: 1M damage to Hale (vanilla 100k isn't enough), high ragdoll knockback.
   - **Mighty Slam**: Fixes code that's supposed to prevent low damage hits from being lethal.
 
 - **Control Point**:
@@ -146,7 +146,7 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 
 ## Zombie Infection
 
-Zombie Infection is a promising gamemode, however the implementation and recent balance changes.
+Zombie Infection is a promising gamemode, however the implementation leaves a lot to be desired in my opinion. Notably, the long respawn times for the Zombies result in long periods of time without any fighting. Rounds tend to drag on and on, and the variablity of round and respawn times results in an inconsistent experience.
 
 - Consistent round and respawn times to improve the gamemode's pacing.
   - Round time always starts at, and can never exceed, 2 minutes.
@@ -160,6 +160,7 @@ Zombie Infection is a promising gamemode, however the implementation and recent 
 - Added Overtime:
   - When the timer expires, the game enters Overtime. Overtime lasts until round end and cannot be interrupted.
   - Zombies cannot respawn in Overtime, however Survivors killed in Overtime still become Zombies.
+    - Dead survivors will respawn as Zombies instantly if there are no other Zombies alive.
   - Win conditions:
     - Survivors can only win by killing all the remaining Zombies.
     - Zombies win by killing all the remaining Survivors (as usual).
