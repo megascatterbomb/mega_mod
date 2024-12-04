@@ -26,6 +26,14 @@ function MM_Zombie_Infection() {
     MM_ZI_PrepareForOvertime();
 }
 
+function MM_ZI_OnPlayerTeam(params) {
+    if (!MM_ZI_OVERTIME) return;
+    if ( params.team == 2 ) {
+        local player = GetPlayerFromUserID(params.userid);
+        EntFireByHandle(player, "RunScriptCode", "ChangeTeamSafe(self, 3, true); self.ForceRespawn(); self.TakeDamage(1000000, 0, null)", 0, null, player)
+    }
+}
+
 // OVERRIDE: replacement for functions.nut::GetRandomPlayers
 function MM_ZI_OverrideZombieSelection() {
     // MEGAMOD: Zombie selection will always ignore zombies from last round if possible.

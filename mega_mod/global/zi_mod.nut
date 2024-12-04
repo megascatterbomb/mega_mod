@@ -28,6 +28,10 @@ zi_mod.OnGameEvent_teamplay_round_start <- function (event) {
     MM_Zombie_Infection();
 }
 
+zi_mod.OnGameEvent_player_team <- function (event) {
+    MM_ZI_OnPlayerTeam(event);
+}
+
 zi_mod.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
 ::ClearGameEventCallbacks <- function () {
     zi_mod.ClearGameEventCallbacks()
