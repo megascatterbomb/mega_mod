@@ -8,15 +8,15 @@ Installation:
 - You can comment out any maps you don't want to use the mod for within `main.nut`
 
 Project structure:
-- /common
+- `/common`
   - Script files that may be included by any map-specific mod or global mod when needed. Typically contains templates that may require map-specific setup.
-- /global
+- `/global`
   - Script files that are included on maps without a map-specific mod. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/global/5cp_anti_stalemate.nut as an example).
-- /mapmods
+- `/mapmods`
   - Script files that are included on a specific map, determined by the filename.
-- /tug_of_war_addons
+- `/tug_of_war_addons`
   - Addons that utilize the official addon support in the Tug-of-war VScript gamemode.
-- /vsh_addons
+- `/vsh_addons`
   - Addons that utilize the official addon support in the Versus Saxton Hale VScript gamemode.
 
 # General Improvements
@@ -80,7 +80,7 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 ## Versus Saxton Hale
 
 ### New Features:
-- Damage logging:
+- **Damage logging**:
   - Market gardens, backstabs, and telefrags are logged in chat.
   - On death: the damage dealt by the player is broadcast in chat.
     - If the dead ringer is used, a fake message is displayed to Hale only.
@@ -91,16 +91,16 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     - Damage by other sources (e.g. Distillery grinder) is listed separately.
     - Winners of RPS are displayed in gold.
     - Shows a percentage of how much health the Mercs managed to chip away.
-- Anti-AFK measures:
+- **Anti-AFK measures**:
   - If a player fails to send a keyboard input for 60 seconds, they are "fired" (killed).
   - When this happens, Hale's health is reduced to compensate, as though the idle player was never there in the first place.
     - Damage dealt by players before going AFK is factored into the damage caluclation to prevent metagaming. 
   - Chat messages are sent to the idle player to give them an opportunity to come back before they're "fired".
-- Killstreaks:
+- **Killstreaks**:
   - Killstreaks now increment as the mercenaries deal damage to Hale.
   - The streak increments by 1 for every 200 damage dealt to Hale.
   - This does NOT produce any killstreak notifications, but it does enable the visual effects of Professional Killstreak items.
-- Player Glows:
+- **Player Glows**:
   - The last mercenary and Hale can see each other through walls.
   - Prevents that one guy from hiding in a corner for the whole round.
 
@@ -135,16 +135,36 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
   - **Mighty Slam**: Fixes code that's supposed to prevent low damage hits from being lethal.
 
 - **Control Point**:
-  - Captures don't end rounds immediately; instead grant bonuses to the capping team.
+  - Captures don't end rounds immediately; instead granting bonuses to the capping team.
   - **Mercs Cap**: Guaranteed crits and a brief health regen.
   - **Hale Caps**: Ability cooldowns reduced to 5s.
-  - After capture, Hale's health adjusts over time, ensuring a dynamic finish:
-    - **Mercs**: Hale's health is drained until he dies.
-    - **Hale**: Hale's health regenerates until it reaches maximum, at which point Hale wins.
+  - Point capture affects Hale's health in a manner which guarantees the round will end (given sufficient time).
+    - Mercs: Hale's health is drained until he either dies or wins.
+    - Hale: Hale's health regenerates. If Hale reaches his starting health, he wins.
   - Rate of health drain/regen increases over time.
   - Point capture now leads to an engaging endgame, avoiding abrupt and unfair victories.
 
 ## Zombie Infection
+
+Zombie Infection is a promising gamemode, however the implementation and recent balance changes.
+
+- Consistent round and respawn times to improve the gamemode's pacing.
+  - Round time always starts at, and can never exceed, 2 minutes.
+  - Respawn wave time is set to 5 seconds for Survivors.
+  - Zombies have true instant respawn.
+  - Death during setup triggers instant respawn.
+- Players cannot start as Zombies in two consecutive rounds.
+- Weapon rebalances:
+  - The B.A.S.E. Jumper is no longer disabled for the last survivor.
+  - Increased reserve ammo for the Rocket Jumper (0 -> 4) and Sticky Jumper's reserve ammo (0 -> 8).
+- Added Overtime:
+  - When the timer expires, the game enters Overtime. Overtime lasts until round end and cannot be interrupted.
+  - Zombies cannot respawn in Overtime, however Survivors killed in Overtime still become Zombies.
+  - Win conditions:
+    - Survivors can only win by killing all the remaining Zombies.
+    - Zombies win by killing all the remaining Survivors (as usual).
+  - Zombies take an increasing amount damage over time to guarantee a round end.
+  - Survivors can enter Zombie spawnrooms during Overtime.
 
 # Map Specific/Miscellanious Fixes
 
@@ -170,6 +190,6 @@ Saved over 300 edicts by removing gameplay-irrelevant elements.
 
 ## Fix captures not being counted correctly in scoreboard.
 
-In Payload, The team scores are supposed to reflect how many control points that team has captured.
+In Payload, the team scores are supposed to reflect how many control points that team has captured.
 - In pl_emerge, that setting simply isn't enabled; this mod turns it on.
 - In [pl_cactuscanyon_redux_final2](https://steamcommunity.com/sharedfiles/filedetails/?id=2579644293), some of the outputs that trigger point captures trigger twice; adding a slight delay fixes this.
