@@ -31,7 +31,7 @@ function MM_Zombie_Infection() {
 }
 
 function MM_ZI_OnPlayerTeam(params) {
-    if (!::MM_ZI_OVERTIME || !::bGameStarted) return;
+    if (!::MM_ZI_OVERTIME || !::bGameStarted || ::MM_ZI_ROUND_FINISHED) return;
     if ( params.team == 2 ) {
         local player = GetPlayerFromUserID(params.userid);
         EntFireByHandle(player, "RunScriptCode", "ChangeTeamSafe(self, 3, true); self.ForceRespawn(); self.TakeDamage(1000000, 0, null)", 0, null, player)
