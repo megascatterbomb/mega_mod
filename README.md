@@ -112,14 +112,16 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 
 - **Hale's Health**:
   - Updated formula based on [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613).
+  - A version of this formula with slight tweaks to the numbers made it into the [official game](https://www.teamfortress.com/post.php?id=234882)!
 
-    | Mercs (N) | Vanilla Formula     | Resulting Health ($H(N)$) |
-    |:----------|:--------------------|:--------------------------|
-    | 1         | $H = 1000$          | H(1) = 1000               |
-    | 2 - 5     | $H = 40N^2 + 1300$  | H(2) = 1400; H(5) = 2300  |
-    | 6+        | $H = 40N^2 + 2000$  | H(6) = 3400; H(12) = 7700;<br>H(23) = 23100; H(31) = 40400;<br>H(63) = 160700; H(99) = 394000 |
+    | Mercs ($N$) | Vanilla Formula (2024)       | Resulting Health ($H(N)$)  |
+    |:----------|:-------------------------------|:---------------------------|
+    | 1         | $H = 1000$                     | H(1) = 1000                |
+    | 2 - 6     | $H = 45N^2 + 2350(0.3 + N/10)$ | H(2) = 1500; H(6) = 4100   |
+    | 7 - 23    | $H = 45N^2 + 2350$             | H(7) = 5000; H(12) = 9200;<br>H(23) = 26600 |
+    | 24+       | $H = 2000(N-23) + 26600$       | H(24) = 28600; H(31) = 42600;<br>H(63) = 106600; H(99) = 178600 |
 
-    | Mercs ($N$) | New Formula                    | Resulting Health ($H(N)$)|
+    | Mercs ($N$) | Custom formula                    | Resulting Health ($H(N)$)|
     |:----------|:-------------------------------|:---------------------------|
     | 1         | $H = 1000$                     | H(1) = 1000                |
     | 2 - 6     | $H = 41N^2 + 2350(0.3 + N/10)$ | H(2) = 1300; H(6) = 3500   |
@@ -127,12 +129,12 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     | 24+       | $H = 2000(N-23) + 24000$       | H(24) = 26000; H(31) = 40000;<br>H(63) = 104000; H(99) = 176000 |
 
 - **Gameplay Tweaks**:
-  - **Brave Jump**: 3 second cooldown, center HUD notification.
+  - ~~**Brave Jump**: 3 second cooldown, center HUD notification.~~ Using official dampening now.
   - **Round Timer**:
     - Setup: Adjusts to player count, 16-32s.
     - Point Unlock: Starts at $max(30, 10N)$ seconds, clamps to $max(30, 15n)$ seconds on player death.
   - **Rock-Paper-Scissors**: 1M damage to Hale (vanilla 100k isn't enough), high ragdoll knockback.
-  - **Mighty Slam**: Fixes code that's supposed to prevent low damage hits from being lethal.
+  - ~~**Mighty Slam**: Fixes code that's supposed to prevent low damage hits from being lethal.~~ Fixed officially.
 
 - **Control Point**:
   - Captures don't end rounds immediately; instead granting bonuses to the capping team.
