@@ -1,4 +1,4 @@
-characterTraitsClasses[6].OnDamageDealt <-  function(victim, params) {
+characterTraitsClasses[5].OnDamageDealt <-  function(victim, params) {
     if (params.damage_custom == TF_DMG_CUSTOM_BACKSTAB)
     {
         local attackerName = GetPropString(player, "m_szNetname");
@@ -31,7 +31,7 @@ characterTraitsClasses[6].OnDamageDealt <-  function(victim, params) {
     }
 }
 
-characterTraitsClasses[22].OnDamageDealt <-  function(victim, params) {
+characterTraitsClasses[20].OnDamageDealt <-  function(victim, params) {
     if (player.InCond(TF_COND_BLASTJUMPING) && WeaponIs(params.weapon, "market_gardener"))
         {
             params.damage = vsh_vscript.CalcStabDamage(victim) / 2.5;
@@ -41,7 +41,7 @@ characterTraitsClasses[22].OnDamageDealt <-  function(victim, params) {
             ClientPrint(null, 3, COLOR_MERCS + attackerName + " " + COLOR_SPECIAL + "gardened \x01Hale!")
         }
 }
-characterTraitsClasses[27].OnDamageDealt <-  function(victim, params) {
+characterTraitsClasses[25].OnDamageDealt <-  function(victim, params) {
     if (params.damage_custom == TF_DMG_CUSTOM_TELEFRAG)
         {
             local attackerName = GetPropString(player, "m_szNetname");
