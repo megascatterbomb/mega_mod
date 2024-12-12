@@ -9,6 +9,7 @@ local mods = [
     "pl_bloodwater"
     "pl_emerge"
     "plr_bananabay"
+    "plr_cutter"
     "plr_hacksaw"
     "plr_hacksaw_event"
     "plr_hightower"
