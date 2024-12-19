@@ -19,6 +19,9 @@ function BroadcastBestPlayers()
     local topN = 3;
     local damageBoard = GetDamageBoardSorted();
 
+    local seconds = floor(Time() - ::MM_VSH_ROUND_START);
+    local timeString = floor(seconds / 60) + ":" + (seconds % 60 < 10 ? "0" : "") + (seconds % 60);
+
     // Filter self-damage out of here.
     for(local i = 0; i < damageBoard.len(); i++) {
         if(IsBoss(damageBoard[i][0])) {
@@ -40,7 +43,8 @@ function BroadcastBestPlayers()
 
     ClientPrint(null, 3, COLOR_BOSS + "Saxton \x01killed "
         + COLOR_BOSS + (startMercCount - GetAliveMercCount()) + "/"
-        + startMercCount + "\x01 mercs. Top players this round:");
+        + startMercCount + "\x01 mercs in "
+        + COLOR_BOSS + timeString + "\x01. Top players this round:");
 
     for(local i = 0; i < damageBoard.len(); i++) {
         if (damageBoard[i][0].IsValid() == false) {
@@ -58,10 +62,10 @@ function BroadcastBestPlayers()
             local isRPSWinner = damageBoard[i][0] == VSH_RPS_WINNER;
             local color = isRPSWinner ? COLOR_SPECIAL : COLOR_MERCS;
             local out = "\x01#"+(i+1)+": "
+            +(isRPSWinner ? COLOR_SPECIAL + "(RPS) " : "")
             + COLOR_MERCS + name + "\x01 dealt "
             + color + damage + "\x01 damage ("
             + color + percent + "%\x01)";
-            local out = isRPSWinner ? COLOR_SPECIAL + "(RPS) " + out : out;
             ClientPrint(null, 3, out);
         }
     }
@@ -96,6 +100,11 @@ AddListener("death", 0, function(attacker, victim, params)
 AddListener("dead_ringer", 0, function(attacker, victim, params)
 {
     BroadcastDamageOnDeath(attacker, victim, true);
+});
+
+AddListener("setup_end", 11, function ()
+{
+    ::MM_VSH_ROUND_START <- Time();
 });
 
 AddListener("round_end", 5, function (winnerTeam)
