@@ -104,7 +104,7 @@ AddListener("round_end", 5, function (winnerTeam)
     RunWithDelay("BroadcastBestPlayers()", null, 0);
 });
 
-// OVERRIDE: Ensure death message gets printed to Hale when dead ringer is used.
+// OVERRIDE: __lizardlib\game_events.nut::OnGameEvent_player_death
 function OnGameEvent_player_death(params)
 {
     if (IsNotValidRound())
@@ -113,6 +113,7 @@ function OnGameEvent_player_death(params)
     if (!IsValidPlayer(player))
         return;
     local attacker = GetPlayerFromParams(params, "attacker");
+    // Ensure death message gets printed to Hale when dead ringer is used.
     if(params.death_flags & TF_DEATHFLAG.DEAD_RINGER) {
         FireListeners("dead_ringer", attacker, player, params);
         return;

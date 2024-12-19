@@ -1,4 +1,4 @@
-// Last player gets glow, if hale caps they all get glow
+// Last player gets glow
 characterTraitsClasses.push(class extends CharacterTrait
 {
     function OnTickAlive(timeDelta)

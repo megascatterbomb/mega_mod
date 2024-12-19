@@ -5,11 +5,12 @@ local newSweepingChargeCooldown = 5;
 // Contains replacement functions for each of saxton's abilities.
 // Needed to modify the ability cooldown at runtime.
 
+// OVERRIDE: bosses\saxton_hale\abilities\mighty_slam.nut::MightySlamTrait::Perform
 function MightySlamTrait::Perform() {
-    DispatchParticleEffect("hammer_impact_button", boss.GetOrigin() + Vector(0,0,20), Vector(0,0,0));
+    DispatchParticleEffect("vsh_mighty_slam", boss.GetOrigin() + Vector(0,0,20), Vector(0,0,0));
     EmitSoundOn("vsh_sfx.boss_slam_impact", boss);
     lastFrameDownVelocity = 0;
-    meter = -newMightySlamCooldown;
+    meter = -newMightySlamCooldown; // MEGAMOD: Set new cooldown
 
     local bossLocal = boss;
     BossPlayViewModelAnim(boss, "vsh_slam_land");
@@ -23,7 +24,7 @@ function MightySlamTrait::Perform() {
             if (damage <= 30 && target.GetHealth() <= 30)
                 return; // We don't want to have people on low health die because Hale just Slammed a mile away.
             target.TakeDamageEx(
-                bossLocal,
+                custom_dmg_slam_collateral,
                 bossLocal,
                 weapon,
                 deltaVector * 1250,
@@ -43,11 +44,12 @@ function MightySlamTrait::Perform() {
     ScreenShake(boss.GetCenter(), 10, 2.5, 1, 1000, 0, true);
 }
 
+// OVERRIDE: bosses\saxton_hale\abilities\saxton_punch.nut::SaxtonPunchTrait::Perform
 function SaxtonPunchTrait::Perform(victim)
 {
     if (meter != 0)
         return false;
-    meter -= newSaxtonPunchCooldown;
+    meter -= -newSaxtonPunchCooldown;
 
     vsh_vscript.Hale_SetRedArm(boss, false);
 
@@ -71,7 +73,7 @@ function SaxtonPunchTrait::Perform(victim)
             if (!target.IsPlayer())
                 damage *= 2;
             target.TakeDamageEx(
-                boss,
+                custom_dmg_saxton_punch_aoe,
                 boss,
                 boss.GetActiveWeapon(),
                 deltaVector * 1250,
@@ -92,6 +94,7 @@ function SaxtonPunchTrait::Perform(victim)
     return true;
 }
 
+// OVERRIDE: bosses\saxton_hale\abilities\sweeping_charge.nut::SweepingChargeTrait::Perform
 function SweepingChargeTrait::Finish()
 {
     vsh_vscript.Hale_SetBlueArm(boss, false);
@@ -106,6 +109,7 @@ function SweepingChargeTrait::Finish()
 
 // Update the meters to show the correct cooldowns
 
+// OVERRIDE: bosses\saxton_hale\abilities\mighty_slam.nut::MightySlamTrait::MeterAsPercentage
 function MightySlamTrait::MeterAsPercentage()
 {
     if (meter < 0)
@@ -113,6 +117,7 @@ function MightySlamTrait::MeterAsPercentage()
     return inUse ? 200 : 100
 }
 
+// OVERRIDE: bosses\saxton_hale\abilities\saxton_punch.nut::SaxtonPunchTrait::MeterAsPercentage
 function SaxtonPunchTrait::MeterAsPercentage()
 {
     if (meter < 0)
@@ -120,6 +125,7 @@ function SaxtonPunchTrait::MeterAsPercentage()
     return 200;
 }
 
+// OVERRIDE: bosses\saxton_hale\abilities\sweeping_charge.nut::SweepingChargeTrait::MeterAsPercentage
 function SweepingChargeTrait::MeterAsPercentage()
 {
     if (meter < 0)

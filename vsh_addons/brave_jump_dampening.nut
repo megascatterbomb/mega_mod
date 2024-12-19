@@ -1,9 +1,9 @@
-local jumped = false;
 local jumpCooldown = 3;
-local lastDisplayTime = Time()
 
+// OVERRIDE: bosses\generic\abilities\brave_jump.nut::BraveJumpTrait::OnFrameTickAlive
 function BraveJumpTrait::OnFrameTickAlive()
 {
+    local time = Time();
     local buttons = GetPropInt(boss, "m_nButtons");
 
     if (!boss.IsOnGround())
@@ -14,45 +14,46 @@ function BraveJumpTrait::OnFrameTickAlive()
             jumpStatus = BOSS_JUMP_STATUS.CAN_DOUBLE_JUMP;
     }
     else
-        jumpStatus = BOSS_JUMP_STATUS.WALKING;
-
-    if (buttons & IN_JUMP && jumpStatus == BOSS_JUMP_STATUS.CAN_DOUBLE_JUMP)
     {
-        if(Time() < lastTimeJumped + jumpCooldown)
+        if (jumpStatus == BOSS_JUMP_STATUS.DOUBLE_JUMPED)
         {
-            // if (lastDisplayTime + 0.7 <= Time())
-            // {
-            //     // shows brave jump timer in chat upon trying to doublejump (to counteract some players not being able to see game_text_tf)
-            //     // hello hi kiwi here probablyt a better way to do this but im stupid :steamhappy:
-            //     local jumpTimeCeil = ceil(3 - (Time() - lastTimeJumped))
-            //     ClientPrint(boss, 4, "\x03Brave Jump ready in " + jumpTimeCeil + " seconds.")
-            //     lastDisplayTime = Time()
-            // }
-            return
+            boss.SetGravity(1);
         }
+        jumpStatus = BOSS_JUMP_STATUS.WALKING;
+    }
 
-        lastTimeJumped = Time();
-        jumped = true;
-        if (!IsRoundSetup() && Time() - voiceLinePlayed > 1.5)
+    if (buttons & IN_JUMP && jumpStatus == BOSS_JUMP_STATUS.CAN_DOUBLE_JUMP && charges > 0)
+    {
+        if (!IsRoundSetup() && time - voiceLinePlayed > 1.5)
         {
-            voiceLinePlayed = Time();
-            EmitPlayerVO(boss, "jump");
+            voiceLinePlayed = time;
+            if (charges > 0)
+                EmitPlayerVO(boss, "jump");
         }
 
         jumpStatus = BOSS_JUMP_STATUS.DOUBLE_JUMPED;
         Perform();
+        charges = 0;
+        braveJumpCharges = 0;
     }
 
-    if (!jumped && Time() > lastTimeJumped + 30)
-    {
+    if (shouldNotifyJump && time > lastTimeJumped + API_GetInt("setup_length") + 30)
         NotifyJump();
+    if (time - lastTimeJumped >= jumpCooldown)
+    {
+        charges = 4;
+        braveJumpCharges = 4;
     }
 }
 
 local cooldown_text_tf;
 
+// OVERRIDE: bosses\generic\abilities\brave_jump.nut::BraveJumpTrait::Perform
 function BraveJumpTrait::Perform()
 {
+    shouldNotifyJump = false;
+    lastTimeJumped = Time();
+
     local buttons = GetPropInt(boss, "m_nButtons");
     local eyeAngles = boss.EyeAngles();
     local forward = eyeAngles.Forward();
@@ -77,8 +78,10 @@ function BraveJumpTrait::Perform()
     newVelocity.x = forward.x * forwardmove + left.x * sidemove;
     newVelocity.y = forward.y * forwardmove + left.y * sidemove;
     newVelocity.Norm();
-    newVelocity *= 300;
-    newVelocity.z = jumpForce
+    newVelocity *= 300 * jumpSpamForwardVel[4];
+    newVelocity.z = jumpForce * jumpSpamUpwardVel[4];
+
+    boss.SetGravity(jumpSpamGrav[4]);
 
     local currentVelocity = boss.GetAbsVelocity();
     if (currentVelocity.z < 300)
@@ -95,6 +98,7 @@ function BraveJumpTrait::Perform()
     RunWithDelay("BraveJumpNotifyJump(-1)", null, jumpCooldown + 2);
 }
 
+// OVERRIDE: bosses\generic\abilities\brave_jump.nut::BraveJumpTrait::NotifyJump
 function BraveJumpTrait::NotifyJump()
 {
     local boss = GetBossPlayers()[0];
@@ -110,4 +114,45 @@ function BraveJumpNotifyJump(secondsLeft) {
     } else {
         ClientPrint(boss, 4, "Brave Jump ready in " + secondsLeft + " seconds.")
     }
+}
+
+// OVERRIDE: bosses\generic\misc\ability_hud.nut::AbilityHudTrait::OnTickAlive
+function AbilityHudTrait::OnTickAlive(timeDelta)
+{
+    if (!(player in hudAbilityInstances))
+    return;
+
+    local progressBarTexts = [];
+    local overlay = "";
+    foreach(ability in hudAbilityInstances[player])
+    {
+        local percentage = ability.MeterAsPercentage();
+        local progressBarText = BigToSmallNumbers(ability.MeterAsNumber())+" ";
+        local i = 13;
+        for(; i < clampCeiling(100, percentage); i+=13)
+            progressBarText += "▰";
+        for(; i <= 100; i+=13)
+            progressBarText += "▱";
+        progressBarTexts.push(progressBarText);
+        // MEGAMOD: Don't gray out Mighty Slam as it's always available because of our Brave Jump changes.
+        if (percentage >= 100)
+            overlay += "1";
+        else
+            overlay += "0";
+    }
+    if (braveJumpCharges >= 2)
+        overlay += "0";
+    else
+        overlay += cos(Time() * 12) < 0 ? "1" : "2";
+
+    EntFireByHandle(game_text_charge, "AddOutput", "message "+progressBarTexts[0], 0, boss, boss);
+    EntFireByHandle(game_text_charge, "Display", "", 0, boss, boss);
+
+    EntFireByHandle(game_text_punch, "AddOutput", "message "+progressBarTexts[1], 0, boss, boss);
+    EntFireByHandle(game_text_punch, "Display", "", 0, boss, boss);
+
+    EntFireByHandle(game_text_slam, "AddOutput", "message "+progressBarTexts[2], 0, boss, boss);
+    EntFireByHandle(game_text_slam, "Display", "", 0, boss, boss);
+
+    player.SetScriptOverlayMaterial(API_GetString("ability_hud_folder") + "/" + overlay);
 }

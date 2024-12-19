@@ -1,3 +1,4 @@
+// OVERRIDE: mercs\merc_traits\single_class\spy_backstab.nut::OnDamageDealt
 characterTraitsClasses[5].OnDamageDealt <-  function(victim, params) {
     if (params.damage_custom == TF_DMG_CUSTOM_BACKSTAB)
     {
@@ -31,6 +32,7 @@ characterTraitsClasses[5].OnDamageDealt <-  function(victim, params) {
     }
 }
 
+// OVERRIDE: mercs\merc_traits\single_class\soldier_market_gardener.nut::OnDamageDealt
 characterTraitsClasses[20].OnDamageDealt <-  function(victim, params) {
     if (player.InCond(TF_COND_BLASTJUMPING) && WeaponIs(params.weapon, "market_gardener"))
         {
@@ -41,6 +43,7 @@ characterTraitsClasses[20].OnDamageDealt <-  function(victim, params) {
             ClientPrint(null, 3, COLOR_MERCS + attackerName + " " + COLOR_SPECIAL + "gardened \x01Hale!")
         }
 }
+// OVERRIDE: mercs\merc_traits\single_class\engineer_telefrag_scaling.nut::OnDamageDealt
 characterTraitsClasses[25].OnDamageDealt <-  function(victim, params) {
     if (params.damage_custom == TF_DMG_CUSTOM_TELEFRAG)
         {

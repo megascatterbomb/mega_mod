@@ -18,7 +18,7 @@
     return floor(unrounded / 100) * 100;
 }
 
-// OVERRIDE: Reduce health for higher player counts
+// OVERRIDE: bosses\generic\misc\setup_stat_refresh.nut::CalcBossMaxHealth
 ::CalcBossMaxHealth <- function(mercCount)
 {
     local health = GetStartingHealth(mercCount);

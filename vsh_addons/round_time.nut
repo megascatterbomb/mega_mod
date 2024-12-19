@@ -33,7 +33,8 @@ AddListener("setup_start", -10, function ()
     EntFireByHandle(team_round_timer, "Resume", "", 5, null, null);
 });
 
-// OVERRIDE: accomodate long setup time.
+// OVERRIDE: bosses\generic\voice_lines\round_start.nut::PlayRoundStartVO
+// Accomodate long setup time.
 function PlayRoundStartVO()
 {
     if (IsRoundOver())
@@ -77,7 +78,7 @@ AddListener("setup_end", 0, function()
     RunWithDelay("ClampRoundTime()", null, 0.05);
 });
 
-// OVERRIDE: Replacement for listener in /_gamemode/round_logic.nut
+// OVERRIDE: _gamemode\round_logic.nut::AddListener("tick_always", 8, ... )
 // Removes vanilla logic for timer clamp.
 EraseListener("tick_always", 8, 0);
 AddListener("tick_always", 8, function(timeDelta)
@@ -100,7 +101,7 @@ AddListener("tick_always", 8, function(timeDelta)
         return;
     }
 
-    // Removed as we have a replacement
+    // MEGAMOD: Removed as we have a replacement
     // if (GetAliveMercCount() <= 5 && GetPropFloat(team_round_timer, "m_flTimeRemaining") > 60)
     //    EntFireByHandle(team_round_timer, "SetTime", "60", 0, null, null);
 

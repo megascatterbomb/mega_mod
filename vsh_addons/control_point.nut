@@ -10,7 +10,8 @@ local haleLastDamage = Time();
 local mercsLastDamage = Time();
 local idleTime = 30;
 
-// OVERRIDE: Replace stalemate function to account for a captured control point.
+// OVERRIDE: _gamemode\gamerules.nut::PrepareStalemate
+// Replace stalemate function to account for a captured control point.
 function PrepareStalemate()
 {
     local delay = clampFloor(60, API_GetFloat("stalemate_time"));
@@ -30,7 +31,8 @@ function PrepareStalemate()
     RunWithDelay("EndRoundTime()", null, delay);
 }
 
-// OVERRIDE: Prevent screenshake from the bleed damage dealt if RED caps
+// OVERRIDE: bosses\generic\misc\screen_shake.nut::ScreenShakeTrait::OnDamageDealt
+// Prevent screenshake from the bleed damage dealt if RED caps
 function ScreenShakeTrait::OnDamageDealt(victim, params)
 {
     if (victim != null && victim.IsValid() && !IsBoss(victim))

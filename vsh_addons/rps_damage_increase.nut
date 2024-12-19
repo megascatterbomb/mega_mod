@@ -1,6 +1,7 @@
 ::VSH_RPS_WINNER <- null;
 
-// OVERRIDE: Increase RPS damage to 1 Million to account for very high hale health
+// OVERRIDE: bosses\generic\misc\taunt_handler.nut::TauntHandlerTrait::OnRPS
+// Increase RPS damage to 1 Million to account for very high hale health
 function TauntHandlerTrait::OnRPS(winner, loser, params)
 {
     local voiceLine = null;
@@ -10,7 +11,7 @@ function TauntHandlerTrait::OnRPS(winner, loser, params)
     {
         lostByRPS = true;
         voiceLine = RandomInt(1, 2) == 1 ? "rps_lose" : "rps_lose_"+["rock","paper","scissors"][params.loser_rps];
-        ::VSH_RPS_WINNER <- winner;
+        ::VSH_RPS_WINNER <- winner; // MEGAMOD: Track winner for damage summary purposes.
         RunWithDelay2(this, 3, function(winner, loser) {
             if (!IsValidPlayer(loser))
                 return;
@@ -25,7 +26,7 @@ function TauntHandlerTrait::OnRPS(winner, loser, params)
                 attacker.GetActiveWeapon(),
                 deltaVector,
                 attacker.GetOrigin(),
-                999999, // <- the part we care about
+                999999, // MEGAMOD: Up the damage.
                 0);
         }, winner, loser);
     }

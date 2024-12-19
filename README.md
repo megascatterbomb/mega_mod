@@ -113,6 +113,7 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 - **Hale's Health**:
   - Updated formula based on [vsh_facility](https://steamcommunity.com/sharedfiles/filedetails/?id=3225055613).
   - A version of this formula with slight tweaks to the numbers made it into the [official game](https://www.teamfortress.com/post.php?id=234882)!
+  - Decided to stick with the original numbers as this mod is likely going to be used in higher-skilled communities.
 
     | Mercs ($N$) | Vanilla Formula (2024)       | Resulting Health ($H(N)$)  |
     |:----------|:-------------------------------|:---------------------------|
@@ -129,12 +130,12 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     | 24+       | $H = 2000(N-23) + 24000$       | H(24) = 26000; H(31) = 40000;<br>H(63) = 104000; H(99) = 176000 |
 
 - **Gameplay Tweaks**:
-  - ~~**Brave Jump**: 3 second cooldown, center HUD notification.~~ Using official dampening now.
+  - **Brave Jump**: 3 second cooldown, center HUD notification alongside repurposed brave jump icon.
   - **Round Timer**:
     - Setup: Adjusts to player count, 16-32s.
     - Point Unlock: Starts at $max(30, 10N)$ seconds, clamps to $max(30, 15n)$ seconds on player death.
   - **Rock-Paper-Scissors**: 1M damage to Hale (vanilla 100k isn't enough), high ragdoll knockback.
-  - ~~**Mighty Slam**: Fixes code that's supposed to prevent low damage hits from being lethal.~~ Fixed officially.
+  - **Mighty Slam**: Do not prevent weighdown when on jump cooldown.
 
 - **Control Point**:
   - Captures don't end rounds immediately; instead granting bonuses to the capping team.

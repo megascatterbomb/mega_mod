@@ -2,7 +2,7 @@ function GetKillstreak(damage) {
     return floor(damage / 200);
 }
 
-// OVERRIDE: Add killstreaks
+// OVERRIDE: _gamemode\scoreboard.nut::AddListener("player_hurt", 5, ... )
 EraseListener("player_hurt", 5, 0);
 AddListener("player_hurt", 5, function (attacker, victim, params)
 {
