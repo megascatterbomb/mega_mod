@@ -63,16 +63,18 @@ function AdjustHaleHealth(booted)
     {
         local damageByPlayer = GetRoundDamage(player);
         adjustedMercCount--;
-        damageToDeal += clampFloor(0, adjustedMaxHealth - GetStartingHealth(adjustedMercCount) - damageByPlayer);
+        local damageToAdd = clampFloor(0, adjustedMaxHealth - GetStartingHealth(adjustedMercCount) - damageByPlayer);
+        damageToDeal += damageToAdd;
         adjustedMaxHealth = GetStartingHealth(adjustedMercCount);
     }
 
     // This is the formula used in received_damage_scaling
-    local mercMultiplier = clampFloor(1, 1.85 - (GetAliveMercCount() * 1.0) / adjustedMercCount);
+    local mercMultiplier = clampFloor(1, 1.85 - (GetAliveMercCount() * 1.0 / adjustedMercCount));
 
-    local healthPenalty = floor(clampCeiling((currHealth - 100) / mercMultiplier,  damageToDeal * (currHealth / oldMaxHealth) / mercMultiplier));
+    // Multiply by 2/3 to counter the damage vulnerability hale has to blast damage.
+    local healthPenalty = floor(clampCeiling((currHealth - 100) / mercMultiplier, damageToDeal * (currHealth / oldMaxHealth) / mercMultiplier ) * 2.0 / 3.0);
 
-    if(healthPenalty <= 0) return;
+    if(healthPenalty < 1) return;
 
     boss.TakeDamageCustom(null, boss, null, Vector(0.0000001, 0.0000001, 0.0000001), Vector(0.0000001, 0.0000001, 0.0000001), healthPenalty, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
 
