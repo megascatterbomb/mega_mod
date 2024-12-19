@@ -76,7 +76,8 @@ characterTraitsClasses[25].OnDamageDealt <-  function(victim, params) {
     if (params.damage_custom == TF_DMG_CUSTOM_TELEFRAG)
         {
             local attackerName = GetPropString(player, "m_szNetname");
-            params.damage = vsh_vscript.CalcStabDamage(victim) * 2;
+            // MEGAMOD: Telefrags deal 10x the damage they'd normally do
+            params.damage = vsh_vscript.CalcStabDamage(victim) * 2 * 10;
             local count = IncrementAndGetSpecialScoreboard(player, ::SPECIAL_TELEFRAG);
             ClientPrint(null, 3, COLOR_MERCS + attackerName + " " + COLOR_SPECIAL + "telefragged \x01Hale! (#" + count + ")")
         }

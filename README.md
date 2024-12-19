@@ -136,6 +136,7 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     - Point Unlock: Starts at $max(30, 10N)$ seconds, clamps to $max(30, 15n)$ seconds on player death.
   - **Rock-Paper-Scissors**: 1M damage to Hale (vanilla 100k isn't enough), high ragdoll knockback.
   - **Mighty Slam**: Do not prevent weighdown when on jump cooldown.
+  - **Telefrags**: Deal 10x the damage they'd normally do, as they are so rare.
 
 - **Control Point**:
   - Captures don't end rounds immediately; instead granting bonuses to the capping team.
