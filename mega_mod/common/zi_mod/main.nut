@@ -680,9 +680,11 @@ function MM_ZI_EnableOvertime() {
 
     foreach( _hNextPlayer in GetAllPlayers() ) {
         if (_hNextPlayer.GetTeam() == 3 && GetPropInt(_hNextPlayer, "m_lifeState") == 0 && floor(MM_ZI_OVERTIME_DAMAGE) >= 1) {
+            local vecPunch = GetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle");
             _hNextPlayer.TakeDamageCustom(null, _hNextPlayer, null,
                 Vector(Epsilon, Epsilon, Epsilon), _hNextPlayer.GetOrigin(),
                 floor(MM_ZI_OVERTIME_DAMAGE), DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
+            SetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle", vecPunch);
         }
     }
 
