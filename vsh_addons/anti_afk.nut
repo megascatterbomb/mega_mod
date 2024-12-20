@@ -71,8 +71,8 @@ function AdjustHaleHealth(booted)
     // This is the formula used in received_damage_scaling
     local mercMultiplier = clampFloor(1, 1.85 - (GetAliveMercCount() * 1.0 / adjustedMercCount));
 
-    // Multiply by 2/3 to counter the damage vulnerability hale has to blast damage.
-    local healthPenalty = floor(clampCeiling((currHealth - 100) / mercMultiplier, damageToDeal * (currHealth / oldMaxHealth) / mercMultiplier ) * 2.0 / 3.0);
+    // Divide by 1.25 to counter the damage vulnerability hale has to fire damage.
+    local healthPenalty = floor(clampCeiling((currHealth - 100) / mercMultiplier, damageToDeal * (currHealth / oldMaxHealth) / mercMultiplier ) / 1.25);
 
     if(healthPenalty < 1) return;
 

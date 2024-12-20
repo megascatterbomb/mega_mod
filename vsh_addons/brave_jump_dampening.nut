@@ -41,8 +41,8 @@ function BraveJumpTrait::OnFrameTickAlive()
         NotifyJump();
     if (time - lastTimeJumped >= jumpCooldown)
     {
-        charges = 4;
-        braveJumpCharges = 4;
+        charges = 5;
+        braveJumpCharges = 5;
     }
 }
 
@@ -78,10 +78,10 @@ function BraveJumpTrait::Perform()
     newVelocity.x = forward.x * forwardmove + left.x * sidemove;
     newVelocity.y = forward.y * forwardmove + left.y * sidemove;
     newVelocity.Norm();
-    newVelocity *= 300 * jumpSpamForwardVel[4];
-    newVelocity.z = jumpForce * jumpSpamUpwardVel[4];
+    newVelocity *= 300 * jumpSpamForwardVel[jumpSpamForwardVel.len() - 1];
+    newVelocity.z = jumpForce * jumpSpamUpwardVel[jumpSpamUpwardVel.len() - 1];
 
-    boss.SetGravity(jumpSpamGrav[4]);
+    boss.SetGravity(jumpSpamGrav[jumpSpamGrav.len() - 1]);
 
     local currentVelocity = boss.GetAbsVelocity();
     if (currentVelocity.z < 300)
@@ -114,45 +114,4 @@ function BraveJumpNotifyJump(secondsLeft) {
     } else {
         ClientPrint(boss, 4, "Brave Jump ready in " + secondsLeft + " seconds.")
     }
-}
-
-// OVERRIDE: bosses\generic\misc\ability_hud.nut::AbilityHudTrait::OnTickAlive
-function AbilityHudTrait::OnTickAlive(timeDelta)
-{
-    if (!(player in hudAbilityInstances))
-    return;
-
-    local progressBarTexts = [];
-    local overlay = "";
-    foreach(ability in hudAbilityInstances[player])
-    {
-        local percentage = ability.MeterAsPercentage();
-        local progressBarText = BigToSmallNumbers(ability.MeterAsNumber())+" ";
-        local i = 13;
-        for(; i < clampCeiling(100, percentage); i+=13)
-            progressBarText += "▰";
-        for(; i <= 100; i+=13)
-            progressBarText += "▱";
-        progressBarTexts.push(progressBarText);
-        // MEGAMOD: Don't gray out Mighty Slam as it's always available because of our Brave Jump changes.
-        if (percentage >= 100)
-            overlay += "1";
-        else
-            overlay += "0";
-    }
-    if (braveJumpCharges >= 2)
-        overlay += "0";
-    else
-        overlay += cos(Time() * 12) < 0 ? "1" : "2";
-
-    EntFireByHandle(game_text_charge, "AddOutput", "message "+progressBarTexts[0], 0, boss, boss);
-    EntFireByHandle(game_text_charge, "Display", "", 0, boss, boss);
-
-    EntFireByHandle(game_text_punch, "AddOutput", "message "+progressBarTexts[1], 0, boss, boss);
-    EntFireByHandle(game_text_punch, "Display", "", 0, boss, boss);
-
-    EntFireByHandle(game_text_slam, "AddOutput", "message "+progressBarTexts[2], 0, boss, boss);
-    EntFireByHandle(game_text_slam, "Display", "", 0, boss, boss);
-
-    player.SetScriptOverlayMaterial(API_GetString("ability_hud_folder") + "/" + overlay);
 }
