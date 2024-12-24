@@ -31,6 +31,7 @@ local globalMods = [
     "5cp_anti_stalemate"
     "respawn_mod"
     "zi_mod"
+    "jakemod"
 ];
 
 printl("MEGAMOD: Loading mega_mod/util.nut...");
