@@ -37,23 +37,24 @@ function ShouldApply() {
     return false;
 }
 
-if (ShouldApply()) {
+function IsGlobal() {
+    return false;
+}
+
+ApplyMod <- function () {
     IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
 
-    local root = getroottable();
-    local prefix = DoUniqueString("mod_cp");
-    local mod_cp = root[prefix] <- {};
-
-    mod_cp.OnGameEvent_teamplay_round_start <- function (event) {
+    this.OnGameEvent_teamplay_round_start <- function (event) {
         if(IsInWaitingForPlayers()) return;
         printl("MEGAMOD: Loading 5cp mod...");
         MM_5CP_Activate();
     }
 
-    mod_cp.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
+    this.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
     ::ClearGameEventCallbacks <- function () {
-        mod_cp.ClearGameEventCallbacks()
-        ::__CollectGameEventCallbacks(mod_cp)
-    }
-    ::__CollectGameEventCallbacks(mod_cp);
-}
+        this.ClearGameEventCallbacks()
+        ::__CollectGameEventCallbacks(this)
+    }.bindenv(this);
+
+    ::__CollectGameEventCallbacks(this);
+}.bindenv(this);

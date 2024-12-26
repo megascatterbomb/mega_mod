@@ -37,24 +37,26 @@ function ShouldApply() {
     return true;
 }
 
-if (!ShouldApply()) return;
-
-IncludeScript("mega_mod/common/respawn_mod.nut");
-
-
-local root = getroottable();
-local prefix = DoUniqueString("mod_respawns");
-local mod_respawns = root[prefix] <- {};
-
-mod_respawns.OnGameEvent_teamplay_round_start <- function (event) {
-    if(IsInWaitingForPlayers()) return;
-    printl("MEGAMOD: Loading respawn mod...");
-    MM_Respawn_Mod();
+function IsGlobal() {
+    return false;
 }
 
-mod_respawns.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
-::ClearGameEventCallbacks <- function () {
-    mod_respawns.ClearGameEventCallbacks()
-    ::__CollectGameEventCallbacks(mod_respawns)
-}
-::__CollectGameEventCallbacks(mod_respawns);
+ApplyMod <- function () {
+    IncludeScript("mega_mod/common/respawn_mod.nut");
+
+    this.OnGameEvent_teamplay_round_start <- function (event) {
+        if(IsInWaitingForPlayers()) return;
+        printl("MEGAMOD: Loading respawn mod...");
+        MM_Respawn_Mod();
+    }
+    
+    this.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
+    ::ClearGameEventCallbacks <- function () {
+        this.ClearGameEventCallbacks()
+        ::__CollectGameEventCallbacks(this)
+    }.bindenv(this);
+    
+    ::__CollectGameEventCallbacks(this);
+}.bindenv(this);
+
+

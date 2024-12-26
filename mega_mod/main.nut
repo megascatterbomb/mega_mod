@@ -23,27 +23,58 @@ local mods = [
 ];
 
 local mapName = GetMapName();
-local index = mods.find(mapName);
+local mapModIndex = mods.find(mapName);
+local hasMapMod = mapModIndex != null;
 
-// These are ALWAYS loaded (unless there's a map specific mod)
-// if you only want to apply mods on some maps, do your own checks!
+// These are loaded unless there's a map specific mod.
+// To create a global mod: create a file in mega_mod/global/ with the name of the mod.
+// Implement these functions:
+// function ShouldApply() // Return true if the mod should be applied, false if not.
+// function IsGlobal() // Return true if the mod should be applied even if there's a map specific mod.
+// function ApplyMod() // Apply the mod.
+// Remember to bind the functions to their scopes, otherwise things might not work as expected!
 local globalMods = [
     "5cp_anti_stalemate"
     "respawn_mod"
     "zi_mod"
 ];
 
+// You should not have to touch anything below this point.
+
 printl("MEGAMOD: Loading mega_mod/util.nut...");
 IncludeScript("mega_mod/util.nut")
 printl("MEGAMOD: util.nut started");
 
-if(index != null) {
+if(hasMapMod) {
     printl("MEGAMOD: Found mod for " + mapName + ". Attempting to load...");
     IncludeScript("mega_mod/mapmods/" + mapName + ".nut")
     printl("MEGAMOD: " + mapName + ".nut started")
 } else {
-    printl("" + mapName + " is not listed within mega_mod.nut. Checking global mods...");
-    foreach(mod in globalMods) {
-        IncludeScript("mega_mod/global/" + mod + ".nut");
+    printl("MEGAMOD: " + mapName + " is not listed within mega_mod.nut.");
+}
+
+printl("MEGAMOD: Loading global mods...");
+
+local root = getroottable();
+
+foreach(mod in globalMods) {
+    local prefix = DoUniqueString(mod);
+    local modTable = root[prefix] <- {};
+    try {
+        IncludeScript("mega_mod/global/" + mod + ".nut", modTable);
+    } catch (e) {
+        printl("MEGAMOD ERROR: Global mod '" + mod + "' does not exist!");
+        continue;
+    }
+    try {
+        if(modTable.ShouldApply() && (!hasMapMod || modTable.IsGlobal())) {
+            printl("MEGAMOD: Loading global mod '" + mod + "'...");
+            modTable.ApplyMod();
+            printl("MEGAMOD: Loaded global mod '" + mod + "'");
+        } else {
+            // printl("MEGAMOD: Skipping global mod '" + mod + "'...");
+        }
+    } catch (e) {
+        printl("MEGAMOD ERROR: Global mod '" + mod + "' has not implemented the required functions!");
     }
 }

@@ -14,28 +14,29 @@ function ShouldApply() {
     return true;
 }
 
-if (!ShouldApply()) return;
-
-local root = getroottable();
-local prefix = DoUniqueString("zi_mod");
-local zi_mod = root[prefix] <- {};
-
-IncludeScript("mega_mod/common/zi_mod/main.nut");
-
-zi_mod.OnGameEvent_teamplay_round_start <- function (event) {
-    if(IsInWaitingForPlayers()) return;
-    printl("MEGAMOD: Loading Zombie Infection mod...");
-    MM_Zombie_Infection();
+function IsGlobal() {
+    return false;
 }
 
-zi_mod.OnGameEvent_player_team <- function (event) {
-    MM_ZI_OnPlayerTeam(event);
-}
+ApplyMod <- function () {
+    IncludeScript("mega_mod/common/zi_mod.nut");
 
-zi_mod.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
-::ClearGameEventCallbacks <- function () {
-    zi_mod.ClearGameEventCallbacks()
-    ::__CollectGameEventCallbacks(zi_mod)
-}
+    this.OnGameEvent_teamplay_round_start <- function (event) {
+        if(IsInWaitingForPlayers()) return;
+        printl("MEGAMOD: Loading Zombie Infection mod...");
+        MM_Zombie_Infection();
+    }
+    
+    this.OnGameEvent_player_team <- function (event) {
+        MM_ZI_OnPlayerTeam(event);
+    }
+    
+    this.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
+    ::ClearGameEventCallbacks <- function () {
+        this.ClearGameEventCallbacks()
+        ::__CollectGameEventCallbacks(this)
+    }.bindenv(this);
+    
+    ::__CollectGameEventCallbacks(this);
+}.bindenv(this);
 
-::__CollectGameEventCallbacks(zi_mod);
