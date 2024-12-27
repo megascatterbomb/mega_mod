@@ -198,3 +198,8 @@ Saved over 300 edicts by removing gameplay-irrelevant elements.
 In Payload, the team scores are supposed to reflect how many control points that team has captured.
 - In pl_emerge, that setting simply isn't enabled; this mod turns it on.
 - In [pl_cactuscanyon_redux_final2](https://steamcommunity.com/sharedfiles/filedetails/?id=2579644293), some of the outputs that trigger point captures trigger twice; adding a slight delay fixes this.
+
+## Prevent 'Meet the Medic" taunt from being used in water.
+
+For the uninitiated, this taunt creates a VERY loud noise if the doves happen to spawn in water. This mod applies a countermeasure.
+Interally referred to as the "jakemod" after the person who "inspired" this mod's existence.
