@@ -36,3 +36,9 @@ function MM_KillAllButOneByName(name) {
     }
     return killed;
 }
+
+// Create thinks that aren't attached to any particular entity
+function MM_CreateDummyThink(funcName) {
+    local relay = Entities.CreateByClassname("logic_relay");
+    AddThinkToEnt(relay, funcName);
+}
