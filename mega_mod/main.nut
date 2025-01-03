@@ -16,6 +16,8 @@ local mods = [
     "plr_hightower_event"
     "plr_nightfall_final"
     "plr_pipeline"
+    "sd_doomsday"
+    "sd_doomsday_event"
 
     // Support for updated versions of workshop maps is not guaranteed
     "workshop/pl_cactuscanyon_redux_final2.ugc2579644293"

@@ -51,6 +51,13 @@ On `cp_standin_final`, the same anti-stalemate functionality is present, with th
 - The team with the active KOTH timer is determined by which team owns more points. If tied, both timers pause.
 - To win by point captures, all three points must be uncontested.
 
+## Arena (VScript)
+
+These improvements apply only to the [VScript Arena](https://steamcommunity.com/workshop/filedetails/?id=3360196477) community fix by Lizard of Oz.
+
+- Added a 3 minute round timer. When elapsed, the round is won by whichever team has more players alive, stalemating if a tie.
+- Reduced win limit to 3.
+
 ## Payload Race
 
 ### Added Overtime
@@ -70,6 +77,12 @@ In multi-stage maps, each win on a previous stage will provide winning teams wit
 - Nightfall:
   - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
   - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.
+
+## Special Delivery
+
+Added a 15 minute round timelimit. When elapsed, the round stalemates immediately (or goes to bumper cars on sd_doomsday_event).
+
+The time limit automatically reduces based on mp_timelimit.
 
 ## Tug of War
 
