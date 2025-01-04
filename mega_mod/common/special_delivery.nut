@@ -5,6 +5,7 @@
     if(oldTimer) {
         EntityOutputs.AddOutput(oldTimer, "OnSetupFinished", "!self", "RunScriptCode", "MM_SDSetupEnd()", 0, -1);
     }
+    ::MM_SDCaptured <- false;
 }
 
 ::MM_SDSetupEnd <- function () {
@@ -48,7 +49,15 @@
     team_round_timer.AcceptInput("Resume", "", null, null);
 }
 
+::MM_SDCapture <- function () {
+    ::MM_SDCaptured <- true;
+    Entities.FindByClassname(null, "team_round_timer").Kill();
+}
+
 ::MM_SDRoundEnd <- function () {
+    if(::MM_SDCaptured) {
+        return;
+    }
     local game_round_win = SpawnEntityFromTable("game_round_win", {
         targetname = "mm_game_round_stalemate",
         force_map_reset = true,
