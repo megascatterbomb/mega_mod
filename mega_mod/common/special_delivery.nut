@@ -50,6 +50,7 @@
 }
 
 ::MM_SDCapture <- function () {
+    printl("MEGAMOD: Round end by capture.");
     ::MM_SDCaptured <- true;
     Entities.FindByClassname(null, "team_round_timer").Kill();
 }
