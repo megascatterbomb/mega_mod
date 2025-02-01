@@ -41,7 +41,7 @@ function BroadcastBestPlayers()
     }
     local playerDamage = 0;
 
-    ClientPrint(null, 3, COLOR_BOSS + "Saxton \x01killed "
+    ClientPrint(null, 3, COLOR_BOSS + HALENAME + " \x01killed "
         + COLOR_BOSS + (startMercCount - GetAliveMercCount()) + "/"
         + startMercCount + "\x01 mercs in "
         + COLOR_BOSS + timeString + "\x01. Top players this round:");
