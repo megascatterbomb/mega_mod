@@ -41,7 +41,7 @@ function BroadcastBestPlayers()
     }
     local playerDamage = 0;
 
-    ClientPrint(null, 3, COLOR_BOSS + HALENAME + " \x01killed "
+    ClientPrint(null, 3, COLOR_BOSS + haleName + " \x01killed "
         + COLOR_BOSS + (startMercCount - GetAliveMercCount()) + "/"
         + startMercCount + "\x01 mercs in "
         + COLOR_BOSS + timeString + "\x01. Top players this round:");
@@ -105,6 +105,7 @@ AddListener("dead_ringer", 0, function(attacker, victim, params)
 AddListener("setup_end", 11, function ()
 {
     ::MM_VSH_ROUND_START <- Time();
+    ::haleName <- NetProps.GetPropString(GetBossPlayers()[0], "m_szNetname");
 });
 
 AddListener("round_end", 5, function (winnerTeam)

@@ -1,6 +1,6 @@
 ::maxHealth <- 100000; // Don't initialize to zero or else you get random divide by zeroes.
 ::currentHealth <- 100000;
-::HALENAME <- NetProps.GetPropString(boss, "m_szNetname")
+::haleName <- "\x07FCD303kiwi is a bald retard"; // If kiwi's code doesn't run correctly, this will let us know :)
 
 ::COLOR_MERCS <- TF_TEAM_MERCS == 2 ? "\x07FF3F3F" : "\x0799CCFF"
 ::COLOR_BOSS <- TF_TEAM_BOSS == 2 ? "\x07FF3F3F" : "\x0799CCFF"
