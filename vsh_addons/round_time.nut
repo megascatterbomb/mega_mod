@@ -5,7 +5,7 @@ local originalMaxTime = 999;
 
 function ClampRoundTime()
 {
-    local maxTime = ceil(clampFloor(30, GetAliveMercCount() * 15));
+    local maxTime = ceil(clampFloor(60, GetAliveMercCount() * 15));
     local currentTime = clampCeiling(GetPropFloat(team_round_timer, "m_flTimerEndTime") - Time(), GetPropFloat(team_round_timer, "m_flTimeRemaining"));
     if (currentTime > maxTime)
     {
@@ -69,9 +69,14 @@ function PlayRoundStartVO()
 }
 
 // Scales round time based on playercount
+// 30 seconds minimum, 10 minutes max
+// 10s per player up to 5 minutes, 5s per player onwards
 AddListener("setup_end", 0, function()
 {
     local time = clampFloor(30, ceil(validMercs.len() * 10));
+    if (time > 300) time = ceil(300 + (time - 300) / 2);
+    if (time > 600) time = 600;
+
     EntFireByHandle(team_round_timer, "SetTime", "" + time, 0, null, null);
     EntFireByHandle(team_round_timer, "SetMaxTime", "" + time, 0, null, null);
     originalMaxTime = time;
