@@ -1,5 +1,12 @@
 // Comment out any maps that you don't want to apply the mods to.
 
+if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
+    printl("MEGAMOD: Already loaded, skipping...");
+    return;
+}
+
+::MEGA_MOD_LOADED <- false;
+
 local mods = [
     "arena_perks"
     "cp_freaky_fair"
@@ -81,3 +88,5 @@ foreach(mod in globalMods) {
         printl("MEGAMOD ERROR: Global mod '" + mod + "' has not implemented the required functions!");
     }
 }
+
+::MEGA_MOD_LOADED <- true;

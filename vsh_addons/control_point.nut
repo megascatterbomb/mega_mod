@@ -1,5 +1,6 @@
 ::mercBuff <- false
 ::haleBuff <- false
+::pointUnlocked <- false;
 
 ::healthHealed <- 0 // Track health regened by Hale.
 
@@ -9,6 +10,7 @@ local idleMultiplier = 1;
 local haleLastDamage = Time();
 local mercsLastDamage = Time();
 local idleTime = 30;
+local mercDamageTarget = null;
 
 // OVERRIDE: _gamemode\gamerules.nut::PrepareStalemate
 // Replace stalemate function to account for a captured control point.
@@ -100,8 +102,8 @@ AddListener("setup_end", 0, function()
         0, -1);
 });
 
-// Continuously regens or damages hale until the round ends.
-function EndgameInterval(killHale)
+// Continuously damages hale.
+function EndgameIntervalMercsCap()
 {
     if(IsRoundOver()) {
         return;
@@ -109,49 +111,83 @@ function EndgameInterval(killHale)
 
     local boss = GetBossPlayers()[0];
     local oldHealth = boss.GetHealth();
-    local damageOrHealing = ceil(increment * idleMultiplier);
-    local newHealth = ceil(killHale ? oldHealth - damageOrHealing : oldHealth + damageOrHealing);
+    local damage = ceil(increment * idleMultiplier);
+    local newHealth = ceil(oldHealth - damage);
 
-    // ClientPrint(null, 3, "Increment: " + increment);
-    // ClientPrint(null, 3, "Idle multiplier: " + idleMultiplier);
-    // ClientPrint(null, 3, "Damage: " + damageOrHealing);
-
-    // Do the damage
-    if(killHale) {
-        local vecPunch = GetPropVector(boss, "m_Local.m_vecPunchAngle");
-        // Adjust for merc damage scaling and fire resistance.
-        local actualDamage = damageOrHealing / (clampFloor(1, 1.85 - (GetAliveMercCount() * 1.0 / startMercCount)) * 1.25 );
-        boss.TakeDamageCustom(boss, boss, null, Vector(0.0000001, 0.0000001, 0.0000001), boss.GetOrigin(), actualDamage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
-        SetPropVector(boss, "m_Local.m_vecPunchAngle", vecPunch);
-    } else if(!killHale && newHealth >= maxHealth) {
-        healthHealed = healthHealed + maxHealth - oldHealth;
-        boss.SetHealth(maxHealth);
-        currentHealth = maxHealth;
-        EndRound(TF_TEAM_BOSS);
-        return;
-    } else {
-        healthHealed = healthHealed + newHealth - oldHealth;
-        boss.SetHealth(newHealth);
-    }
+    local vecPunch = GetPropVector(boss, "m_Local.m_vecPunchAngle");
+    // Adjust for merc damage scaling and fire resistance.
+    local actualDamage = damage / (clampFloor(1, 1.85 - (GetAliveMercCount() * 1.0 / startMercCount)) * 1.25 );
+    boss.TakeDamageCustom(boss, boss, null, Vector(0.0000001, 0.0000001, 0.0000001), boss.GetOrigin(), actualDamage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
+    SetPropVector(boss, "m_Local.m_vecPunchAngle", vecPunch);
 
     increment++;
     // Speed things up if the losing team hasn't dealt damage in the past 30 seconds.
-    if(killHale && Time() > haleLastDamage + idleTime) {
-        if(idleMultiplier == 1) {
-            ClientPrint(null, 3, "Do some damage Saxton! Otherwise your health will drain even faster!");
-        }
-        idleMultiplier = idleMultiplier * 1.05;
-    } else if (!killHale && Time() > mercsLastDamage + idleTime){
-        if(idleMultiplier == 1) {
-            ClientPrint(null, 3, "Do some damage Mercenaries! Otherwise Hale will regenerate even faster!");
-        }
+    if (Time() > haleLastDamage + idleTime) {
         idleMultiplier = idleMultiplier * 1.05;
     } else {
         idleMultiplier = 1;
     }
 
     // Loop continuously at 1 second intervals.
-    RunWithDelay("EndgameInterval("+killHale+")", null, 1);
+    RunWithDelay("EndgameIntervalMercsCap()", null, 1);
+}
+
+// Continuously damages the merc who has dealt the least damage.
+function EndgameIntervalHaleCaps()
+{
+    if(IsRoundOver()) {
+        return;
+    }
+
+    local damageBoard = GetDamageBoardSorted();
+    for (local i = damageBoard.len() - 1; i >= 0; i--) {
+        local merc = damageBoard[i][0];
+        if(IsMercValidAndAlive(merc)) {
+            if(!IsMercValidAndAlive(mercDamageTarget) || merc.entindex() != mercDamageTarget.entindex()) {
+                SetMarkedForDeath(mercDamageTarget, false);
+            }
+            SetMarkedForDeath(merc, true);
+            break;
+        }
+    }
+
+    local damage = 1 + (idleMultiplier * increment / 10);
+
+    if (mercDamageTarget == null) {
+        RunWithDelay("EndgameIntervalHaleCaps()", null, 1);
+        return;
+    }
+
+    local vecPunch = GetPropVector(mercDamageTarget, "m_Local.m_vecPunchAngle");
+    mercDamageTarget.TakeDamageCustom(mercDamageTarget, mercDamageTarget, null, Vector(0.0000001, 0.0000001, 0.0000001),
+        mercDamageTarget.GetOrigin(), damage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
+    SetPropVector(mercDamageTarget, "m_Local.m_vecPunchAngle", vecPunch);
+
+    increment++;
+    // Speed things up if the losing team hasn't dealt damage in the past 30 seconds.
+    if (Time() > mercsLastDamage + idleTime) {
+        idleMultiplier = idleMultiplier * 1.05;
+    } else {
+        idleMultiplier = 1;
+    }
+
+    // Loop continuously at 1 second intervals.
+    RunWithDelay("EndgameIntervalHaleCaps()", null, 1);
+}
+
+// Apply Marked for Death to targeted player
+function SetMarkedForDeath(merc, mark) {
+    if (!IsMercValidAndAlive(merc)) {
+        mercDamageTarget = null;
+    } else if (!mark) {
+        merc.RemoveCond(TF_COND_MARKEDFORDEATH);
+    } else {
+        merc.AddCondEx(TF_COND_MARKEDFORDEATH, 1.1, merc);
+        if (mercDamageTarget == null || merc.entindex() != mercDamageTarget) {
+            // notify new target.
+        }
+        mercDamageTarget = merc;
+    }
 }
 
 // Listen for idlers
@@ -166,7 +202,7 @@ AddListener("damage_hook", 0, function (attacker, victim, params)
 
 // Starts the endgame bleed/health regen.
 // Calculates the appropriate starting increment to use.
-function BeginEndgame(killHale) {
+function BeginEndgame() {
 
     EntFireByHandle(team_round_timer, "Pause", "", 0, null, null);
     EntFireByHandle(team_round_timer, "Disable", "", 0, null, null);
@@ -177,36 +213,29 @@ function BeginEndgame(killHale) {
     haleLastDamage = Time();
     mercsLastDamage = Time();
 
-    // local sum = killHale ? currentHealth : maxHealth - currentHealth;
-    // local mercsKilled = startMercCount - GetAliveMercCount();
-    // local desiredTimeUnclamped = 5 * (killHale ? mercsKilled : GetAliveMercCount());
-
-    // local desiredTime = clampFloor(60, desiredTimeUnclamped);
-
-    // local startingIncrement = (2*sum/desiredTime - desiredTime + 1)/2.0;
-
-    increment = 1; // clamp(ceil(startingIncrement), 1, maxHealth / 100);
-
-    EndgameInterval(killHale);
+    increment = 1;
 }
 
-// Removes Hale's cooldown on abilities.
-// Hale's health regenerates an ever-increasing amount until it's max, at which point Hale wins.
 ::BuffHale <- function() {
     haleBuff = true;
-    ClientPrint(null, 3, "Hale's regenerating health, and his abilities have reduced cooldown!");
-    ClientPrint(null, 3, "If Hale's health replenishes entirely, he wins!");
+    ClientPrint(null, 3, COLOR_BOSS + "[HALE CAPTURED POINT]");
+    ClientPrint(null, 3, "Hale's abilities have reduced cooldown, and the merc with the lowest damage will bleed to death!");
     // Buff ability cooldown
     IncludeScript("vsh_addons/ability_cooldown_override.nut");
 
-    // Super regen
-    BeginEndgame(false);
+    // Init damage board for mercs who haven't dealt damage.
+    local mercs = GetAliveMercs();
+    for(local i = 0; i < mercs.len(); i++) {
+        if (GetRoundDamage(mercs[i]) == 0) SetRoundDamage(mercs[i], 0);
+    }
+
+    BeginEndgame();
+    EndgameIntervalHaleCaps();
 }
 
-// Mercs get 5s of massive regen and full crits on all weapons for the rest of the round.
-// Hale bleeds an ever-increasing amount until the round ends.
 ::BuffMercs <- function() {
     mercBuff = true;
+    ClientPrint(null, 3, COLOR_MERCS + "[MERCS CAPTURED POINT]");
     ClientPrint(null, 3, "Hale is bleeding to death, and the Mercs now have permanent crits!");
     // Give huge health buff
     local mercs = GetAliveMercs();
@@ -214,11 +243,11 @@ function BeginEndgame(killHale) {
         mercs[i].AddCondEx(TF_COND_HALLOWEEN_QUICK_HEAL, 5, mercs[i]);
     }
 
-    // Super bleed
-    BeginEndgame(true);
+    BeginEndgame();
+    EndgameIntervalMercsCap();
 }
 
-// Give full crits for rest of round
+// Give full crits for rest of round if mercs cap.
 characterTraitsClasses.push(class extends CharacterTrait
 {
     function OnTickAlive(timeDelta)
