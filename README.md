@@ -77,6 +77,7 @@ In multi-stage maps, each win on a previous stage will provide winning teams wit
 - Nightfall:
   - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
   - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.
+  - The round timer overhaul fixes a bug where setup time is stuck on during Stage 3, affecting Engineer building upgrades.
 
 ## Special Delivery
 
@@ -98,12 +99,13 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
   - On death: the damage dealt by the player is broadcast in chat.
     - If the dead ringer is used, a fake message is displayed to Hale only.
     - Insults the player if they do 0 damage.
-  - At round end:
-    - The top 3 players' damage is listed.
-    - The total damage by all players is displayed.
-    - Damage by other sources (e.g. Distillery grinder) is listed separately.
-    - Winners of RPS are displayed in gold.
-    - Shows a percentage of how much health the Mercs managed to chip away.
+  - At round end, the following are displayed:
+    - The round duration.
+    - The amount of Mercs killed by hale.
+    - The top 3 players' damage (RPS winners displayed in gold).
+    - The total damage by all players.
+    - Damage by other sources (e.g. Distillery grinder).
+    - Total damage.
 - **Anti-AFK measures**:
   - If a player fails to send a keyboard input for 60 seconds, they are "fired" (killed).
   - When this happens, Hale's health is reduced to compensate, as though the idle player was never there in the first place.
@@ -132,33 +134,36 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
     |:----------|:-------------------------------|:---------------------------|
     | 1         | $H = 1000$                     | H(1) = 1000                |
     | 2 - 6     | $H = 45N^2 + 2350(0.3 + N/10)$ | H(2) = 1500; H(6) = 4100   |
-    | 7 - 23    | $H = 45N^2 + 2350$             | H(7) = 5000; H(12) = 9200;<br>H(23) = 26600 |
+    | 7 - 23    | $H = 45N^2 + 2350$             | H(7) = 5000; H(12) = 9200;<br>H(18) = 17300; H(23) = 26600 |
     | 24+       | $H = 2000(N-23) + 26600$       | H(24) = 28600; H(31) = 42600;<br>H(63) = 106600; H(99) = 178600 |
 
-    | Mercs ($N$) | Custom formula                    | Resulting Health ($H(N)$)|
+    | Mercs ($N$) | Custom Formula               | Resulting Health ($H(N)$)  |
     |:----------|:-------------------------------|:---------------------------|
     | 1         | $H = 1000$                     | H(1) = 1000                |
     | 2 - 6     | $H = 41N^2 + 2350(0.3 + N/10)$ | H(2) = 1300; H(6) = 3500   |
-    | 7 - 23    | $H = 41N^2 + 2350$             | H(7) = 4300; H(12) = 8200;<br>H(23) = 24000 |
+    | 7 - 23    | $H = 41N^2 + 2350$             | H(7) = 4300; H(12) = 8200;<br>H(18) = 15600; H(23) = 24000 |
     | 24+       | $H = 2000(N-23) + 24000$       | H(24) = 26000; H(31) = 40000;<br>H(63) = 104000; H(99) = 176000 |
 
 - **Gameplay Tweaks**:
   - **Brave Jump**: 3 second cooldown, center HUD notification alongside repurposed brave jump icon.
   - **Round Timer**:
-    - Setup: Adjusts to player count, 16-32s.
-    - Point Unlock: Starts at $max(30, 10N)$ seconds, clamps to $max(30, 15n)$ seconds on player death.
+    - Setup time: Adjusts to player count, 16-32s.
+    - Point Unlock time: 10 seconds per player up to 30 players. Additional players add 5 seconds each. Final result clamped between 30 seconds and 10 minutes.
+      - During the round: if $time > 15n$, then the timer is clamped to $15n$ 
   - **Rock-Paper-Scissors**: 1M damage to Hale (vanilla 100k isn't enough), high ragdoll knockback.
   - **Mighty Slam**: Do not prevent weighdown when on jump cooldown.
   - **Telefrags**: Deal 10x the damage they'd normally do, as they are so rare.
 
 - **Control Point**:
   - Captures don't end rounds immediately; instead granting bonuses to the capping team.
-  - **Mercs Cap**: Guaranteed crits and a brief health regen.
-  - **Hale Caps**: Ability cooldowns reduced to 5s.
-  - Point capture affects Hale's health in a manner which guarantees the round will end (given sufficient time).
-    - Mercs: Hale's health is drained until he either dies or wins.
-    - Hale: Hale's health regenerates. If Hale reaches his starting health, he wins.
-  - Rate of health drain/regen increases over time.
+  - **Mercs Cap**: 
+    - Guaranteed crits and a brief health regen.
+    - Hale's health is drained until he either dies or wins.
+  - **Hale Caps**:
+    - Ability cooldowns reduced to 5s.
+    - The Merc with the lowest damage dealt is marked for death and drained of health.
+  - Point capture guarantees the round will end given sufficient time.
+  - Rate of health drain increases over time.
   - Point capture now leads to an engaging endgame, avoiding abrupt and unfair victories.
 
 ## Zombie Infection
@@ -181,7 +186,7 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
   - Win conditions:
     - Survivors can only win by killing all the remaining Zombies.
     - Zombies win by killing all the remaining Survivors (as usual).
-  - Zombies take an increasing amount damage over time to guarantee a round end.
+  - Zombies experience bled with increasing damage over time to guarantee a round end.
   - Survivors can enter Zombie spawnrooms during Overtime.
 
 # Map Specific/Miscellanious Fixes
