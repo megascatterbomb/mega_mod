@@ -1,11 +1,16 @@
 ::MM_PLR_TIME_UPPER_LIMIT <- 600;
 ::MM_PLR_TIME_LOWER_LIMIT <- 300;
 
+// If true, disables the rollback zones entirely after 5 minutes pass during overtime.
+// If false, then rollback zones still work if the other cart is actively pushed.
+::MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG <- false;
+
 // REQUIRED GLOBAL VARIABLES
 // This file should be included at the very start of the map-specific file.
 // Every global variable MUST be set by the map-specific file in OnGameEvent_teamplay_round_start() after a call to InitGlobalVars()
 
 function InitGlobalVars() {
+
     // team_round_timer
     ::PLR_TIMER <- null;
     ::PLR_TIMER_NAME <- null;
@@ -51,6 +56,14 @@ function InitGlobalVars() {
     ::CROSSING_RED <- 0;
     ::CROSSING_BLU <- 0;
 
+    ::TIMES_1_SPEED_RED <- 0.55;
+    ::TIMES_2_SPEED_RED <- 0.77;
+    ::TIMES_3_SPEED_RED <- 1.0;
+
+    ::TIMES_1_SPEED_BLU <- 0.55;
+    ::TIMES_2_SPEED_BLU <- 0.77;
+    ::TIMES_3_SPEED_BLU <- 1.0;
+
     ::OVERTIME_SPEED_RED <- 0.22;
     ::OVERTIME_SPEED_BLU <- 0.22;
 
@@ -65,6 +78,8 @@ function GetRoundTimeString() {
 }
 
 function GetRoundTime() {
+    local time = MM_PLR_TIME_UPPER_LIMIT;
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     local mp_timelimit = Convars.GetInt("mp_timelimit");
     // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
     if (mp_timelimit != null && mp_timelimit > 0) {
@@ -108,9 +123,9 @@ function AddCaptureOutputsToLogicCase(entity, team) {
 
 function StartOvertime() {
     ::OVERTIME_ACTIVE <- true;
-    if(ROLLBACK_DISABLED) {
+    if(ROLLBACK_DISABLED && MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) {
         AnnounceRollbackDisabled();
-    } else {
+    } else if (MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) {
         if(PLR_TIMER) PLR_TIMER.Kill();
         ::PLR_TIMER <- SpawnEntityFromTable("team_round_timer", {
             reset_time = 1,
@@ -131,6 +146,8 @@ function StartOvertime() {
         EntFireByHandle(PLR_TIMER, "Resume", "1", 0, null, null);
         EntFireByHandle(text_tf, "Display", "", 0.1, self, self);
         EntFireByHandle(text_tf, "Kill", "", 7, self, self);
+    } else {
+        if(PLR_TIMER) PLR_TIMER.Kill();
     }
 
     UpdateRedCart(CASE_RED);
@@ -145,11 +162,11 @@ function UpdateRedCart(caseNumber) {
     if(BLOCK_RED) return;
 
     if(CASE_RED == 1) {
-        AdvanceRed(0.55);
+        AdvanceRed(TIMES_1_SPEED_RED);
     } else if(CASE_RED == 2) {
-        AdvanceRed(0.77);
+        AdvanceRed(TIMES_2_SPEED_RED);
     } else if(CASE_RED >= 3) {
-        AdvanceRed(1);
+        AdvanceRed(TIMES_3_SPEED_RED);
     } else if (CASE_RED == -1) {
         StopRed();
     }
@@ -174,11 +191,11 @@ function UpdateBluCart(caseNumber) {
     if(BLOCK_BLU) return;
 
     if(CASE_BLU == 1) {
-        AdvanceBlu(0.55);
+        AdvanceBlu(TIMES_1_SPEED_BLU);
     } else if(CASE_BLU == 2) {
-        AdvanceBlu(0.77);
+        AdvanceBlu(TIMES_2_SPEED_BLU);
     } else if(CASE_BLU >= 3) {
-        AdvanceBlu(1);
+        AdvanceBlu(TIMES_3_SPEED_BLU);
     } else if (CASE_BLU == -1) {
         StopBlu();
     }
@@ -261,7 +278,7 @@ function RollforwardStartRed() {
     ::RED_ROLLSTATE <- 1;
     RED_PUSHZONE.AcceptInput("Disable", "", null, null);
     BlockRedCart(true);
-    AdvanceRed(1);
+    AdvanceRed(TIMES_3_SPEED_RED);
 }
 
 function RollforwardEndRed() {
@@ -328,7 +345,7 @@ function SetRedCrossing(crossing) {
     } else if (CROSSING_RED > abs(CROSSING_BLU)) {
         RED_PUSHZONE.AcceptInput("Disable", "", null, null);
         BlockRedCart(true);
-        EntFireByHandle(RED_TRAIN, "RunScriptCode", "AdvanceRed(0.55)", 0.5, null, null);
+        EntFireByHandle(RED_TRAIN, "RunScriptCode", "AdvanceRed(TIMES_1_SPEED_RED)", 0.5, null, null);
     }
     // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
 }
@@ -353,14 +370,14 @@ function SetBluCrossing(crossing) {
     } else if (CROSSING_BLU > abs(CROSSING_RED)) {
         BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
         BlockBluCart(true);
-        EntFireByHandle(BLU_TRAIN, "RunScriptCode", "AdvanceBlu(0.55)", 0.5, null, null);
+        EntFireByHandle(BLU_TRAIN, "RunScriptCode", "AdvanceBlu(TIMES_1_SPEED_BLU)", 0.5, null, null);
     }
     // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
 }
 
 // After a time, we disable rollback zones to prevent theoretically infinite rounds.
 function DisableRollback() {
-    if(ROLLBACK_DISABLED) return;
+    if(ROLLBACK_DISABLED || !MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) return;
     ::ROLLBACK_DISABLED <- true;
     if(!OVERTIME_ACTIVE) return;
     AnnounceRollbackDisabled();

@@ -148,8 +148,6 @@ function SwitchToElevatorRed() {
     ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone_elv");
     ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_red_elevatorsparks");
 
-    DisableRollback();
-
     EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(RED_TRAIN, "TeleportToPathTrack", "plr_red_pathC_hillA3", 0, null, null);
     EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
@@ -163,8 +161,6 @@ function SwitchToElevatorBlu() {
     ::BLU_ELV <- MM_GetEntByName("clamp_blue");
     ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone_elv");
     ::BLU_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_blu_elevatorsparks");
-
-    DisableRollback();
 
     EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "TeleportToPathTrack", "plr_blu_pathC_hillA3", 0, null, null);
@@ -181,16 +177,16 @@ function UpdateRedElevator(caseNumber) {
     if(BLOCK_RED) return;
 
     if(CASE_RED >= 1) {
-        AdvanceRed(0.77);
+        AdvanceRed(TIMES_2_SPEED_RED);
     } else if (CASE_RED == -1) {
         StopRed();
     }
 
     if(CASE_RED == 0) {
         if(CASE_BLU == 0 && OVERTIME_ACTIVE) {
-            AdvanceRed(0.22);
-            if(!BLOCK_BLU) AdvanceBlu(0.22);
-        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && RED_ROLLSTATE == -1) {
+            AdvanceRed(OVERTIME_SPEED_RED);
+            if(!BLOCK_BLU) AdvanceBlu(OVERTIME_SPEED_BLU);
+        } else if (!OVERTIME_ACTIVE && RED_ROLLSTATE == -1) {
             TriggerRollbackRed();
         } else {
             StopRed();
@@ -206,16 +202,16 @@ function UpdateBluElevator(caseNumber) {
     if(BLOCK_BLU) return;
 
     if(CASE_BLU >= 1) {
-        AdvanceBlu(0.77);
+        AdvanceBlu(TIMES_2_SPEED_BLU);
     } else if (CASE_BLU == -1) {
         StopBlu();
     }
 
     if(CASE_BLU == 0) {
         if(CASE_RED == 0 && OVERTIME_ACTIVE) {
-            AdvanceBlu(0.22);
-            if(!BLOCK_RED) AdvanceRed(0.22);
-        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && BLU_ROLLSTATE == -1) {
+            AdvanceBlu(OVERTIME_SPEED_BLU);
+            if(!BLOCK_RED) AdvanceRed(OVERTIME_SPEED_RED);
+        } else if (!OVERTIME_ACTIVE && BLU_ROLLSTATE == -1) {
             TriggerRollbackBlu();
         } else {
             StopBlu();
