@@ -66,14 +66,17 @@ Currently supported maps: `plr_bananabay`, `plr_cutter`, `plr_hacksaw`, `plr_hac
 
 Stage 1 and 2 of Nightfall feature an overtime. This mod copies that logic into other maps using nothing but VScript, with some additional QoL features.
 
-After 10 minutes, the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). After a further 5 minutes, all rollback zones are disabled to guarantee a winner in a reasonable timeframe. The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain.
+After 10 minutes, the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain.
 
 In multi-stage maps, each win on a previous stage will provide winning teams with an advantage on the next stage. In vanilla TF2, this takes the form of the winning team's cart starting ahead of the enemy's cart. This mod adds another advantage: the winning team's cart will move slightly faster when automatically advancing in overtime compared to the enemy's cart.
 
+### Optional features:
+
+In `mega_mod\common\plr_overtime.nut`, setting `::MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG <- true` will activate the following behaviour: 5 minutes after overtime begins, all rollback zones are disabled to guarantee a winner in a reasonable timeframe. 
+
 ### Map specific quirks:
 - On Hacksaw and Hacksaw Event, the game_text entities that display "hacking" progress now operate on separate channels, so both teams' progress can display simultaneously.
-- On Hightower and Hightower Event, rollback zones will be disabled if either cart is at the elevator and the round is in overtime. Unfortunately, Hightower's elevators are too jank for me to work around at this time.
-  - Hightower Event disables the rollback zones immediately upon entering overtime as there are no rollback zones other than the elevators in this version of the map. 
+- On Hightower and Hightower Event, the elevators' rollback zones do not operate in overtime.
 - Nightfall:
   - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
   - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.

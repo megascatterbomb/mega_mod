@@ -1,5 +1,5 @@
 ::MM_PLR_TIME_UPPER_LIMIT <- 600;
-::MM_PLR_TIME_LOWER_LIMIT <- 300;
+::MM_PLR_TIME_LOWER_LIMIT <- 90;
 
 // If true, disables the rollback zones entirely after 5 minutes pass during overtime.
 // If false, then rollback zones still work if the other cart is actively pushed.
