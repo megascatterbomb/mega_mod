@@ -13,7 +13,7 @@ function OnGameEvent_teamplay_round_start(params) {
 
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", "600", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
     EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
 
     EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_pathC_start3"), "OnPass", "!self", "RunScriptCode", "MM_HighTowerEvent_DelayedStart()", 0, -1);

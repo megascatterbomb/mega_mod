@@ -1,3 +1,6 @@
+::MM_PLR_TIME_UPPER_LIMIT <- 600;
+::MM_PLR_TIME_LOWER_LIMIT <- 300;
+
 // REQUIRED GLOBAL VARIABLES
 // This file should be included at the very start of the map-specific file.
 // Every global variable MUST be set by the map-specific file in OnGameEvent_teamplay_round_start() after a call to InitGlobalVars()
@@ -56,6 +59,27 @@ function InitGlobalVars() {
 }
 
 InitGlobalVars();
+
+function GetRoundTimeString() {
+    return "" + GetRoundTime();
+}
+
+function GetRoundTime() {
+    local mp_timelimit = Convars.GetInt("mp_timelimit");
+    // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
+    if (mp_timelimit != null && mp_timelimit > 0) {
+        local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
+
+        if(remainingTime < time) {
+            time = ceil(remainingTime / 30) * 30;
+        }
+    }
+
+    if (time > MM_PLR_TIME_UPPER_LIMIT) time = MM_PLR_TIME_UPPER_LIMIT;
+    if (time < MM_PLR_TIME_LOWER_LIMIT) time = MM_PLR_TIME_LOWER_LIMIT;
+
+    return time;
+}
 
 // We use a logic case to capture the value obtained from OnNumCappersChanged2
 // name: targetname of logic_case
