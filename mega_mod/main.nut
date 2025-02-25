@@ -47,6 +47,7 @@ local globalMods = [
     "respawn_mod"
     "zi_mod"
     "jakemod"
+    "gamemode_cfg"
 ];
 
 // You should not have to touch anything below this point.
@@ -85,7 +86,7 @@ foreach(mod in globalMods) {
             // printl("MEGAMOD: Skipping global mod '" + mod + "'...");
         }
     } catch (e) {
-        printl("MEGAMOD ERROR: Global mod '" + mod + "' has not implemented the required functions!");
+        printl("MEGAMOD ERROR: Global mod '" + mod + "' errored when loading! Have you implemented the required functions?");
     }
 }
 

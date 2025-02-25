@@ -1,17 +1,5 @@
 function ShouldApply() {
-    local exceptionsAlways = [];
-    local exceptionsNever = [];
-
-    local mapName = GetMapName();
-
-    if (exceptionsNever.find(mapName) != null) {
-        return false;
-    } else if (exceptionsAlways.find(mapName) != null) {
-        return true;
-    } else if (!startswith(mapName,  "zi_")) {
-        return false;
-    }
-    return true;
+    return MM_GetGamemode() == MM_Gamemodes.ZI;
 }
 
 function IsGlobal() {
@@ -27,18 +15,18 @@ ApplyMod <- function () {
         printl("MEGAMOD: Loading Zombie Infection mod...");
         MM_Zombie_Infection();
     }.bindenv(this);
-    
+
     this.OnGameEvent_player_team <- function (event) {
         MM_ZI_OnPlayerTeam(event);
     }.bindenv(this);
-    
+
     local scope = this;
     scope.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
     ::ClearGameEventCallbacks <- function () {
         scope.ClearGameEventCallbacks()
         ::__CollectGameEventCallbacks(scope)
     };
-    
+
     ::__CollectGameEventCallbacks(this);
 }.bindenv(this);
 

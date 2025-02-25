@@ -5,7 +5,8 @@ A collection of VScript mods for various maps that I think improve the overall g
 Installation:
 - Copy the contents of the repo to `tf/scripts/vscripts`
 - Add `script_execute mega_mod/main.nut` to the end of your server.cfg
-- You can comment out any maps you don't want to use the mod for within `main.nut`
+- You can comment out any mods you don't want to use for within `main.nut`
+- Optional: add `sv_allow_point_servercommand` to your `vscript_convar_allowlist.txt` if you want to use gamemode-specific cfgs.
 
 Project structure:
 - `/common`
@@ -20,6 +21,12 @@ Project structure:
   - Addons that utilize the official addon support in the Versus Saxton Hale VScript gamemode.
 
 # General Improvements
+
+## Gamemode-specific .cfg support
+
+By default, TF2 offers `server.cfg` for general configuration, plus map specific configs. But if you want to configure entire gamemodes with a single cfg, you're SOL.
+
+This mod offers gamemode-specific config execution. Unfortunately, this requires `sv_allow_point_servercommand` to be added to your `vscript_convar_allowlist.txt`. This mod will only enable server commands when it needs to, reducing the risk of any potentially malicious maps. However, there is still a vulnerability to malicious VScript, so be warned!
 
 ## Force Team Respawn when appropriate
 
