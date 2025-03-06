@@ -142,7 +142,7 @@ function MM_Gamemode_CheckCPGamemode() {
 }
 
 function MM_Gamemode_CheckForMannpower() {
-    local powerups = Entities.FindByClassname(null, "item_powerup");
+    local powerups = Entities.FindByClassname(null, "tf_logic_mannpower");
     if(powerups != null) {
         return MM_Gamemodes.MP;
     }
