@@ -66,28 +66,10 @@ if(hasMapMod) {
 
 printl("MEGAMOD: Loading global mods...");
 
-local root = getroottable();
-
 foreach(mod in globalMods) {
-    local prefix = DoUniqueString(mod);
-    local modTable = root[prefix] <- {};
-    try {
-        IncludeScript("mega_mod/global/" + mod + ".nut", modTable);
-    } catch (e) {
-        printl("MEGAMOD ERROR: Global mod '" + mod + "' does not exist!");
-        continue;
-    }
-    try {
-        if(modTable.ShouldApply() && (!hasMapMod || modTable.IsGlobal())) {
-            printl("MEGAMOD: Loading global mod '" + mod + "'...");
-            modTable.ApplyMod();
-            printl("MEGAMOD: Loaded global mod '" + mod + "'");
-        } else {
-            // printl("MEGAMOD: Skipping global mod '" + mod + "'...");
-        }
-    } catch (e) {
-        printl("MEGAMOD ERROR: Global mod '" + mod + "' errored when loading! Have you implemented the required functions?");
-    }
+    MM_IncludeGlobalMod(mod, hasMapMod);
 }
+
+printl("MEGAMOD: Global mods loaded.");
 
 ::MEGA_MOD_LOADED <- true;

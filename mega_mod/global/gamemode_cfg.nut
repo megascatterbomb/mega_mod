@@ -9,6 +9,7 @@ function IsGlobal() {
 }
 
 function ExecGamemodeConfig(gamemode) {
+    local gamemodeConfig = GAMEMODE_PREFIX + gamemode.tostring() + ".cfg";
     printl("MEGAMOD: Executing gamemode config: " + gamemodeConfig);
     SendToServerConsole("exec " + gamemodeConfig);
 
@@ -21,6 +22,12 @@ function ExecGamemodeConfig(gamemode) {
 
 ApplyMod <- function () {
     local gamemode = MM_GetGamemode();
+
+    if (gamemode == null) {
+        printl("MEGAMOD ERROR: Could not identify gamemode. Skipping gamemode config execution.");
+        return;
+    }
+
     local gamemodeConfig = GAMEMODE_PREFIX + gamemode.tostring() + ".cfg";
     printl("MEGAMOD: Gamemode identified: " + gamemode);
 
@@ -34,9 +41,7 @@ ApplyMod <- function () {
     } else if (Convars.GetStr("sv_allow_point_servercommand") != "always") {
         local oldValue = Convars.GetStr("sv_allow_point_servercommand");
         Convars.SetValue("sv_allow_point_servercommand", "always");
-
         ExecGamemodeConfig(gamemode);
-
         Convars.SetValue("sv_allow_point_servercommand", oldValue);
     } else {
         ExecGamemodeConfig(gamemode);

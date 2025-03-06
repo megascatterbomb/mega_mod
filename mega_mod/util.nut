@@ -158,3 +158,29 @@ function MM_Gamemode_CheckIfMultiStage() {
     }
     return rounds > 1;
 }
+
+// hasMapMod == true: Mod is loaded if both ShouldApply() and IsGlobal() returns true
+// hasMapMod == false: Mod is loaded if ShouldApply() returns true
+// hasMapMod == null: Mod is always loaded
+function MM_IncludeGlobalMod(mod, hasMapMod = null) {
+    local root = getroottable();
+    local prefix = DoUniqueString(mod);
+    local modTable = root[prefix] <- {};
+    try {
+        IncludeScript("mega_mod/global/" + mod + ".nut", modTable);
+    } catch (e) {
+        printl("MEGAMOD ERROR: Global mod '" + mod + "' does not exist!");
+        return;
+    }
+    try {
+        if((hasMapMod == null || modTable.ShouldApply()) && (!hasMapMod || modTable.IsGlobal())) {
+            printl("MEGAMOD: Loading global mod '" + mod + "'...");
+            modTable.ApplyMod();
+            printl("MEGAMOD: Loaded global mod '" + mod + "'");
+        } else {
+            // printl("MEGAMOD: Skipping global mod '" + mod + "'...");
+        }
+    } catch (e) {
+        printl("MEGAMOD ERROR: Global mod '" + mod + "' errored when loading! Have you implemented the required functions?");
+    }
+}

@@ -1,6 +1,6 @@
 ClearGameEventCallbacks();
 
-IncludeScript("mega_mod/global/respawn_mod.nut");
+MM_IncludeGlobalMod("respawn_mod");
 
 function OnGameEvent_teamplay_round_start(params)
 {
