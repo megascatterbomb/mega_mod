@@ -159,7 +159,7 @@ function MM_Gamemode_CheckIfMultiStage() {
     return rounds > 1;
 }
 
-// hasMapMod == true: Mod is loaded if both ShouldApply() and IsGlobal() returns true
+// hasMapMod == true: Mod is loaded if both ShouldApply() and LoadAlongsideMapMods() returns true
 // hasMapMod == false: Mod is loaded if ShouldApply() returns true
 // hasMapMod == null: Mod is always loaded
 function MM_IncludeGlobalMod(mod, hasMapMod = null) {
@@ -173,7 +173,7 @@ function MM_IncludeGlobalMod(mod, hasMapMod = null) {
         return;
     }
     try {
-        if((hasMapMod == null || modTable.ShouldApply()) && (!hasMapMod || modTable.IsGlobal())) {
+        if((hasMapMod == null || modTable.ShouldApply()) && (!hasMapMod || modTable.LoadAlongsideMapMods())) {
             printl("MEGAMOD: Loading global mod '" + mod + "'...");
             modTable.ApplyMod();
             printl("MEGAMOD: Loaded global mod '" + mod + "'");

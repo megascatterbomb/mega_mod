@@ -34,7 +34,7 @@ function ShouldApply() {
 	return true;
 }
 
-function IsGlobal() {
+function LoadAlongsideMapMods() {
 	return true;
 }
 

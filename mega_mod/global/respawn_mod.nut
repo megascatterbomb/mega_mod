@@ -8,7 +8,7 @@ function ShouldApply() {
     return gamemodes.find(MM_GetGamemode()) != null;
 }
 
-function IsGlobal() {
+function LoadAlongsideMapMods() {
     return false;
 }
 

@@ -39,7 +39,7 @@ local hasMapMod = mapModIndex != null;
 // To create a global mod: create a file in mega_mod/global/ with the name of the mod.
 // Implement these functions:
 // function ShouldApply() // Return true if the mod should be applied, false if not.
-// function IsGlobal() // Return true if the mod should be applied even if there's a map specific mod.
+// function LoadAlongsideMapMods() // Return true if the mod should be applied even if there's a map specific mod.
 // function ApplyMod() // Apply the mod.
 // Remember to bind the functions to their scopes, otherwise things might not work as expected!
 local globalMods = [

@@ -2,7 +2,7 @@ function ShouldApply() {
     return MM_GetGamemode() == MM_Gamemodes.CP;
 }
 
-function IsGlobal() {
+function LoadAlongsideMapMods() {
     return false;
 }
 
