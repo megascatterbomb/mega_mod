@@ -1,3 +1,5 @@
+// Functions in this file are always loaded into the root scope.
+
 function MM_GetEntByName(name) {
     return Entities.FindByName(null, name);
 }

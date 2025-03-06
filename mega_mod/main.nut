@@ -1,9 +1,11 @@
-// Comment out any maps that you don't want to apply the mods to.
-
 if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     printl("MEGAMOD: Already loaded, skipping...");
     return;
 }
+
+// You should not have to touch anything above this point.
+
+// Comment out any mods that you don't want to apply the mods to.
 
 ::MEGA_MOD_LOADED <- false;
 
@@ -31,11 +33,6 @@ local mods = [
     "workshop/plr_highertower.ugc899335714"
 ];
 
-local mapName = GetMapName();
-local mapModIndex = mods.find(mapName);
-local hasMapMod = mapModIndex != null;
-
-// These are loaded unless there's a map specific mod.
 // To create a global mod: create a file in mega_mod/global/ with the name of the mod.
 // Implement these functions:
 // function ShouldApply() // Return true if the mod should be applied, false if not.
@@ -51,6 +48,10 @@ local globalMods = [
 ];
 
 // You should not have to touch anything below this point.
+
+local mapName = GetMapName();
+local mapModIndex = mods.find(mapName);
+local hasMapMod = mapModIndex != null;
 
 printl("MEGAMOD: Loading mega_mod/util.nut...");
 IncludeScript("mega_mod/util.nut")
