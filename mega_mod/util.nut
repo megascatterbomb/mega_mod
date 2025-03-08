@@ -57,6 +57,7 @@ function MM_CreateDummyThink(funcName) {
     PL_MS = "pl_ms",
     PLR = "plr",
     PLR_MS = "plr_ms",
+    PASS = "pass",
     SD = "sd",
     RD =  "rd",
     PD = "pd",
@@ -95,6 +96,8 @@ function MM_GetGamemode() {
             return MM_Gamemode_CheckIfMultiStage() ? MM_Gamemodes.PL_MS : MM_Gamemodes.PL;
         case "plr":
             return MM_Gamemode_CheckIfMultiStage() ? MM_Gamemodes.PLR_MS : MM_Gamemodes.PLR;
+        case "pass":
+            return MM_Gamemodes.PASS;
         case "sd":
             return MM_Gamemodes.SD;
         case "rd":
