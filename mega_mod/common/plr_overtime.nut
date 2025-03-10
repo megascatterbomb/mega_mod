@@ -69,6 +69,11 @@ function InitGlobalVars() {
 
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
+
+    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local tcpMaster = Entities.FindByClassname(null, "team_control_point_master");
+    EntFireByHandle(gamerules, "SetStalemateOnTimelimit", "0", 0, null, null);
+    EntFireByHandle(tcpMaster, "AddOutput", "play_all_rounds 1", 0, null, null);
 }
 
 InitGlobalVars();
@@ -432,8 +437,22 @@ function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) 
 
 function CountWinRed() {
     ::OVERTIME_SPEED_RED <- OVERTIME_SPEED_RED + 0.02;
+    ::OVERTIME_ACTIVE <- false;
+    ::ROLLBACK_DISABLED <- false;
+    ::RED_ROLLSTATE <- 0;
+    ::BLU_ROLLSTATE <- 0;
+
+    UpdateRedCart(0);
+    UpdateBluCart(0);
 }
 
 function CountWinBlu() {
     ::OVERTIME_SPEED_BLU <- OVERTIME_SPEED_BLU + 0.02;
+    ::OVERTIME_ACTIVE <- false;
+    ::ROLLBACK_DISABLED <- false;
+    ::RED_ROLLSTATE <- 0;
+    ::BLU_ROLLSTATE <- 0;
+
+    UpdateRedCart(0);
+    UpdateBluCart(0);
 }
