@@ -107,7 +107,7 @@ function OnGameEvent_teamplay_round_start(params) {
 
     // Timer logic
     EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
-    PLR_TIMER.AcceptInput("AddOutput", "timer_length " + GetRoundTimeString(), null, null);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
 
     SpawnEntityFromTable("team_round_timer", {
         setup_length = 45,
@@ -177,7 +177,7 @@ function OnRound2Start() {
     ::PLR_TIMER_NAME <- "plr_timer_b";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
-    PLR_TIMER.AcceptInput("AddOutput", "timer_length " + GetRoundTimeString(), null, null);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
 
@@ -206,7 +206,7 @@ function OnRound3Start() {
     ::PLR_TIMER_NAME <- "plr_timer_c";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
-    PLR_TIMER.AcceptInput("AddOutput", "timer_length " + GetRoundTimeString(), null, null);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
 

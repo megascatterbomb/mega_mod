@@ -122,10 +122,10 @@ function OnRound3Start() {
 
     ::PLR_TIMER_NAME <- "setup_timer_c";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
 
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
-
 
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
