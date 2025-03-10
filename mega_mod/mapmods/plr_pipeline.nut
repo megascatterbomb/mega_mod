@@ -98,7 +98,7 @@ function OnGameEvent_teamplay_round_start(params) {
 
 function OnRound2Start() {
 
-    if(PLR_TIMER) PLR_TIMER.Kill();
+    if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
 
     ::PLR_TIMER_NAME <- "setup_timer_b";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
@@ -118,7 +118,7 @@ function OnRound2Start() {
 
 function OnRound3Start() {
 
-    if(PLR_TIMER) PLR_TIMER.Kill();
+    if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
 
     ::PLR_TIMER_NAME <- "setup_timer_c";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);

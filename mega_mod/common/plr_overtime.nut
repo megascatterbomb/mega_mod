@@ -126,7 +126,7 @@ function StartOvertime() {
     if(ROLLBACK_DISABLED && MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) {
         AnnounceRollbackDisabled();
     } else if (MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) {
-        if(PLR_TIMER) PLR_TIMER.Kill();
+        if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
         ::PLR_TIMER <- SpawnEntityFromTable("team_round_timer", {
             reset_time = 1,
             setup_length = 0,
@@ -147,7 +147,7 @@ function StartOvertime() {
         EntFireByHandle(text_tf, "Display", "", 0.1, self, self);
         EntFireByHandle(text_tf, "Kill", "", 7, self, self);
     } else {
-        if(PLR_TIMER) PLR_TIMER.Kill();
+        if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
     }
 
     UpdateRedCart(CASE_RED);
@@ -381,7 +381,7 @@ function DisableRollback() {
     ::ROLLBACK_DISABLED <- true;
     if(!OVERTIME_ACTIVE) return;
     AnnounceRollbackDisabled();
-    if(PLR_TIMER) PLR_TIMER.Kill();
+    if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
 }
 
 function AnnounceRollbackDisabled() {
