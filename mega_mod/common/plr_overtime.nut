@@ -78,20 +78,22 @@ function InitGlobalVars() {
 
 InitGlobalVars();
 
-function GetRoundTimeString() {
-    return "" + GetRoundTime();
+function GetRoundTimeString(setup = 0) {
+    return "" + GetRoundTime(setup);
 }
 
-function GetRoundTime() {
+function GetRoundTime(setup = 0) {
     local time = MM_PLR_TIME_UPPER_LIMIT;
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     local mp_timelimit = Convars.GetInt("mp_timelimit");
     // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
     if (mp_timelimit != null && mp_timelimit > 0) {
-        local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
+        local remainingTime = (mp_timelimit * 60)
+            - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"))
+            - setup;
 
         if(remainingTime < time) {
-            time = ceil(remainingTime / 30) * 30;
+            time = floor(remainingTime / 30) * 30;
         }
     }
 
