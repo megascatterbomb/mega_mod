@@ -183,7 +183,7 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
 - Consistent round and respawn times to improve the gamemode's pacing.
   - Round time always starts at, and can never exceed, 2 minutes.
   - Respawn wave time is set to 5 seconds for Survivors.
-  - Zombies have true instant respawn.
+  - Zombies have near-instant respawn (2 seconds, interrupts killcam).
   - Death during setup triggers instant respawn.
 - Players cannot start as Zombies in two consecutive rounds.
 - Weapon rebalances:
@@ -196,7 +196,7 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
   - Win conditions:
     - Survivors can only win by killing all the remaining Zombies.
     - Zombies win by killing all the remaining Survivors (as usual).
-  - Zombies experience bled with increasing damage over time to guarantee a round end.
+  - Zombies experience bleed with increasing damage over time to guarantee a round end.
   - Survivors can enter Zombie spawnrooms during Overtime.
 
 # Map Specific/Miscellanious Fixes

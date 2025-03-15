@@ -425,7 +425,7 @@ function MM_ZI_OverrideDeath() {
             // MEGAMOD: Instantly respawn the zombie.
             // BLU's respawnwavetime is set to 999999 to facilitate overtime. To make respawns not instant, change this delay.
             if (!MM_ZI_ROUND_FINISHED && !MM_ZI_OVERTIME) {
-                DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 0.1, null, _hPlayer);
+                DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 2, null, _hPlayer);
             } else if (!MM_ZI_ROUND_FINISHED && MM_ZI_OVERTIME) {
                 EntFireByHandle(self, "RunScriptCode", "MM_ZI_ShouldSurvivorsWin()", 0, null, null);
             }
