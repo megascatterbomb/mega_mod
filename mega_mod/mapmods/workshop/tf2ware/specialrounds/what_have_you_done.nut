@@ -26,14 +26,11 @@ function OnPick()
 	}
 	else
 	{
-        Ware_ChatPrint(null, "There are {str} in Ware_DebugNextSpecialRound2!", Ware_DebugNextSpecialRound2.len());
         foreach (file_name in Ware_DebugNextSpecialRound2) {
             special_rounds.append({category = "none", file_name = file_name})
         }
 		Ware_DebugNextSpecialRound2.clear()
 	}
-
-    Ware_ChatPrint(null, "There are {str} in special_rounds!", special_rounds.len());
 
 	local picks = [];
 
@@ -64,8 +61,6 @@ function OnPick()
             }
         }
     }
-
-    Ware_ChatPrint(null, "There are {str} in scopes!", scopes.len());
 
 	foreach (callback_name, func in delegated_callbacks)
 	{
