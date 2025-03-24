@@ -31,6 +31,7 @@ local mods = [
     // Support for updated versions of workshop maps is not guaranteed
     "workshop/pl_cactuscanyon_redux_final2.ugc2579644293"
     "workshop/plr_highertower.ugc899335714"
+    "workshop/tf2ware_ultimate.ugc3413262999"
 ];
 
 // To create a global mod: create a file in mega_mod/global/ with the name of the mod.
