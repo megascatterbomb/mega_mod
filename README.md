@@ -231,3 +231,7 @@ In Payload, the team scores are supposed to reflect how many control points that
 
 For the uninitiated, this taunt creates a VERY loud noise if the doves happen to spawn in water. This mod applies a countermeasure.
 Interally referred to as the "jakemod" after the person who "inspired" this mod's existence.
+
+## (WIP) TF2Ware Ultimate custom special round support.
+
+Framework for injecting custom special rounds into the official workshop version of TF2Ware Ultimate. A special round `what_have_you_done.nut` is included which is a modified "Double Trouble" that allows up to 5 special rounds to be loaded at once. At present, custom special rounds can only be loaded by an admin with `/ware_nextspecial`, which is modified to support up to 5 special rounds at once.
