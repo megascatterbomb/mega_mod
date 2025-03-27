@@ -221,6 +221,10 @@ Self-explanatory. Ghost Fort's timer was also reduced to 3:00 (from 7:00).
 
 Saved over 300 edicts by removing gameplay-irrelevant elements.
 
+## Prevent players going the wrong way on pl_breadspace
+
+Spawns a door at the top of that ramp using the door model featured throughout the map. Door opens once B is captured.
+
 ## Fix captures not being counted correctly in scoreboard.
 
 In Payload, the team scores are supposed to reflect how many control points that team has captured.

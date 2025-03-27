@@ -16,6 +16,7 @@ local mods = [
     "koth_lakeside_event"
     "koth_viaduct_event"
     "pl_bloodwater"
+    "pl_breadspace"
     "pl_emerge"
     "plr_bananabay"
     "plr_cutter"
