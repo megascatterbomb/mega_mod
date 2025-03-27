@@ -187,8 +187,8 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
   - Death during setup triggers instant respawn.
 - Players cannot start as Zombies in two consecutive rounds.
 - Weapon rebalances:
-  - The B.A.S.E. Jumper is no longer disabled for the last survivor.
-  - Increased reserve ammo for the Rocket Jumper (0 -> 4) and Sticky Jumper's reserve ammo (0 -> 8).
+  - The B.A.S.E. Jumper disables during overtime instead of disabling for the last survivor.
+  - Increased reserve ammo for the Rocket Jumper (0 -> 4) and Sticky Jumper's reserve ammo (0 -> 4).
 - Added Overtime:
   - When the timer expires, the game enters Overtime. Overtime lasts until round end and cannot be interrupted.
   - Zombies cannot respawn in Overtime, however Survivors killed in Overtime still become Zombies.

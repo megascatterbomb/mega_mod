@@ -584,7 +584,7 @@ function MM_ZI_OverrideShouldZombiesWin() {
                         // MEGAMOD: Apply Last three buffs as well as last man standing buff
                         _hNextPlayer.GetScriptScope().m_bLastThree       <- true;
 
-                        // MEGAMOD: Do not disable BASE Jumper.
+                        // MEGAMOD: Do not disable BASE Jumper. We'll do that in overtime instead.
                         // if (_hNextPlayer.GetPlayerClass() == TF_CLASS_SOLDIER || _hNextPlayer.GetPlayerClass() == TF_CLASS_DEMOMAN)
                         // {
                         //     local _bDestroyedParachuteResult = _hNextPlayer.HasThisWeapon( 1101, true );
@@ -650,7 +650,16 @@ function MM_ZI_EnableOvertime() {
         if (_hNextPlayer.GetTeam() == 3 || GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
             ClientPrint(_hNextPlayer, 3, "\x0738F3ABNo more respawns for you. Kill the remaining Survivors to win!\x01");
         } else {
+            // Disable B.A.S.E. Jumper in overtime instead of the last player.
             ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for Zombies. Kill the remaining Zombies to win!\x01");
+            if (_hNextPlayer.GetPlayerClass() == TF_CLASS_SOLDIER || _hNextPlayer.GetPlayerClass() == TF_CLASS_DEMOMAN)
+            {
+                local _bDestroyedParachuteResult = _hNextPlayer.HasThisWeapon( 1101, true );
+                if (_bDestroyedParachuteResult)
+                {
+                    ClientPrint(_hNextPlayer, 3, "\x07FCD303Your B.A.S.E. Jumper has been disabled.\x01");
+                }
+            }
         }
     }
 
@@ -793,7 +802,7 @@ function MM_ZI_OverrideWeaponMods() {
 
                     // MEGAMOD: reserve ammo of 8
                     _hWeapon.AddAttribute ( "hidden secondary max ammo penalty", 0.11, -1 );
-                    SetPropIntArray       ( this, "m_iAmmo", 8, 2 );
+                    SetPropIntArray       ( this, "m_iAmmo", 4, 2 );
 
                     _hWeapon.ReapplyProvision();
                     return;
