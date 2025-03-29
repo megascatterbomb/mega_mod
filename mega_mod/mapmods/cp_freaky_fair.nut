@@ -9,7 +9,7 @@ IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
 ::MM_CREDITS_RED <- 0;
 ::MM_CREDITS_BLU <- 0;
 
-::MM_TRIGGERED <- false;
+::MM_FREAKY_FAIR_ACTIVE <- false;
 
 mega.OnGameEvent_teamplay_round_start <- function (event) {
     printl("MEGAMOD: Loading custom cp_freaky_fair logic...");
@@ -21,11 +21,12 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
         // This means the script only runs *once* when the map loads, meaning that if the line of code
         // below runs more than once, we end up assigning our AwardCreditsToTeam to the base handle as well,
         // creating an infinite loop. https://developer.valvesoftware.com/wiki/Info_target
-        if (MM_TRIGGERED == false)
+        if (MM_FREAKY_FAIR_ACTIVE == false)
             AwardCreditsToTeamBase <- AwardCreditsToTeam;
 
-        ::MM_TRIGGERED <- true;
+        ::MM_FREAKY_FAIR_ACTIVE <- true;
 
+        // Track credits awarded during the round.
         AwardCreditsToTeam <- function (team, amount)
         {
             if (team == Constants.ETFTeam.TF_TEAM_RED) {
@@ -44,6 +45,30 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
         AwardCreditsToTeamBase(Constants.ETFTeam.TF_TEAM_RED, MM_CREDITS_RED);
         AwardCreditsToTeamBase(Constants.ETFTeam.TF_TEAM_BLUE, MM_CREDITS_BLU);
 
+        // Modify the canteens to be less stupid.
+        ::effectsTable["kritz"] <- {
+            "behaviour": function(params) { params.player.AddCondEx(TF_COND_CRITBOOSTED_CARD_EFFECT,  params.duration, params.player); },
+            "resetBehaviour": function(params) {},
+            "requirementsCheck": function(player) { return true; },
+            "duration": 8, // was 10
+            "message": "",
+            "canDisguiseDuring": true,
+            "playerTLK": "",
+            "soundsOnUse": ["weapons/weapon_crit_charged_off.wav"],
+        }
+
+        ::effectsTable["uber"] <- {
+            "behaviour": function(params) { params.player.AddCondEx(TF_COND_INVULNERABLE_CARD_EFFECT,  params.duration, params.player); },
+            "resetBehaviour": function(params) {},
+            "requirementsCheck": function(player) { return true; },
+            "duration": 5, // was 10
+            "message": "",
+            "canDisguiseDuring": true,
+            "playerTLK": "",
+            "soundsOnUse": ["player/invulnerable_on.wav"],
+        };
+
+        // Load the 5CP anti stalemate logic.
         MM_5CP_Activate();
 
     }.bindenv(MM_GetEntByName("scripto").GetScriptScope())

@@ -209,9 +209,13 @@ Time limit chosen so the 2:00 mark coincides with the unlocking of the point. If
 ### Made ties less arbitrary.
 When both teams die at exactly the same time (or the time limit introduced by this mod is reached), both teams get a point. This is necessary as the game can't last more than 5 rounds. However, if the score is 2-2 and there's a tie, the winning team is chosen arbitrarily. If this rare situation occurs, this mod makes the win slightly less arbitrary by awarding the win to whichever team most recently lost a player to death (implying their team lasted longer).
 
-## Cumulative cash on cp_freaky_fair
+## cp_freaky_fair
 
-Too often do people complain about capping on cp_freaky_fair, lest they lose their ability to ~~pay off the japanese mafia~~ purchase some insane combination of upgrades. To prevent this, the cash is preserved between rounds.
+### Cash accumulates between rounds.
+Too often do people complain about capping on cp_freaky_fair, lest they lose their ability to ~~pay off the japanese mafia~~ purchase some insane combination of upgrades. To prevent this, the cash is preserved between rounds. Both teams start with the same amount of cash that the richer team had at the end of the previous round.
+
+### Nerfed canteens.
+Reduced durations for the kritz canteen (10s -> 8s) and the Uber canteen (10s -> 5s).
 
 ## No truces on koth_lakeside_event & koth_viaduct_event
 
