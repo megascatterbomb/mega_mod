@@ -76,6 +76,49 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
     EntFireByHandle(MM_GetEntByName("scripto"), "RunScriptCode", "MegaModRoundStart()", 0, null, null);
 }
 
+mega.OnGameEvent_post_inventory_application <- function (params) {
+
+    local player = GetPlayerFromUserID(params.userid)
+
+    // Initialize the melee resistance to a base value of 1 (100% resistance)
+    local calculated_melee_resistance = 1
+
+    // List of custom attributes representing different types of damage resistance
+    local resistances = [
+        "dmg taken from bullets reduced",
+        "dmg taken from fire reduced",
+        "dmg taken from blast reduced",
+    ]
+
+    // Iterate through each resistance type
+    foreach(item in resistances) {
+
+        // If the player has a non-zero resistance for this damage type, adjust the melee resistance
+        if (player.GetCustomAttribute(item, 0) != 0)
+            calculated_melee_resistance -= (1 - player.GetCustomAttribute(item, 0)) / 4
+    }
+
+    // Set the player's melee resistance in their script scope
+    // "but kiwi, why are u using a script scope?" because this shit sucks ass and the melee damage multipler attribute is capped for god knows why
+    player.GetScriptScope().meleeResistance <- calculated_melee_resistance
+}
+
+mega.OnScriptHook_OnTakeDamage <- function (params) {
+
+    local victim = params.const_entity
+
+    // Check if the damage type is melee
+    if (params.damage_type & 128)
+    {
+        // Get the player's melee resistance from the script scope
+        local melee_resistance = victim.GetScriptScope().meleeResistance
+
+        // Apply the melee resistance to reduce the damage
+        params.damage *= melee_resistance
+    }
+}
+
+
 mega.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
 ::ClearGameEventCallbacks <- function () {
     mega.ClearGameEventCallbacks()
