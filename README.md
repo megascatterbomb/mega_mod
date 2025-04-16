@@ -73,9 +73,18 @@ Currently supported maps: `plr_bananabay`, `plr_cutter`, `plr_hacksaw`, `plr_hac
 
 Stage 1 and 2 of Nightfall feature an overtime. This mod copies that logic into other maps using nothing but VScript, with some additional QoL features.
 
-After 10 minutes (or less if mp_timelimit is set), the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain.
+After 10 minutes (or less if mp_timelimit has nearly elapsed), the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain. Multistage maps will also always play to the final stage, even if mp_timelimit has expired.
 
-In multi-stage maps, each win on a previous stage will provide winning teams with an advantage on the next stage. In vanilla TF2, this takes the form of the winning team's cart starting ahead of the enemy's cart. This mod adds another advantage: the winning team's cart will move slightly faster when automatically advancing in overtime compared to the enemy's cart. Multistage maps will also always play to the final stage, even if mp_timelimit has expired.
+### Dynamic cart speed
+
+To reduce the likelihood of steamrolls, the leading cart's speed is reduced based on how much of a lead that team has over the losing team. The leading cart's speed starts reducing when it's 25% (of the track length) ahead of the other cart, and reaches its minimum at a 65% lead. The following table shows the relative speeds in various situations:
+
+| Cart State    | <=25% lead | 45% lead | >=65% lead |
+|:--------------|:-----------|:---------|:-----------|
+| x0 (overtime) | 0.22       | 0.149    | 0.077      |
+| x1            | 0.55       | 0.371    | 0.193      |
+| x2            | 0.77       | 0.520    | 0.270      |
+| x3            | 1.00       | 0.675    | 0.350      |
 
 ### Optional features:
 
@@ -83,7 +92,7 @@ In `mega_mod\common\plr_overtime.nut`, setting `::MM_PLR_DISABLE_ROLLBACK_IF_OVE
 
 ### Map specific quirks:
 - On Hacksaw and Hacksaw Event, the game_text entities that display "hacking" progress now operate on separate channels, so both teams' progress can display simultaneously.
-- On Hightower and Hightower Event, the elevators' rollback zones do not operate in overtime.
+- On Hightower and Hightower Event, the elevators' rollback zones do not operate in overtime and are not affected by the dynamic speed system.
 - Nightfall:
   - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
   - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.
