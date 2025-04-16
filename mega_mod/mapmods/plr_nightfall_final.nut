@@ -24,6 +24,9 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
     ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
 
+    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherA");
+    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherA");
+
     MM_GetEntByName("plr_red_overtime").Kill();
     MM_GetEntByName("plr_blu_overtime").Kill();
     MM_GetEntByName("plr_overtime_template").Kill();
@@ -52,7 +55,7 @@ function OnGameEvent_teamplay_round_start(params) {
     AddRollbackZone("plr_blu_pathC_hillA2", "plr_blu_pathC_hillA6", "plr_blu_pathC_hillA1", "Blu");
     AddRollbackZone("plr_blu_pathC_hillB2", "plr_blu_pathC_hillB6", "plr_blu_pathC_hillB1", "Blu")
 
-    // Crossing logic replacement (yes they used "crossing2" twice)
+    // Crossing logic replacement (yes they used "crossover2" twice)
     foreach(entName in [
         "plr_red_pathA_crossover1_branch",
         "plr_red_pathA_crossover1_relay",
@@ -177,6 +180,9 @@ function OnRound2Start() {
     ::PLR_TIMER_NAME <- "plr_timer_b";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
+    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherB");
+    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherB");
+
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(45), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
@@ -190,13 +196,7 @@ function OnRound2Start() {
         BLU_TRAIN.AcceptInput("TeleportToPathTrack", "plr_blu_pathB_start1", null, null);
     }
 
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
-    ::RED_ROLLSTATE <- 0;
-    ::BLU_ROLLSTATE <- 0;
-
-    UpdateRedCart(0);
-    UpdateBluCart(0);
+    ResetCartStates();
 }
 
 function OnRound3Start() {
@@ -206,6 +206,9 @@ function OnRound3Start() {
     ::PLR_TIMER_NAME <- "plr_timer_c";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
+    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherC");
+    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherC");
+
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
@@ -213,13 +216,7 @@ function OnRound3Start() {
     // Handle cart warp
     MM_GetEntByName("plr_stageC_start_case").AcceptInput("InValue", "" + ROUND_WIN_COUNTER, null, null);
 
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
-    ::RED_ROLLSTATE <- 0;
-    ::BLU_ROLLSTATE <- 0;
-
-    UpdateRedCart(0);
-    UpdateBluCart(0);
+    ResetCartStates();
 }
 
 ::CountWinRedBase <- CountWinRed;

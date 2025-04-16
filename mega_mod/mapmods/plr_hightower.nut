@@ -23,6 +23,9 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_ELV <- null;
     ::BLU_ELV <- null;
 
+    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherC");
+    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherC");
+
     // Cart control logic replacement
     MM_GetEntByName("template_elv_case_red").Kill();
     MM_GetEntByName("template_elv_case_blu").Kill();
@@ -91,8 +94,9 @@ function StartOvertime() {
 ::StopBluBase <- StopBlu;
 ::TriggerRollbackBluBase <- TriggerRollbackBlu;
 
-function AdvanceRed(speed) {
-    AdvanceRedBase(speed);
+function AdvanceRed(speed, dynamic = true) {
+    if (RED_ELV) dynamic = false;
+    AdvanceRedBase(speed, dynamic);
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
@@ -115,8 +119,9 @@ function TriggerRollbackRed() {
     }
 }
 
-function AdvanceBlu(speed) {
-    AdvanceBluBase(speed);
+function AdvanceBlu(speed, dynamic = true) {
+    if (BLU_ELV) dynamic = false;
+    AdvanceBluBase(speed, dynamic);
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);

@@ -22,6 +22,9 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_TRAIN <- MM_GetEntByName("red_cart_tracktrain");
     ::BLU_TRAIN <- MM_GetEntByName("blue_cart_tracktrain");
 
+    ::RED_WATCHER <- MM_GetEntByName("red_watcher_1");
+    ::BLU_WATCHER <- MM_GetEntByName("blue_watcher_1");
+
     MM_GetEntByName("red_train_case").Kill();
     MM_GetEntByName("blue_train_case").Kill();
     MM_GetEntByName("red_train_remap").Kill();
@@ -103,17 +106,14 @@ function OnRound2Start() {
     ::PLR_TIMER_NAME <- "setup_timer_b";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
+    ::RED_WATCHER <- MM_GetEntByName("red_watcher_2");
+    ::BLU_WATCHER <- MM_GetEntByName("blue_watcher_2");
+
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", "setup_timer_b", "Disable", "");
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(65), 0, -1);
     EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
 
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
-    ::RED_ROLLSTATE <- 0;
-    ::BLU_ROLLSTATE <- 0;
-
-    UpdateRedCart(0);
-    UpdateBluCart(0);
+    ResetCartStates();
 }
 
 function OnRound3Start() {
@@ -124,16 +124,13 @@ function OnRound3Start() {
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
 
+    ::RED_WATCHER <- MM_GetEntByName("red_watcher_3");
+    ::BLU_WATCHER <- MM_GetEntByName("blue_watcher_3");
+
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
 
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
-    ::RED_ROLLSTATE <- 0;
-    ::BLU_ROLLSTATE <- 0;
-
-    UpdateRedCart(0);
-    UpdateBluCart(0);
+    ResetCartStates();
 }
 
 __CollectGameEventCallbacks(this);

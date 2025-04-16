@@ -1,6 +1,12 @@
 ::MM_PLR_TIME_UPPER_LIMIT <- 600;
 ::MM_PLR_TIME_LOWER_LIMIT <- 90;
 
+// Defines minimum multiplier applied to cart speed for the dynamic speed system.
+::MM_PLR_MINIMUM_SPEED_RATIO <- 0.35;
+// Defines distances between the carts as a fraction of track length for the dynamic speed system.
+::MM_PLR_MINIMUM_DELTA_RATIO <- 0.25;
+::MM_PLR_MAXIMUM_DELTA_RATIO <- 0.65;
+
 // If true, disables the rollback zones entirely after 5 minutes pass during overtime.
 // If false, then rollback zones still work if the other cart is actively pushed.
 ::MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG <- false;
@@ -34,6 +40,10 @@ function InitGlobalVars() {
     // 0 if on flat ground, -1 if rolling back, 1 if rolling forward
     ::RED_ROLLSTATE <- 0;
     ::BLU_ROLLSTATE <- 0;
+
+    // team_train_watcher for each team
+    ::RED_WATCHER <- null;
+    ::BLU_WATCHER <- null;
 
     // func_tracktrain for the cart itself
     ::RED_TRAIN <- null;
@@ -223,7 +233,10 @@ function UpdateBluCart(caseNumber) {
 
 // Called by other code to directly control the cart.
 
-function AdvanceRed(speed) {
+function AdvanceRed(speed, dynamic = true) {
+
+    if (dynamic) speed = CalculateDynamicSpeed(speed, 2);
+
     foreach(spark in RED_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
@@ -248,6 +261,9 @@ function TriggerRollbackRed() {
 }
 
 function AdvanceBlu(speed) {
+
+    if (dynamic) speed = CalculateDynamicSpeed(speed, 3);
+
     foreach(spark in BLU_CARTSPARKS_ARRAY) {
         EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
@@ -285,7 +301,7 @@ function RollforwardStartRed() {
     ::RED_ROLLSTATE <- 1;
     RED_PUSHZONE.AcceptInput("Disable", "", null, null);
     BlockRedCart(true);
-    AdvanceRed(TIMES_3_SPEED_RED);
+    AdvanceRed(1);
 }
 
 function RollforwardEndRed() {
@@ -328,6 +344,30 @@ function BlockBluCart(blocked) {
     ::BLOCK_BLU <- blocked;
     UpdateBluCart(CASE_BLU);
     UpdateRedCart(CASE_RED);
+}
+
+// This function is called by the AdvanceRed/AdvanceBlu functions to determine the speed of the cart.
+// Dynamic speed forces the leading cart to slow down if it's too far ahead of the other team's cart.
+
+function CalculateDynamicSpeed(baseSpeed, teamNum) {
+    // Get the positions of the carts (they are ratios between 0.0 and 1.0)
+    local redPos = NetProps.GetPropFloat(RED_WATCHER, "m_flTotalProgress");
+    local bluPos = NetProps.GetPropFloat(BLU_WATCHER, "m_flTotalProgress");
+
+    // If this cart is behind, don't do anything.
+    if (redPos > bluPos && teamNum == 3) return baseSpeed;
+    if (bluPos > redPos && teamNum == 2) return baseSpeed;
+
+    local distance = abs(redPos - bluPos);
+
+    if (distance < MM_PLR_MINIMUM_DELTA_RATIO) return baseSpeed;
+    else if (distance > MM_PLR_MAXIMUM_DELTA_RATIO) return baseSpeed * MM_PLR_MINIMUM_SPEED_RATIO;
+
+    local scaledDistance = (distance - MM_PLR_MINIMUM_DELTA_RATIO) / (MM_PLR_MAXIMUM_DELTA_RATIO - MM_PLR_MINIMUM_DELTA_RATIO);
+
+    // Calculate the speed ratio based on the distance between the carts.
+    local speedRatio = 1 - scaledDistance * (1 - MM_PLR_MINIMUM_SPEED_RATIO);
+    return baseSpeed * speedRatio;
 }
 
 // These functions set the crossing value, then block the cart from being updated
@@ -434,27 +474,22 @@ function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) 
     EntityOutputs.AddOutput(MM_GetEntByName(endPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + -index + ")", 0, -1);
 }
 
-// Called whenever a team wins a stage in a multi-stage map.
-// Teams that win more get more of an advantage in overtime.
-
-function CountWinRed() {
-    ::OVERTIME_SPEED_RED <- OVERTIME_SPEED_RED + 0.02;
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
+// Called whenever the cart states need to be reset (usually for multistage maps).
+function ResetCartStates() {
     ::RED_ROLLSTATE <- 0;
     ::BLU_ROLLSTATE <- 0;
+    ::OVERTIME_ACTIVE <- false;
+    ::ROLLBACK_DISABLED <- false;
 
     UpdateRedCart(0);
     UpdateBluCart(0);
 }
 
-function CountWinBlu() {
-    ::OVERTIME_SPEED_BLU <- OVERTIME_SPEED_BLU + 0.02;
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
-    ::RED_ROLLSTATE <- 0;
-    ::BLU_ROLLSTATE <- 0;
+// Called whenever a team wins a stage in a multi-stage map.
+function CountWinRed() {
+    ResetCartStates();
+}
 
-    UpdateRedCart(0);
-    UpdateBluCart(0);
+function CountWinBlu() {
+    ResetCartStates();
 }

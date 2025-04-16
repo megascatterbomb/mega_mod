@@ -23,6 +23,9 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_red", "Red");
     ::BLU_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_blu", "Blu");
 
+    ::RED_WATCHER <- MM_GetEntByName("minecart_red_watcherA");
+    ::BLU_WATCHER <- MM_GetEntByName("minecart_blu_watcherA");
+
     EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
     EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
 
@@ -52,8 +55,8 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0, -1);
 
     // team_train_watcher is no longer in charge.
-    NetProps.SetPropBool(MM_GetEntByName("minecart_red_watcherA"), "m_bHandleTrainMovement", false);
-    NetProps.SetPropBool(MM_GetEntByName("minecart_blu_watcherA"), "m_bHandleTrainMovement", false);
+    NetProps.SetPropBool(RED_WATCHER, "m_bHandleTrainMovement", false);
+    NetProps.SetPropBool(BLU_WATCHER, "m_bHandleTrainMovement", false);
 
     EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "minecart_red_watcherA", "SetNumTrainCappers", "", 0, -1);
     EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "minecart_blu_watcherA", "SetNumTrainCappers", "", 0, -1);

@@ -33,6 +33,9 @@ function MM_HighTowerEvent_DelayedStart() {
     ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
     ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
 
+    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherC");
+    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherC");
+
     ::RED_ELV <- null;
     ::BLU_ELV <- null;
 
@@ -111,8 +114,9 @@ function StartOvertime() {
 ::StopBluBase <- StopBlu;
 ::TriggerRollbackBluBase <- TriggerRollbackBlu;
 
-function AdvanceRed(speed) {
-    AdvanceRedBase(speed);
+function AdvanceRed(speed, dynamic = true) {
+    if (RED_ELV) dynamic = false;
+    AdvanceRedBase(speed, dynamic);
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
@@ -135,8 +139,9 @@ function TriggerRollbackRed() {
     }
 }
 
-function AdvanceBlu(speed) {
-    AdvanceBluBase(speed);
+function AdvanceBlu(speed, dynamic = true) {
+    if (BLU_ELV) dynamic = false;
+    AdvanceBluBase(speed, dynamic);
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
