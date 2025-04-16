@@ -60,6 +60,10 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
     EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+
+    // Add thinks to carts
+    CreateCartAutoUpdater(RED_TRAIN, 2);
+    CreateCartAutoUpdater(BLU_TRAIN, 3);
 }
 
 __CollectGameEventCallbacks(this);

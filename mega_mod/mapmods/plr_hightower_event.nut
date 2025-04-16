@@ -83,6 +83,10 @@ function MM_HighTowerEvent_DelayedStart() {
 
     EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "Endgame()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "Endgame()", 0, -1);
+
+    // Add thinks to carts
+    CreateCartAutoUpdater(RED_TRAIN, 2);
+    CreateCartAutoUpdater(BLU_TRAIN, 3);
 }
 
 // Destroy timer during the underworld phase.
@@ -128,6 +132,10 @@ function StopRed() {
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
+
+        // Stop sound if elevator is completely stopped.
+        local currentSpeed = NetProps.GetPropFloat(RED_ELV, "m_flSpeed");
+        if (currentSpeed == 0) EntFireByHandle(RED_ELV, "Stop", "", 0, null, null);
     }
 }
 
@@ -153,6 +161,10 @@ function StopBlu() {
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
+
+        // Stop sound if elevator is completely stopped.
+        local currentSpeed = NetProps.GetPropFloat(BLU_ELV, "m_flSpeed");
+        if (currentSpeed == 0) EntFireByHandle(BLU_ELV, "Stop", "", 0, null, null);
     }
 }
 

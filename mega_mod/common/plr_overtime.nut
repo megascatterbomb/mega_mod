@@ -66,6 +66,10 @@ function InitGlobalVars() {
     ::CROSSING_RED <- 0;
     ::CROSSING_BLU <- 0;
 
+    // When was the cart's speed last updated?
+    ::RED_LAST_UPDATE <- Time();
+    ::BLU_LAST_UPDATE <- Time();
+
     ::TIMES_1_SPEED_RED <- 0.55;
     ::TIMES_2_SPEED_RED <- 0.77;
     ::TIMES_3_SPEED_RED <- 1.0;
@@ -242,6 +246,8 @@ function AdvanceRed(speed, dynamic = true) {
     }
     if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
+
+    ::RED_LAST_UPDATE <- Time();
 }
 
 function StopRed() {
@@ -250,6 +256,12 @@ function StopRed() {
     }
     if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
+
+    // Stop sound if cart is completely stopped.
+    local currentSpeed = NetProps.GetPropFloat(RED_TRAIN, "m_flSpeed");
+    if (currentSpeed == 0) EntFireByHandle(RED_TRAIN, "Stop", "", 0, null, null);
+
+    ::RED_LAST_UPDATE <- Time();
 }
 
 function TriggerRollbackRed() {
@@ -258,9 +270,11 @@ function TriggerRollbackRed() {
     }
     if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
+
+    ::RED_LAST_UPDATE <- Time();
 }
 
-function AdvanceBlu(speed) {
+function AdvanceBlu(speed, dynamic = true) {
 
     if (dynamic) speed = CalculateDynamicSpeed(speed, 3);
 
@@ -269,6 +283,8 @@ function AdvanceBlu(speed) {
     }
     if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
+
+    ::BLU_LAST_UPDATE <- Time();
 }
 
 function StopBlu() {
@@ -277,6 +293,12 @@ function StopBlu() {
     }
     if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
+
+    // Stop sound if cart is completely stopped.
+    local currentSpeed = NetProps.GetPropFloat(BLU_TRAIN, "m_flSpeed");
+    if (currentSpeed == 0) EntFireByHandle(BLU_TRAIN, "Stop", "", 0, null, null);
+
+    ::BLU_LAST_UPDATE <- Time();
 }
 
 function TriggerRollbackBlu() {
@@ -285,6 +307,8 @@ function TriggerRollbackBlu() {
     }
     if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
+
+    ::BLU_LAST_UPDATE <- Time();
 }
 
 // Called by path_track as the cart enters and exits rollback/rollforward zones
@@ -301,7 +325,7 @@ function RollforwardStartRed() {
     ::RED_ROLLSTATE <- 1;
     RED_PUSHZONE.AcceptInput("Disable", "", null, null);
     BlockRedCart(true);
-    AdvanceRed(1);
+    AdvanceRed(1, false);
 }
 
 function RollforwardEndRed() {
@@ -322,7 +346,7 @@ function RollforwardStartBlu() {
     ::BLU_ROLLSTATE <- 1;
     BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
     BlockBluCart(true);
-    AdvanceBlu(1);
+    AdvanceBlu(1, false);
 }
 
 function RollforwardEndBlu() {
@@ -368,6 +392,34 @@ function CalculateDynamicSpeed(baseSpeed, teamNum) {
     // Calculate the speed ratio based on the distance between the carts.
     local speedRatio = 1 - scaledDistance * (1 - MM_PLR_MINIMUM_SPEED_RATIO);
     return baseSpeed * speedRatio;
+}
+
+// This function creates a think for the cart entity which periodically updates the cart speed.
+// team: "Red" or "Blu"
+function CreateCartAutoUpdater(cart, team)
+{
+    if (team != 2 && team != 3) return;
+
+    AddThinkToEnt(cart, "CartThink(" + team + ")");
+}
+
+function CartThink(team) {
+    local updateInterval = 2.5;
+    local cart = team == 2 ? RED_TRAIN : BLU_TRAIN;
+    local lastUpdate = team == 2 ? RED_LAST_UPDATE : BLU_LAST_UPDATE;
+    if (Time() - lastUpdate > updateInterval) {
+        // Update the cart's state (and therefore speed).
+        if (team == 2) {
+            UpdateRedCart(CASE_RED);
+            ::RED_LAST_UPDATE <- Time();
+        } else {
+            UpdateBluCart(CASE_BLU);
+            ::BLU_LAST_UPDATE <- Time();
+        }
+    }
+    local timeUntilNextCheck = updateInterval - (Time() - lastUpdate);
+    if (timeUntilNextCheck < 0.5) timeUntilNextCheck = 0.5;
+    return timeUntilNextCheck;
 }
 
 // These functions set the crossing value, then block the cart from being updated
@@ -480,6 +532,9 @@ function ResetCartStates() {
     ::BLU_ROLLSTATE <- 0;
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
+
+    ::RED_LAST_UPDATE <- Time();
+    ::BLU_LAST_UPDATE <- Time();
 
     UpdateRedCart(0);
     UpdateBluCart(0);

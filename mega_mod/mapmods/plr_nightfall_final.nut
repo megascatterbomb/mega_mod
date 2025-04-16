@@ -171,6 +171,10 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_A"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_B"), "OnWonByTeam1", "!self", "RunScriptCode", "CountWinRed()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_B"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
+
+    // Add thinks to carts
+    CreateCartAutoUpdater(RED_TRAIN, 2);
+    CreateCartAutoUpdater(BLU_TRAIN, 3);
 }
 
 function OnRound2Start() {
