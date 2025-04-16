@@ -33,7 +33,7 @@ This mod offers gamemode-specific config execution. Unfortunately, this requires
 In certain scenarios, it is beneficial to respawn the dead players on one or both teams to improve the gameplay experience.
 
 - In Attack/Defend and Payload maps:
-  - Both teams are respawned at the end of setup time.
+  - BLU team is respawned at the end of setup time.
   - RED team is respawned whenever a control point is captured. This helps prevent steamrolls.
 
 # Gamemode Improvements

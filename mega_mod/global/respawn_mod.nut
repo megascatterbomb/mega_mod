@@ -19,7 +19,7 @@ ApplyMod <- function () {
     this.OnGameEvent_teamplay_round_start <- function (event) {
         if(IsInWaitingForPlayers()) return;
         printl("MEGAMOD: Loading respawn mod...");
-        MM_Respawn_Mod();
+        MM_Respawn_Mod(event.full_reset == 1);
     }.bindenv(this);
 
     local scope = this;

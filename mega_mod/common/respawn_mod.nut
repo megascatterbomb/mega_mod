@@ -1,6 +1,9 @@
-function MM_Respawn_Mod() {
+function MM_Respawn_Mod(full_reset) {
     ::MM_RESPAWN_DELAY <- 0.2;
     ::MM_RESPAWN_DISABLE <- false;
+
+    // Don't want to reapply mods on multistage maps.
+    if (!full_reset) return;
 
     MM_RespawnEndOfRound();
     MM_RespawnSetupEnd();
@@ -15,7 +18,7 @@ function MM_RespawnEndOfRound() {
 
 function MM_RespawnSetupEnd() {
     for (local timer = null; timer = Entities.FindByClassname(timer, "team_round_timer");) {
-        EntityOutputs.AddOutput(timer, "OnSetupFinished", "!self", "RunScriptCode", "MM_RespawnTeam(2)", MM_RESPAWN_DELAY, -1);
+        // EntityOutputs.AddOutput(timer, "OnSetupFinished", "!self", "RunScriptCode", "MM_RespawnTeam(2)", MM_RESPAWN_DELAY, -1);
         EntityOutputs.AddOutput(timer, "OnSetupFinished", "!self", "RunScriptCode", "MM_RespawnTeam(3)", MM_RESPAWN_DELAY, -1);
     }
 }
