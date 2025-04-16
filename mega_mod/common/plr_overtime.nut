@@ -382,7 +382,7 @@ function CalculateDynamicSpeed(baseSpeed, teamNum) {
     if (redPos > bluPos && teamNum == 3) return baseSpeed;
     if (bluPos > redPos && teamNum == 2) return baseSpeed;
 
-    local distance = abs(redPos - bluPos);
+    local distance = fabs(redPos - bluPos);
 
     if (distance < MM_PLR_MINIMUM_DELTA_RATIO) return baseSpeed;
     else if (distance > MM_PLR_MAXIMUM_DELTA_RATIO) return baseSpeed * MM_PLR_MINIMUM_SPEED_RATIO;
@@ -400,14 +400,25 @@ function CreateCartAutoUpdater(cart, team)
 {
     if (team != 2 && team != 3) return;
 
-    AddThinkToEnt(cart, "CartThink(" + team + ")");
+    local thinkName = team == 2 ? "CartThinkRed" : "CartThinkBlu";
+
+    AddThinkToEnt(cart, thinkName);
+}
+
+function CartThinkRed() {
+    return CartThink(2);
+}
+
+function CartThinkBlu() {
+    return CartThink(3);
 }
 
 function CartThink(team) {
     local updateInterval = 2.5;
     local cart = team == 2 ? RED_TRAIN : BLU_TRAIN;
     local lastUpdate = team == 2 ? RED_LAST_UPDATE : BLU_LAST_UPDATE;
-    if (Time() - lastUpdate > updateInterval) {
+    local rollstate = team == 2 ? RED_ROLLSTATE : BLU_ROLLSTATE;
+    if (Time() - lastUpdate > updateInterval && rollstate == 0) {
         // Update the cart's state (and therefore speed).
         if (team == 2) {
             UpdateRedCart(CASE_RED);
