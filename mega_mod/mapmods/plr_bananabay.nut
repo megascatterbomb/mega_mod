@@ -45,14 +45,55 @@ function OnGameEvent_teamplay_round_start(params) {
     AddRollbackZone("minecart_bpath_77", "minecart_bpath_78", "minecart_bpath_76", "Blu");
     AddRollbackZone("minecart_bpath_80", null, "minecart_bpath_88", "Blu");
 
-    // Update carts whenever trains move out of the way (carts waiting at final ramp don't autoresume)
-    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_red_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0, -1);
+    // Track if the cart is at the cutoff between the track and the capture zone
+    // where the cart stops during the train event.
+    ::RED_AT_CUTOFF <- false;
+    ::BLU_AT_CUTOFF <- false;
 
-    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_81"), "OnPass", "!self", "RunScriptCode", "::RED_AT_CUTOFF <- false", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_82"), "OnPass", "!self", "RunScriptCode", "::RED_AT_CUTOFF <- true", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_84"), "OnPass", "!self", "RunScriptCode", "::RED_AT_CUTOFF <- true", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_86"), "OnPass", "!self", "RunScriptCode", "::RED_AT_CUTOFF <- false", 0, -1);
+
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_82"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_CUTOFF <- false", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_89"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_CUTOFF <- true", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_83"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_CUTOFF <- true", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_86"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_CUTOFF <- false", 0, -1);
+
+    // Track if the cart is at the very end of the track.
+    ::RED_AT_END <- false;
+    ::BLU_AT_END <- false;
+
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_85"), "OnPass", "!self", "RunScriptCode", "::RED_AT_END <- false", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_red_pathA_end"), "OnPass", "!self", "RunScriptCode", "::RED_AT_END <- true", 0, -1);
+
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_85"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_END <- false", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_blu_pathA_end"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_END <- true", 0, -1);
+
+    // Check if the cart needs updating.
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "CheckCartRed()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "CheckCartRed()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_red_cap"), "OnTrigger", "!self", "RunScriptCode", "CheckCartRed()", 0, -1);
+
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "!self", "RunScriptCode", "CheckCartBlu()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "!self", "RunScriptCode", "CheckCartBlu()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "!self", "RunScriptCode", "CheckCartBlu()", 0, -1);
+
+    // Remove old cart update logic
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "minecart_red_pushzone", "Disable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "minecart_red_pushzone", "Disable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "minecart_blu_pushzone", "Disable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "minecart_blu_pushzone", "Disable", "");
+
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "minecart_red_pushzone", "Enable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "minecart_red_pushzone", "Enable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a7"), "OnPass", "minecart_blu_pushzone", "Enable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("path_mid_a10"), "OnPass", "minecart_blu_pushzone", "Enable", "");
+
+    EntityOutputs.RemoveOutput(MM_GetEntByName("relay_enable_red_cap"), "OnTrigger", "minecart_red_pushzone", "Disable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("relay_enable_red_cap"), "OnTrigger", "minecart_red_pushzone", "Enable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "minecart_blu_pushzone", "Disable", "");
+    EntityOutputs.RemoveOutput(MM_GetEntByName("relay_enable_blu_cap"), "OnTrigger", "minecart_blu_pushzone", "Enable", "");
 
     // team_train_watcher is no longer in charge.
     NetProps.SetPropBool(RED_WATCHER, "m_bHandleTrainMovement", false);
@@ -69,6 +110,48 @@ function OnGameEvent_teamplay_round_start(params) {
     // Add thinks to carts
     CreateCartAutoUpdater(RED_TRAIN, 2);
     CreateCartAutoUpdater(BLU_TRAIN, 3);
+}
+
+// Update carts at the cutoff when train event finishes (carts at cutoff don't autoresume)
+function CheckCartRed() {
+    // Don't need to autoresume if the cart should be stationary.
+    if (CASE_RED == 0 && !OVERTIME_ACTIVE) return;
+    if (!RED_AT_CUTOFF) return;
+
+    printl("CHECK CART RED");
+    UpdateRedCart(CASE_RED);
+}
+
+function CheckCartBlu() {
+    // Don't need to autoresume if the cart should be stationary.
+    if (CASE_BLU == 0 && !OVERTIME_ACTIVE) return;
+    if (!BLU_AT_CUTOFF) return;
+
+    printl("CHECK CART BLU");
+    UpdateBluCart(CASE_BLU);
+}
+
+// Do not move cart forward if it's already at the end of the track.
+::AdvanceRedBase <- AdvanceRed;
+::AdvanceBluBase <- AdvanceBlu;
+
+function AdvanceRed(speed, dynamic = true) {
+    if (RED_AT_END && speed > 0) return;
+    AdvanceRedBase(speed, dynamic);
+}
+
+function AdvanceBlu(speed, dynamic = true) {
+    if (BLU_AT_END && speed > 0) return;
+    AdvanceBluBase(speed, dynamic);
+}
+
+// Stop thinks from needlessly checking cart (causes cart sounds to play when they shouldn't)
+::CartThinkBase <- CartThink;
+function CartThink(team) {
+    if (team == 2 && (RED_AT_END || RED_AT_CUTOFF)) return;
+    if (team == 3 && (BLU_AT_END || BLU_AT_CUTOFF)) return;
+    printl("THINK CART" + (team == 3 ? " BLU" : " RED"));
+    return CartThinkBase(team);
 }
 
 __CollectGameEventCallbacks(this);

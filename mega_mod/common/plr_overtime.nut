@@ -420,12 +420,13 @@ function CartThink(team) {
     local rollstate = team == 2 ? RED_ROLLSTATE : BLU_ROLLSTATE;
     if (Time() - lastUpdate > updateInterval && rollstate == 0) {
         // Update the cart's state (and therefore speed).
+        lastUpdate = Time();
         if (team == 2) {
             UpdateRedCart(CASE_RED);
-            ::RED_LAST_UPDATE <- Time();
+            ::RED_LAST_UPDATE <- lastUpdate;
         } else {
             UpdateBluCart(CASE_BLU);
-            ::BLU_LAST_UPDATE <- Time();
+            ::BLU_LAST_UPDATE <- lastUpdate;
         }
     }
     local timeUntilNextCheck = updateInterval - (Time() - lastUpdate);
