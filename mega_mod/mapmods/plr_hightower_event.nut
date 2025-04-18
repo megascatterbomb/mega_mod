@@ -24,9 +24,6 @@ function MM_HighTowerEvent_DelayedStart() {
     ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_red_cartsparks");
     ::BLU_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_blu_cartsparks");
 
-    ::RED_FLASHINGLIGHT <- MM_GetEntByName("plr_red_flashinglight");
-    ::BLU_FLASHINGLIGHT <- MM_GetEntByName("plr_blu_flashinglight");
-
     ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone");
     ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone");
 
@@ -81,17 +78,12 @@ function MM_HighTowerEvent_DelayedStart() {
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorRed()", 0.95, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_blu_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorBlu()", 0.95, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "Endgame()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "Endgame()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
 
     // Add thinks to carts
     CreateCartAutoUpdater(RED_TRAIN, 2);
     CreateCartAutoUpdater(BLU_TRAIN, 3);
-}
-
-// Destroy timer during the underworld phase.
-function Endgame() {
-    if (PLR_TIMER) PLR_TIMER.Kill();
 }
 
 ::StartOvertimeBase <- StartOvertime;

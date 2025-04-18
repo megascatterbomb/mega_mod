@@ -92,6 +92,16 @@ function InitGlobalVars() {
 
 InitGlobalVars();
 
+function OnGameEvent_teamplay_round_win(params) {
+    if (params.team == 2) { // Red team
+        WinRed();
+    } else if (params.team == 3) { // Blu team
+        WinBlu();
+    } else { // Stalemate. Can happen in halloween or if mp_timelimit is reached
+        ForceStopCarts();
+    }
+}
+
 function GetRoundTimeString(setup = 0) {
     return "" + GetRoundTime(setup);
 }
@@ -538,10 +548,27 @@ function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) 
     EntityOutputs.AddOutput(MM_GetEntByName(endPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + -index + ")", 0, -1);
 }
 
+// Used to stop the carts at the end of a round.
+// Typically only needed for multistage maps or maps with special endings (e.g. Helltower).
+function ForceStopCarts() {
+    if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
+
+    ::OVERTIME_ACTIVE <- false;
+    ::ROLLBACK_DISABLED <- false;
+
+    ::BLOCK_RED <- true;
+    ::BLOCK_BLU <- true;
+
+    StopRed();
+    StopBlu();
+}
+
 // Called whenever the cart states need to be reset (usually for multistage maps).
 function ResetCartStates() {
     ::RED_ROLLSTATE <- 0;
     ::BLU_ROLLSTATE <- 0;
+    ::BLOCK_RED <- false;
+    ::BLOCK_BLU <- false;
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
 
@@ -552,11 +579,11 @@ function ResetCartStates() {
     UpdateBluCart(0);
 }
 
-// Called whenever a team wins a stage in a multi-stage map.
-function CountWinRed() {
-    ResetCartStates();
+// Called whenever a team wins the round (includes all stages in multistage maps).
+function WinRed() {
+    ForceStopCarts();
 }
 
-function CountWinBlu() {
-    ResetCartStates();
+function WinBlu() {
+    ForceStopCarts();
 }

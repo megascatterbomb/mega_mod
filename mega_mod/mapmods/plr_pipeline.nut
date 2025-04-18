@@ -93,14 +93,26 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(MM_GetEntByName("round2"), "OnStart", "!self", "RunScriptCode", "OnRound2Start()", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("round3"), "OnStart", "!self", "RunScriptCode", "OnRound3Start()", 0, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("round1"), "OnWonByTeam1", "!self", "RunScriptCode", "CountWinRed()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("round1"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("round2"), "OnWonByTeam1", "!self", "RunScriptCode", "CountWinRed()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("round2"), "OnWonByTeam2", "!self", "RunScriptCode", "CountWinBlu()", 0, -1);
-
     // Add thinks to carts
     CreateCartAutoUpdater(RED_TRAIN, 2);
     CreateCartAutoUpdater(BLU_TRAIN, 3);
+}
+
+::WinBase <- OnGameEvent_teamplay_round_win;
+
+// Pipeline has an end-of-round win sequence that requires the winning cart to keep moving forward.
+function OnGameEvent_teamplay_round_win(params) {
+    if (params.full_round == 1 && params.team != 0) {
+        if (params.team == 2) {
+            ::BLOCK_BLU <- true;
+            StopBlu();
+        } else if (params.team == 3) {
+            ::BLOCK_RED <- true;
+            StopRed();
+        }
+        return;
+    }
+    WinBase(params);
 }
 
 function OnRound2Start() {
