@@ -64,10 +64,10 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_AT_END <- false;
     ::BLU_AT_END <- false;
 
-    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_85"), "OnPass", "!self", "RunScriptCode", "::RED_AT_END <- false", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_85"), "OnPass", "!self", "RunScriptCode", "::RED_AT_END <- false; UpdateRedCart(CASE_RED)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_red_pathA_end"), "OnPass", "!self", "RunScriptCode", "::RED_AT_END <- true", 0, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_85"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_END <- false", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_85"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_END <- false; UpdateBluCart(CASE_BLU)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_blu_pathA_end"), "OnPass", "!self", "RunScriptCode", "::BLU_AT_END <- true", 0, -1);
 
     // Check if the cart needs updating.
@@ -150,7 +150,6 @@ function AdvanceBlu(speed, dynamic = true) {
 function CartThink(team) {
     if (team == 2 && (RED_AT_END || RED_AT_CUTOFF)) return;
     if (team == 3 && (BLU_AT_END || BLU_AT_CUTOFF)) return;
-    printl("THINK CART" + (team == 3 ? " BLU" : " RED"));
     return CartThinkBase(team);
 }
 
