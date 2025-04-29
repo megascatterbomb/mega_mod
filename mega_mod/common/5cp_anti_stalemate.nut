@@ -62,6 +62,22 @@ function Setup5CPKothTimer() {
 
     EntityOutputs.AddOutput(MM_GetEntByName("zz_red_koth_timer"), "OnFinished", "zz_gamewin_red", "RoundWin", "", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("zz_blue_koth_timer"), "OnFinished", "zz_gamewin_blue", "RoundWin", "", 0, -1);
+
+    // Some maps like cp_foundry have logic_relays targeting "team_round_timer" instead of a specific entity.
+    for (local relay = null; relay = Entities.FindByClassname(relay, "logic_relay");) {
+        local outputs = [];
+        local outputCount = EntityOutputs.GetNumElements(relay, "OnTrigger");
+        for (local i = outputCount - 1; i >= 0; i--) {
+            local table = {}
+            EntityOutputs.GetOutputTable(relay, "OnTrigger", table, i);
+            outputs.append(table)
+        }
+        foreach (output in outputs) {
+            if (output.target == "team_round_timer") {
+                EntityOutputs.RemoveOutput(relay, "OnTrigger", output.target, output.input, output.parameter);
+            }
+        }
+    }
 }
 
 function AttachMid() {
