@@ -36,6 +36,14 @@ In certain scenarios, it is beneficial to respawn the dead players on one or bot
   - BLU team is respawned at the end of setup time.
   - RED team is respawned whenever a control point is captured. This helps prevent steamrolls.
 
+## Better mp_timelimit enforcement on KOTH and 5CP.
+
+Normally, mp_match_end_at_timelimit enforces a stalemate on these gamemodes when the map timer ends, regardless of the game state.
+
+This mod only forces a stalemate if no-one has capped a point (i.e. there is a neutral point on the map). This guarantees a map change after a certain point in time without interrupting actual gameplay (loitering on harvest without capping is not actual gameplay).
+
+This mod will force `mp_match_end_at_timelimit 0`.
+
 # Gamemode Improvements
 
 ## 5CP Anti-stalemate

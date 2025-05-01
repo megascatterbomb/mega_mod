@@ -47,6 +47,7 @@ local globalMods = [
     "zi_mod"
     "jakemod"
     "gamemode_cfg"
+    "neutral_point_stalemate"
 ];
 
 // You should not have to touch anything below this point.
