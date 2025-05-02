@@ -71,7 +71,6 @@ On `cp_standin_final`, the same anti-stalemate functionality is present, with th
 These improvements apply only to the [VScript Arena](https://steamcommunity.com/workshop/filedetails/?id=3360196477) community fix by Lizard of Oz.
 
 - Added a 3 minute round timer. When elapsed, the round is won by whichever team has more players alive, stalemating if a tie.
-- Reduced win limit to 3.
 
 ## Payload Race
 
