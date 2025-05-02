@@ -86,6 +86,8 @@ function MM_GetGamemode() {
     local mapPrefix = mapName.slice(0, mapName.find("_"));
 
     switch (mapPrefix) {
+        case "arena":
+            return MM_Gamemodes.ARENA;
         case "cp":
             return MM_Gamemode_CheckCPGamemode();
         case "ctf":
