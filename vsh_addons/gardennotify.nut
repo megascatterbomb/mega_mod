@@ -17,13 +17,6 @@
     return ::specialScoreboard[scoreboardKey]
 }
 
-// Credit to valve wiki: https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/VScript_Examples#Getting_the_userid_from_a_player_handle
-::PlayerManager <- Entities.FindByClassname(null, "tf_player_manager")
-::GetPlayerUserID <- function(player)
-{
-    return NetProps.GetPropIntArray(PlayerManager, "m_iUserID", player.entindex())
-}
-
 // OVERRIDE: mercs\merc_traits\single_class\spy_backstab.nut::OnDamageDealt
 characterTraitsClasses[5].OnDamageDealt <-  function(victim, params) {
     if (params.damage_custom == TF_DMG_CUSTOM_BACKSTAB)
@@ -82,6 +75,3 @@ characterTraitsClasses[25].OnDamageDealt <-  function(victim, params) {
             ClientPrint(null, 3, COLOR_MERCS + attackerName + " " + COLOR_SPECIAL + "telefragged \x01Hale! (#" + count + ")")
         }
 }
-
-if (IsDedicatedServer() == true){
-    local host = GetListenServerHost()}

@@ -25,13 +25,3 @@
     maxHealth = health;
     return health;
 }
-
-// Track current health for damage calculations.
-AddListener("tick_always", 5, function(timeDelta)
-{
-    if(!IsRoundOver() && IsAnyBossAlive())
-    {
-        local boss = GetBossPlayers()[0];
-        currentHealth = boss.GetHealth();
-    }
-});

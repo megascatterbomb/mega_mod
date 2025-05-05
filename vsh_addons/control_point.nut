@@ -117,6 +117,10 @@ function EndgameIntervalMercsCap()
     local vecPunch = GetPropVector(boss, "m_Local.m_vecPunchAngle");
     // Adjust for merc damage scaling and fire resistance.
     local actualDamage = damage / (clampFloor(1, 1.85 - (GetAliveMercCount() * 1.0 / startMercCount)) * 1.25 );
+    SendGlobalGameEvent("player_healonhit", {
+        entindex = boss.entindex(),
+        amount = -(actualDamage * 1.25).tointeger()
+    });
     boss.TakeDamageCustom(boss, boss, null, Vector(0.0000001, 0.0000001, 0.0000001), boss.GetOrigin(), actualDamage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
     SetPropVector(boss, "m_Local.m_vecPunchAngle", vecPunch);
 
@@ -159,6 +163,10 @@ function EndgameIntervalHaleCaps()
     }
 
     local vecPunch = GetPropVector(mercDamageTarget, "m_Local.m_vecPunchAngle");
+    SendGlobalGameEvent("player_healonhit", {
+        entindex = mercDamageTarget.entindex(),
+        amount = -damage.tointeger()
+    });
     mercDamageTarget.TakeDamageCustom(mercDamageTarget, mercDamageTarget, null, Vector(0.0000001, 0.0000001, 0.0000001),
         mercDamageTarget.GetOrigin(), damage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
     SetPropVector(mercDamageTarget, "m_Local.m_vecPunchAngle", vecPunch);
@@ -220,8 +228,8 @@ function BeginEndgame() {
     haleBuff = true;
     ClientPrint(null, 3, COLOR_BOSS + "[HALE CAPTURED POINT]");
     ClientPrint(null, 3, "Hale's abilities have reduced cooldown, and the merc with the lowest damage will bleed to death!");
-    // Buff ability cooldown
-    IncludeScript("vsh_addons/ability_cooldown_override.nut");
+
+    ReduceCooldownOfSaxtonAbilities();
 
     // Init damage board for mercs who haven't dealt damage.
     local mercs = GetAliveMercs();
@@ -258,3 +266,149 @@ characterTraitsClasses.push(class extends CharacterTrait
         }
     }
 });
+
+//////////////////////////////////////
+/// SAXTON ABILITY OVERRIDES BELOW ///
+//////////////////////////////////////
+
+function ReduceCooldownOfSaxtonAbilities()
+{
+    local newMightySlamCooldown = 5;
+    local newSaxtonPunchCooldown = 5;
+    local newSweepingChargeCooldown = 5;
+
+    // Contains replacement functions for each of saxton's abilities.
+    // Needed to modify the ability cooldown at runtime.
+
+    // OVERRIDE: bosses\saxton_hale\abilities\mighty_slam.nut::MightySlamTrait::Perform
+    MightySlamTrait.Perform <- function () {
+        DispatchParticleEffect("vsh_mighty_slam", boss.GetOrigin() + Vector(0,0,20), Vector(0,0,0));
+        EmitSoundOn("vsh_sfx.boss_slam_impact", boss);
+        lastFrameDownVelocity = 0;
+        meter = -newMightySlamCooldown; // MEGAMOD: Set new cooldown
+
+        local bossLocal = boss;
+        BossPlayViewModelAnim(boss, "vsh_slam_land");
+        local weapon = boss.GetActiveWeapon();
+        SetItemId(weapon, 444); //Mantreads
+        CreateAoE(boss.GetCenter(), 500,
+            function (target, deltaVector, distance) {
+                local damage = target.GetMaxHealth() * (1 - distance / 500);
+                if (!target.IsPlayer())
+                    damage *= 2;
+                if (damage <= 30 && target.GetHealth() <= 30)
+                    return; // We don't want to have people on low health die because Hale just Slammed a mile away.
+                target.TakeDamageEx(
+                    custom_dmg_slam_collateral,
+                    bossLocal,
+                    weapon,
+                    deltaVector * 1250,
+                    bossLocal.GetOrigin(),
+                    damage,
+                    DMG_BLAST);
+            }
+            function (target, deltaVector, distance) {
+                local pushForce = distance < 100 ? 1 : 100 / distance;
+                deltaVector.x = deltaVector.x * 1250 * pushForce;
+                deltaVector.y = deltaVector.y * 1250 * pushForce;
+                deltaVector.z = 950 * pushForce;
+                target.Yeet(deltaVector);
+            });
+
+        SetItemId(weapon, 5);
+        ScreenShake(boss.GetCenter(), 10, 2.5, 1, 1000, 0, true);
+    }
+
+    // OVERRIDE: bosses\saxton_hale\abilities\saxton_punch.nut::SaxtonPunchTrait::Perform
+    SaxtonPunchTrait.Perform <- function (victim)
+    {
+        if (meter != 0)
+            return false;
+        meter -= -newSaxtonPunchCooldown;
+
+        vsh_vscript.Hale_SetRedArm(boss, false);
+
+        local haleEyeVector = boss.EyeAngles().Forward();
+        haleEyeVector.Norm();
+
+        boss.RemoveCond(TF_COND_CRITBOOSTED);
+        EmitSoundOn("TFPlayer.CritHit", boss);
+        EmitSoundOn("vsh_sfx.saxton_punch", boss);
+        if (GetAliveMercCount() > 1)
+            EmitPlayerVO(boss, "saxton_punch");
+        DispatchParticleEffect("vsh_megapunch_shockwave", victim.EyePosition(), QAngle(0,boss.EyeAngles().Yaw(),0).Forward());
+        ScreenShake(boss.GetCenter(), 10, 2.5, 1, 1000, 0, true);
+
+        CreateAoE(boss.GetCenter(), 600,
+            function (target, deltaVector, distance) {
+                local dot = haleEyeVector.Dot(deltaVector);
+                if (dot < 0.6)
+                    return;
+                local damage = target.GetMaxHealth() * (0.7 - distance / 2000);
+                if (!target.IsPlayer())
+                    damage *= 2;
+                target.TakeDamageEx(
+                    custom_dmg_saxton_punch_aoe,
+                    boss,
+                    boss.GetActiveWeapon(),
+                    deltaVector * 1250,
+                    boss.GetOrigin(),
+                    damage,
+                    DMG_BLAST);
+            }
+            function (target, deltaVector, distance) {
+                local dot = haleEyeVector.Dot(deltaVector);
+                if (dot < 0.6)
+                    return;
+                local pushForce = distance < 100 ? 10 : 10 / sqrt(distance);
+                deltaVector.x = deltaVector.x * 1250 * pushForce;
+                deltaVector.y = deltaVector.y * 1250 * pushForce;
+                deltaVector.z = 750 * pushForce;
+                target.Yeet(deltaVector);
+            });
+        return true;
+    }
+
+    // OVERRIDE: bosses\saxton_hale\abilities\sweeping_charge.nut::SweepingChargeTrait::Perform
+    SweepingChargeTrait.Finish <- function ()
+    {
+        vsh_vscript.Hale_SetBlueArm(boss, false);
+        BossPlayViewModelAnim(boss, "vsh_dash_end");
+        boss.AddCondEx(TF_COND_GRAPPLINGHOOK_LATCHED, 0.1, boss);
+        meter = -newSweepingChargeCooldown;
+        isCurrentlyDashing = false;
+        boss.SetGravity(1);
+        EntFireByHandle(triggerCatapult, "Disable", "", 0, boss, boss)
+        boss.AddCustomAttribute("no_attack", 1, 0.5);
+    }
+
+    // Update the meters to reflect the correct cooldowns
+
+    // OVERRIDE: bosses\saxton_hale\abilities\mighty_slam.nut::MightySlamTrait::MeterAsPercentage
+    MightySlamTrait.MeterAsPercentage <- function ()
+    {
+        if (meter < 0)
+            return (newMightySlamCooldown + meter) * 90 / newMightySlamCooldown;
+        return inUse ? 200 : 100
+    }
+
+    // OVERRIDE: bosses\saxton_hale\abilities\saxton_punch.nut::SaxtonPunchTrait::MeterAsPercentage
+    SaxtonPunchTrait.MeterAsPercentage <- function ()
+    {
+        if (meter < 0)
+            return (newSaxtonPunchCooldown + meter) * 90 / newSaxtonPunchCooldown;
+        return 200;
+    }
+
+    // OVERRIDE: bosses\saxton_hale\abilities\sweeping_charge.nut::SweepingChargeTrait::MeterAsPercentage
+    SweepingChargeTrait.MeterAsPercentage <- function ()
+    {
+        if (meter < 0)
+            return (newSweepingChargeCooldown + meter) * 90 / newSweepingChargeCooldown;
+        return isCurrentlyDashing ? 200 : 100
+    }
+}
+
+function OnGameEvent_localplayer_healed(params){
+    // need empty event listener to fire localplayer event
+}

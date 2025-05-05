@@ -118,11 +118,9 @@ function IdleSecondLoop()
             player.TakeDamage(999999, 0, null);
 
             local name = GetPropString(player, "m_szNetname");
-            // coloured team based text (for vsh_outburst and any future vsh map support)
-            if (player.GetTeam() == 2)
-                ClientPrint(null, 3, "\x07FF3F3F" + name + "\x01 was fired for being AFK.");
-            if (player.GetTeam() == 3)
-                ClientPrint(null, 3, "\x0799CCFF" + name + "\x01 was fired for being AFK.");
+
+            ClientPrint(null, 3, COLOR_MERCS + name + "\x01 was fired for being AFK.");
+
             continue;
         }
         switch (timeIdle) {
