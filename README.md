@@ -6,15 +6,19 @@ Installation:
 - Copy the contents of the repo to `tf/scripts/vscripts`
 - Add `script_execute mega_mod/main.nut` to the end of your server.cfg
 - You can comment out any mods you don't want to use for within `main.nut`
-- Optional: add `sv_allow_point_servercommand` to your `vscript_convar_allowlist.txt` if you want to use gamemode-specific cfgs.
+- Optional: add `sv_allow_point_servercommand` to `cfg/vscript_convar_allowlist.txt` if you want to use gamemode-specific cfgs.
 
 Project structure:
 - `/common`
   - Script files that may be included by any map-specific mod or global mod when needed. Typically contains templates that may require map-specific setup.
 - `/global`
-  - Script files that are included on maps without a map-specific mod. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/global/5cp_anti_stalemate.nut as an example).
+  - Script files that are included on many/all maps. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/global/5cp_anti_stalemate.nut as an example).
+  - Global mods must include these functions:
+    - `ShouldApply()`: Should this mod be loaded?
+    - `LoadAlongsideMapMods()`: Should this mod be loaded even if there's a map-specific mod?
+    - `ApplyMod()`: Applies the modification.
 - `/mapmods`
-  - Script files that are included on a specific map, determined by the filename.
+  - Script files that are automatically included when the map with the same filename loads.
 - `/tug_of_war_addons`
   - Addons that utilize the official addon support in the Tug-of-war VScript gamemode.
 - `/vsh_addons`
