@@ -205,7 +205,9 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
   - Respawn wave time is set to 5 seconds for Survivors.
   - Zombies have near-instant respawn (2 seconds, interrupts killcam).
   - Death during setup triggers instant respawn.
-- Players cannot start as Zombies in two consecutive rounds.
+- Initial Zombie selection:
+  - Zombie count formula modified (see table).  
+  - Players cannot start as Zombies in two consecutive rounds.
 - Weapon rebalances:
   - The B.A.S.E. Jumper disables during overtime instead of disabling for the last survivor.
   - Increased reserve ammo for the Rocket Jumper (0 -> 4) and Sticky Jumper's reserve ammo (0 -> 4).
@@ -218,6 +220,16 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
     - Zombies win by killing all the remaining Survivors (as usual).
   - Zombies experience bleed with increasing damage over time to guarantee a round end.
   - Survivors can enter Zombie spawnrooms during Overtime.
+
+Player count to Zombie count table:
+
+| # Players ($P$) | # Zombies (Vanilla) | # Zombies (Modified) |
+|:----------------|:--------------------|:---------------------|
+| 2 - 4           | 1                   | 1                    |
+| 5 - 8           | 2                   | 2                    |
+| 9 - 12          | 3                   | 3                    |
+| 13 - 16         | 4                   | 4                    |
+| 17+             | ceil($\frac{P}{5}$) | floor(sqrt($P$))     |
 
 # Map Specific/Miscellanious Fixes
 
