@@ -1,4 +1,7 @@
 ::MM_ZI_ROUND_FINISHED <- false;
+::MM_ZI_LAST_SURVIVOR_DEATH <- 0;
+::MM_ZI_STARTING_PLAYERS <- 1;
+::MM_ZI_STARTING_SURVIVORS <- 1;
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
 
@@ -6,7 +9,7 @@ function MM_Zombie_Infection() {
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     if (gamerules != null)  {
         // Delay so our settings overwrite those set by logic_auto ents.
-        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 5, null, null);
+        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "5", 5, null, null);
         EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 5, null, null);
 
         gamerules.ValidateScriptScope();
@@ -92,6 +95,10 @@ function MM_ZI_OverrideZombieSelection() {
             // printl(p.entindex());
             return p.entindex();
         });
+
+        ::MM_ZI_STARTING_PLAYERS = availablePlayers;
+        ::MM_ZI_STARTING_SURVIVORS = availablePlayers - _selectedPlayers.len();
+
         return _selectedPlayers;
     };
 }
@@ -466,7 +473,7 @@ function MM_ZI_OverrideDeath() {
             };
 
             // evaluate win condition when a player dies
-            ShouldZombiesWin ( _hPlayer );
+            local remainingSurvivors = ShouldZombiesWin(_hPlayer);
 
             // make sure players can only add time once per round
             if ( ( !_sc.m_bCanAddTime ) )
@@ -508,7 +515,15 @@ function MM_ZI_OverrideDeath() {
             if ( bIsPayload )
                 return; // don't add time to the round timer if it's a payload map
 
-            EntFireByHandle( _hRoundTimer, "AddTime", ADDITIONAL_SEC_PER_PLAYER.tostring(), 0, null, null );
+            // MEGAMOD: Reduce the time added when there's a large number of survivors
+            local minTimeToAdd = 2;
+            local adjustedTimeToAdd = ADDITIONAL_SEC_PER_PLAYER - floor(remainingSurvivors / 5)
+            if (adjustedTimeToAdd < minTimeToAdd)
+                adjustedTimeToAdd = minTimeToAdd;
+
+            EntFireByHandle(_hRoundTimer, "AddTime", ceil(adjustedTimeToAdd).tostring(), 0, null, null);
+
+            MM_ZI_LAST_SURVIVOR_DEATH <- Time();
         } else {
             // MEGAMOD: If game hasn't started, instantly respawn.
             if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 0.1, null, _hPlayer);
@@ -517,6 +532,7 @@ function MM_ZI_OverrideDeath() {
 }
 
 // OVERRIDE: functions.nut::ShouldZombiesWin
+// MEGAMOD: now returns number of remaining survivors
 function MM_ZI_OverrideShouldZombiesWin() {
     ::ShouldZombiesWin <- function( _hPlayer )
     {
@@ -544,7 +560,7 @@ function MM_ZI_OverrideShouldZombiesWin() {
 
         if ( _iValidPlayers == 0 ) // GetAllPlayers didn't find any players, should never happen
         {
-            return;
+            return -1;
         };
 
         if ( _iValidSurvivors == 3 )
@@ -611,7 +627,7 @@ function MM_ZI_OverrideShouldZombiesWin() {
             };
         };
 
-        return;
+        return _iValidSurvivors;
     };
 }
 
@@ -769,9 +785,10 @@ function MM_ZI_OverrideWeaponMods() {
                     if ( GetPropInt( _hWeapon, STRING_NETPROP_ITEMDEF ) != 237 )
                         continue;
 
-                    // MEGAMOD: reserve ammo of 4
-                    _hWeapon.AddAttribute ( "maxammo primary reduced", 0.0667, -1 );
-                    SetPropIntArray       ( this, "m_iAmmo", 4, 1 );
+                    // MEGAMOD: reserve ammo of 5
+                    local newMaxAmmo = 5;
+                    _hWeapon.AddAttribute ( "maxammo primary reduced", newMaxAmmo / 60.0, -1 );
+                    SetPropIntArray       ( this, "m_iAmmo", 5, 1 );
 
                     _hWeapon.ReapplyProvision();
                     return;
@@ -800,9 +817,10 @@ function MM_ZI_OverrideWeaponMods() {
                     if ( GetPropInt( _hWeapon, STRING_NETPROP_ITEMDEF ) != 265 )
                         continue;
 
-                    // MEGAMOD: reserve ammo of 8
-                    _hWeapon.AddAttribute ( "hidden secondary max ammo penalty", 0.11, -1 );
-                    SetPropIntArray       ( this, "m_iAmmo", 4, 2 );
+                    // MEGAMOD: reserve ammo of 5
+                    local newMaxAmmo = 5;
+                    _hWeapon.AddAttribute ( "hidden secondary max ammo penalty", newMaxAmmo / 72.0, -1 );
+                    SetPropIntArray       ( this, "m_iAmmo", 5, 2 );
 
                     _hWeapon.ReapplyProvision();
                     return;
