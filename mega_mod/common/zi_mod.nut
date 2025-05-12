@@ -163,7 +163,7 @@ function MM_ZI_OverrideSetupFinished() {
                 }
                 else // 17 or more players
                 {
-                    _numStartingZombies = floor(sqrt(_iPlayerCountRed));
+                    _numStartingZombies = floor(sqrt(_iPlayerCountRed - 1));
                 }
             }
 

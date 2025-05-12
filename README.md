@@ -230,7 +230,7 @@ Player count to Zombie count table:
 | 5 - 8           | 2                   | 2                    |
 | 9 - 12          | 3                   | 3                    |
 | 13 - 16         | 4                   | 4                    |
-| 17+             | ceil($\frac{P}{5}$) | floor(sqrt($P$))     |
+| 17+ | $\lceil\frac{P}{5}\rceil$ | $\lfloor\sqrt{P-1}\rfloor$ |
 
 # Map Specific/Miscellanious Fixes
 
