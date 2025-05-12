@@ -250,6 +250,9 @@ Too often do people complain about capping on cp_freaky_fair, lest they lose the
 ### Nerfed canteens.
 Reduced durations for the kritz canteen (10s -> 8s) and the Uber canteen (10s -> 5s).
 
+### Damage resistances provide Melee resistance.
+Each tick of Fire, Bullet, or Blast resistance gives 5% resistance to Melee damage; up to a total of 45% resistance.
+
 ## No truces on koth_lakeside_event & koth_viaduct_event
 
 Self-explanatory. Ghost Fort's timer was also reduced to 3:00 (from 7:00).
