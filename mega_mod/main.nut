@@ -48,6 +48,7 @@ local globalMods = [
     "jakemod"
     "gamemode_cfg"
     "neutral_point_stalemate"
+    "mvm_scaling"
 ];
 
 // You should not have to touch anything below this point.
