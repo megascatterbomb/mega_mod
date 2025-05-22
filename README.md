@@ -6,7 +6,10 @@ Installation:
 - Copy the contents of the repo to `tf/scripts/vscripts`
 - Add `script_execute mega_mod/main.nut` to the end of your server.cfg
 - You can comment out any mods you don't want to use for within `main.nut`
-- Optional: add `sv_allow_point_servercommand` to `cfg/vscript_convar_allowlist.txt` if you want to use gamemode-specific cfgs.
+
+Feature-specific cvars for vscript_convar_allowlist:
+- `sv_allow_point_servercommand` if you want to use gamemode-specific cfgs.
+- `sig_mvm_robot_multiplier_tank_hp` if you want MvM health scaling to apply to tanks. Also depends on [rafmod](https://github.com/rafradek/sigsegv-mvm).
 
 Project structure:
 - `/common`
@@ -75,6 +78,14 @@ On `cp_standin_final`, the same anti-stalemate functionality is present, with th
 These improvements apply only to the [VScript Arena](https://steamcommunity.com/workshop/filedetails/?id=3360196477) community fix by Lizard of Oz.
 
 - Added a 3 minute round timer. When elapsed, the round is won by whichever team has more players alive, stalemating if a tie.
+
+## Mann Vs Machine
+
+### Health scaling above 6 players.
+
+Robots gain a multipler on their health based on how many players are on RED. For example, if there are 12 players on RED, robots spawn with 200% HP. Health is multiplied by modifying `tf_populator_health_multiplier`.
+
+Also supports multiplying Tank health if [rafmod](https://github.com/rafradek/sigsegv-mvm) is installed. Requires `sig_mvm_robot_multiplier` to be non-zero and `sig_mvm_robot_multiplier_tank_hp` to be in `cfg/vscript_convar_allowlist.txt`.
 
 ## Payload Race
 
@@ -195,6 +206,8 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
   - Point capture guarantees the round will end given sufficient time.
   - Rate of health drain increases over time.
   - Point capture now leads to an engaging endgame, avoiding abrupt and unfair victories.
+
+- **Particle Precaching**: Fixes missing particles (red X) when playing workshop maps.
 
 ## Zombie Infection
 
