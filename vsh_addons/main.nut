@@ -56,6 +56,10 @@ function EraseListener(event, order, indexToRemove)
     }
 }
 
+PrecacheEntityFromTable({ classname = "info_particle_system", effect_name = "vsh_megapunch_shockwave" })
+PrecacheEntityFromTable({ classname = "info_particle_system", effect_name = "vsh_mighty_slam" });
+PrecacheEntityFromTable({ classname = "info_particle_system", effect_name = "stomp_text" });
+
 IncludeScript("vsh_addons/health.nut");
 IncludeScript("vsh_addons/damage_scoring.nut");
 IncludeScript("vsh_addons/round_time.nut");
