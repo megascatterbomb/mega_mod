@@ -67,6 +67,7 @@ function MM_CreateDummyThink(funcName) {
     TOW = "tow",
     VSH = "vsh",
     ZI = "zi"
+    VIP = "vip"
 }
 
 function MM_GetGamemode() {
@@ -116,6 +117,8 @@ function MM_GetGamemode() {
             return MM_Gamemodes.VSH;
         case "zi":
             return MM_Gamemodes.ZI;
+        case "vip":
+            return MM_Gamemodes.VIP;
     }
 
     return MM_Gamemodes.UNKNOWN;
