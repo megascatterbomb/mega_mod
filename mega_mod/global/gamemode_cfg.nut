@@ -8,7 +8,7 @@ function LoadAlongsideMapMods() {
     return true;
 }
 
-function ExecGamemodeConfig(gamemode) {
+::ExecGamemodeConfig <- function (gamemode) {
     local gamemodeConfig = GAMEMODE_PREFIX + gamemode.tostring() + ".cfg";
     printl("MEGAMOD: Executing gamemode config: " + gamemodeConfig);
     SendToServerConsole("exec " + gamemodeConfig);
@@ -20,7 +20,7 @@ function ExecGamemodeConfig(gamemode) {
     SendToServerConsole("exec " + mapConfig);
 }
 
-ApplyMod <- function () {
+::FullGamemodeExec <- function () {
     local gamemode = MM_GetGamemode();
 
     if (gamemode == null) {
@@ -46,4 +46,8 @@ ApplyMod <- function () {
     } else {
         ExecGamemodeConfig(gamemode);
     }
+}
+
+ApplyMod <- function () {
+    EntFire("tf_gamerules", "CallScriptFunction", "FullGamemodeExec", 0)
 }.bindenv(this);
