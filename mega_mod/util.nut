@@ -145,7 +145,7 @@ function MM_Gamemode_CheckCPGamemode() {
     }
 
     // Check for 3CP or 5CP by looking at default owners of control points.
-    if (countRed >= 1 && countRed == countBlu && countNeutral == 1) {
+    if (countRed == countBlu && countNeutral >= 1) {
         return MM_Gamemodes.CP;
     }
     return MM_Gamemode_CheckIfMultiStage() ? MM_Gamemodes.AD_MS : MM_Gamemodes.AD;
