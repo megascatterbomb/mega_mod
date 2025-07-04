@@ -32,7 +32,7 @@ function LoadAlongsideMapMods() {
     printl("MEGAMOD: Gamemode identified: " + gamemode);
 
     // For this to work, allow sv_allow_point_servercommand in your cfg/vscript_convar_allowlist.txt
-    // This plugin will set it to always for a single tick so it can execute the config, which will protect
+    // This plugin will set it to "always" for a single tick so it can execute the config, which will protect
     // against *some* malicious maps, but not against malicious vscript!
 
     if (Convars.GetStr("sv_allow_point_servercommand") != "always" && !Convars.IsConVarOnAllowList("sv_allow_point_servercommand")) {

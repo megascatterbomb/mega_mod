@@ -7,10 +7,6 @@
 ::MM_PLR_MINIMUM_DELTA_RATIO <- 0.25;
 ::MM_PLR_MAXIMUM_DELTA_RATIO <- 0.65;
 
-// If true, disables the rollback zones entirely after 5 minutes pass during overtime.
-// If false, then rollback zones still work if the other cart is actively pushed.
-::MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG <- false;
-
 // REQUIRED GLOBAL VARIABLES
 // This file should be included at the very start of the map-specific file.
 // Every global variable MUST be set by the map-specific file in OnGameEvent_teamplay_round_start() after a call to InitGlobalVars()
@@ -154,32 +150,8 @@ function AddCaptureOutputsToLogicCase(entity, team) {
 
 function StartOvertime() {
     ::OVERTIME_ACTIVE <- true;
-    if(ROLLBACK_DISABLED && MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) {
-        AnnounceRollbackDisabled();
-    } else if (MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) {
-        if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
-        ::PLR_TIMER <- SpawnEntityFromTable("team_round_timer", {
-            reset_time = 1,
-            setup_length = 0,
-            start_paused = 0,
-            targetname = PLR_TIMER_NAME,
-            timer_length = 300,
-            "OnFinished#1" : "!self,RunScriptCode,DisableRollback(),0,1"
-        });
-        local text_tf = SpawnEntityFromTable("game_text_tf", {
-            message = "Overtime!",
-            icon = "timer_icon",
-            background = 0,
-            display_to_team = 0
-        });
 
-        EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
-        EntFireByHandle(PLR_TIMER, "Resume", "1", 0, null, null);
-        EntFireByHandle(text_tf, "Display", "", 0.1, self, self);
-        EntFireByHandle(text_tf, "Kill", "", 7, self, self);
-    } else {
-        if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
-    }
+    if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
 
     UpdateRedCart(CASE_RED);
     UpdateBluCart(CASE_BLU);
@@ -496,9 +468,11 @@ function SetBluCrossing(crossing) {
     // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
 }
 
-// After a time, we disable rollback zones to prevent theoretically infinite rounds.
-function DisableRollback() {
-    if(ROLLBACK_DISABLED || !MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG) return;
+// Permanently disables overtime rollback.
+// Used to prevent map breaking in some way e.g. on the hightower lifts.
+// Has no effect if overtime is not active.
+function DisableOvertimeRollback() {
+    if(ROLLBACK_DISABLED) return;
     ::ROLLBACK_DISABLED <- true;
     if(!OVERTIME_ACTIVE) return;
     AnnounceRollbackDisabled();

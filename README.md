@@ -108,10 +108,6 @@ To reduce the likelihood of steamrolls, the leading cart's speed is reduced base
 | x2            | 0.77       | 0.520    | 0.270      |
 | x3            | 1.00       | 0.675    | 0.350      |
 
-### Optional features:
-
-In `mega_mod\common\plr_overtime.nut`, setting `::MM_PLR_DISABLE_ROLLBACK_IF_OVERTIME_LONG <- true` will activate the following behaviour: 5 minutes after overtime begins, all rollback zones are disabled to guarantee a winner in a reasonable timeframe. 
-
 ### Map specific quirks:
 - On Hacksaw and Hacksaw Event, the game_text entities that display "hacking" progress now operate on separate channels, so both teams' progress can display simultaneously.
 - On Hightower and Hightower Event, the elevators' rollback zones do not operate in overtime and are not affected by the dynamic speed system.

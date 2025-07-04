@@ -98,7 +98,7 @@ function StartOvertime() {
 
     // The only rollback zones are on the elevator, which force disable rollback anyway.
     // Might as well disable rollback right now.
-    DisableRollback();
+    DisableOvertimeRollback();
 
     StartOvertimeBase();
 }
@@ -177,7 +177,7 @@ function SwitchToElevatorRed() {
     ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone_elv");
     ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_red_elevatorsparks");
 
-    DisableRollback();
+    DisableOvertimeRollback();
 
     EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(RED_TRAIN, "TeleportToPathTrack", "plr_red_pathC_hillA3", 0, null, null);
@@ -193,7 +193,7 @@ function SwitchToElevatorBlu() {
     ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone_elv");
     ::BLU_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_blu_elevatorsparks");
 
-    DisableRollback();
+    DisableOvertimeRollback();
 
     EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
     EntFireByHandle(BLU_TRAIN, "TeleportToPathTrack", "plr_blu_pathC_hillA3", 0, null, null);
