@@ -2,7 +2,7 @@
 
 ClearGameEventCallbacks();
 
-MM_IncludeGlobalMod("respawn_mod");
+if (MM_ModIsEnabled("respawn_mod")) MM_IncludeGlobalMod("respawn_mod");
 
 function OnGameEvent_teamplay_round_start(params)
 {

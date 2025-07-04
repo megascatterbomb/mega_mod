@@ -2,6 +2,23 @@ const MM_CONFIG_PATH = "mega_mod_config.txt";
 ::MM_GLOBAL_MODS <- {};
 ::MM_MAP_MODS <- {};
 
+function MM_ModIsEnabled(mod, isMapMod = false) {
+
+	local modArray = null;
+	if (isMapMod) {
+		modArray = MM_MAP_MODS;
+	} else {
+		modArray = MM_GLOBAL_MODS;
+	}
+
+	if (modArray.rawin(mod)) {
+		return modArray[mod];
+	} else {
+		printl("MEGAMOD ERROR: Mod \"" + mod + "\" is not a valid mod.");
+		return false;
+	}
+}
+
 function MM_SaveConfig() {
 	local configString = "globalmods:\n";
 	foreach (mod, enabled in MM_GLOBAL_MODS) {

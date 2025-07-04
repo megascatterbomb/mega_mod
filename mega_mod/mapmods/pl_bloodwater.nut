@@ -1,5 +1,5 @@
 ClearGameEventCallbacks();
-MM_IncludeGlobalMod("respawn_mod");
+if (MM_ModIsEnabled("respawn_mod")) MM_IncludeGlobalMod("respawn_mod");
 
 // Kill a lot of gameplay-irrelevant entities to save edicts.
 // Total estimated savings: ~300

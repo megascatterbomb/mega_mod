@@ -43,7 +43,10 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
 // function LoadAlongsideMapMods() // Return true if the mod should be applied even if there's a map specific mod.
 // function ApplyMod() // Apply the mod.
 // Remember to bind the functions to their scopes, otherwise things might not work as expected!
+
 // If you want to manually include a global mod in a map-specific mod, use MM_IncludeGlobalMod("global_mod_name")
+// Make sure to gate its inclusion with MM_ModIsEnabled("global", "global_mod_name") unless your mod REQUIRES the global mod to work.
+
 ::MM_ALL_GLOBAL_MODS <- [
     "5cp_anti_stalemate"
     "respawn_mod"
@@ -67,9 +70,12 @@ IncludeScript("mega_mod/util.nut")
 printl("MEGAMOD: util.nut started");
 
 if(hasMapMod) {
-    printl("MEGAMOD: Found mod for " + mapName + ". Attempting to load...");
-    IncludeScript("mega_mod/mapmods/" + mapName + ".nut")
-    printl("MEGAMOD: " + mapName + ".nut started")
+    if(MM_ModIsEnabled(mapName, true)) {
+        IncludeScript("mega_mod/mapmods/" + mapName + ".nut")
+        printl("MEGAMOD: " + mapName + ".nut started")
+    } else {
+        printl("MEGAMOD: " + mapName + " has a mod, but is disabled, skipping...");
+    }
 } else {
     printl("MEGAMOD: " + mapName + " is not listed within mega_mod.nut.");
 }
@@ -77,7 +83,7 @@ if(hasMapMod) {
 printl("MEGAMOD: Loading global mods...");
 
 foreach(mod in globalMods) {
-    MM_IncludeGlobalMod(mod, hasMapMod);
+	if(MM_ModIsEnabled(mod)) MM_IncludeGlobalMod(mod, hasMapMod);
 }
 
 printl("MEGAMOD: Global mods loaded.");

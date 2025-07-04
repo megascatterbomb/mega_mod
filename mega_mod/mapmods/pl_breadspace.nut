@@ -1,5 +1,5 @@
 ClearGameEventCallbacks();
-MM_IncludeGlobalMod("respawn_mod");
+if (MM_ModIsEnabled("respawn_mod")) MM_IncludeGlobalMod("respawn_mod");
 
 // Adds a door that prevents players from accidentally going the wrong way.
 
