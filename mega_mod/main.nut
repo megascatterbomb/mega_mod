@@ -1,15 +1,17 @@
+// This file should only be touched by mod contributors.
+// If you're a server owner and you want to disable certain mods,
+// go to scriptdata/mega_mod_config.txt and set those mods to false.
+
 if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     printl("MEGAMOD: Already loaded, skipping...");
     return;
 }
 
-// You should not have to touch anything above this point.
-
-// Comment out any mods that you don't want to apply the mods to.
-
 ::MEGA_MOD_LOADED <- false;
 
-local mods = [
+// You should not have to touch anything above this point.
+
+::MM_ALL_MAP_MODS <- [
     "arena_perks"
     "cp_freaky_fair"
     "cp_standin_final"
@@ -35,13 +37,14 @@ local mods = [
     "workshop/tf2ware_ultimate.ugc3413262999"
 ];
 
-// To create a global mod: create a file in mega_mod/global/ with the name of the mod.
+// To create a global mod: create a file in mega_mod/globalmods/ with the name of the mod.
 // Implement these functions:
 // function ShouldApply() // Return true if the mod should be applied, false if not.
 // function LoadAlongsideMapMods() // Return true if the mod should be applied even if there's a map specific mod.
 // function ApplyMod() // Apply the mod.
 // Remember to bind the functions to their scopes, otherwise things might not work as expected!
-local globalMods = [
+// If you want to manually include a global mod in a map-specific mod, use MM_IncludeGlobalMod("global_mod_name")
+::MM_ALL_GLOBAL_MODS <- [
     "5cp_anti_stalemate"
     "respawn_mod"
     "zi_mod"
@@ -52,6 +55,8 @@ local globalMods = [
 ];
 
 // You should not have to touch anything below this point.
+
+IncludeScript("mega_mod/config.nut");
 
 local mapName = GetMapName();
 local mapModIndex = mods.find(mapName);

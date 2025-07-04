@@ -5,7 +5,7 @@ A collection of VScript mods for various maps that I think improve the overall g
 Installation:
 - Copy the contents of the repo to `tf/scripts/vscripts`
 - Add `script_execute mega_mod/main.nut` to the end of your server.cfg
-- You can comment out any mods you don't want to use for within `main.nut`
+- You can disable any mods you don't want to use by modifying `scriptdata/mega_mod_config.txt` after loading the mod once.
 
 Feature-specific cvars for vscript_convar_allowlist:
 - `sv_allow_point_servercommand` if you want to use gamemode-specific cfgs.
@@ -14,8 +14,8 @@ Feature-specific cvars for vscript_convar_allowlist:
 Project structure:
 - `/common`
   - Script files that may be included by any map-specific mod or global mod when needed. Typically contains templates that may require map-specific setup.
-- `/global`
-  - Script files that are included on many/all maps. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/global/5cp_anti_stalemate.nut as an example).
+- `/globalmods`
+  - Script files that are included on many/all maps. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/globalmods/5cp_anti_stalemate.nut as an example).
   - Global mods must include these functions:
     - `ShouldApply()`: Should this mod be loaded?
     - `LoadAlongsideMapMods()`: Should this mod be loaded even if there's a map-specific mod?

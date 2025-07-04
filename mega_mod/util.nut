@@ -177,7 +177,7 @@ function MM_IncludeGlobalMod(mod, hasMapMod = null) {
     local prefix = DoUniqueString(mod);
     local modTable = root[prefix] <- {};
     try {
-        IncludeScript("mega_mod/global/" + mod + ".nut", modTable);
+        IncludeScript("mega_mod/globalmods/" + mod + ".nut", modTable);
     } catch (e) {
         printl("MEGAMOD ERROR: Global mod '" + mod + "' does not exist!");
         return;
