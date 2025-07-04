@@ -18,13 +18,25 @@ function MM_ModIsEnabled(mod, isMapMod = false) {
 }
 
 function MM_SaveConfig() {
-	local configString = "globalmods:\n";
+	local configString = "";
+	local globalModLines = [];
+	local mapModLines = [];
 	foreach (mod, enabled in MM_GLOBAL_MODS) {
-		configString += mod + "=" + enabled + "\n";
+		globalModLines.append(mod + "=" + enabled + "\n");
+	}
+	globalModLines.sort();
+	foreach (mod, enabled in MM_MAP_MODS) {
+		mapModLines.append(mod + "=" + enabled + "\n");
+	}
+	mapModLines.sort();
+
+	configString += "globalmods:\n";
+	foreach (line in globalModLines) {
+		configString += line;
 	}
 	configString += "mapmods:\n";
-	foreach (mod, enabled in MM_MAP_MODS) {
-		configString += mod + "=" + enabled + "\n";
+	foreach (line in mapModLines) {
+		configString += line;
 	}
 
 	StringToFile(MM_CONFIG_PATH, configString);
@@ -43,9 +55,8 @@ function MM_LoadConfig() {
 	local configString = FileToString(MM_CONFIG_PATH)
 
 	// Load existing config
-	if (!configString) {
-		return;
-	}
+	if (!configString) configString = "";
+
 	local lines = split(configString, "\n")
 	local settings = null;
 	foreach (line in lines) {
