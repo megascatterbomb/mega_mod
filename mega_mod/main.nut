@@ -45,7 +45,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
 // Remember to bind the functions to their scopes, otherwise things might not work as expected!
 
 // If you want to manually include a global mod in a map-specific mod, use MM_IncludeGlobalMod("global_mod_name")
-// Make sure to gate its inclusion with MM_ModIsEnabled("global", "global_mod_name") unless your mod REQUIRES the global mod to work.
+// Make sure to gate its inclusion with MM_ModIsEnabled("global_mod_name") unless your mod REQUIRES the global mod to work.
 
 ::MM_ALL_GLOBAL_MODS <- [
     "5cp_anti_stalemate"
@@ -62,7 +62,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
 IncludeScript("mega_mod/config.nut");
 
 local mapName = GetMapName();
-local mapModIndex = mods.find(mapName);
+local mapModIndex = MM_ALL_MAP_MODS.find(mapName);
 local hasMapMod = mapModIndex != null;
 
 printl("MEGAMOD: Loading mega_mod/util.nut...");
@@ -82,7 +82,7 @@ if(hasMapMod) {
 
 printl("MEGAMOD: Loading global mods...");
 
-foreach(mod in globalMods) {
+foreach(mod in MM_ALL_GLOBAL_MODS) {
 	if(MM_ModIsEnabled(mod)) MM_IncludeGlobalMod(mod, hasMapMod);
 }
 
