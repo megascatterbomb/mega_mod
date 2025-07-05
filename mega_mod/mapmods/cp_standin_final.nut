@@ -1,3 +1,5 @@
+if (!MM_ModIsEnabled("5cp_anti_stalemate")) return;
+
 ClearGameEventCallbacks();
 IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
 

@@ -4,7 +4,7 @@ local root = getroottable();
 local prefix = DoUniqueString("mega");
 local mega = root[prefix] <- {};
 
-IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
+if (MM_ModIsEnabled("5cp_anti_stalemate")) IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
 
 ::MM_CREDITS_RED <- 0;
 ::MM_CREDITS_BLU <- 0;
@@ -69,7 +69,7 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
         };
 
         // Load the 5CP anti stalemate logic.
-        MM_5CP_Activate();
+        if (MM_ModIsEnabled("5cp_anti_stalemate")) MM_5CP_Activate();
 
     }.bindenv(MM_GetEntByName("scripto").GetScriptScope())
 
