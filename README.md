@@ -2,18 +2,25 @@
 
 A collection of VScript mods for various maps that I think improve the overall gameplay experience. If you would like to play on a server with these mods, connect to `tf2.megascatterbomb.com`.
 
-Installation:
+### Installation:
 - Copy the contents of the repo to `tf/scripts/vscripts`
 - Add `script_execute mega_mod/main.nut` to the end of your server.cfg
-- You can disable any mods you don't want to use by modifying `scriptdata/mega_mod_config.txt` after loading the mod once.
 
-Feature-specific cvars for vscript_convar_allowlist:
+### Configuration:
+You can disable any mods you don't want to use by modifying `scriptdata/mega_mod_config.txt` after loading the mod once.
+- The internal name for each global mod is listed under each heading in this readme.
+- Map specific mods are named after the filename of their map.
+- All mods default to `true` in the cfg (enabled).
+
+Some mods depend on certain cvars being in vscript_convar_allowlist:
 - `sv_allow_point_servercommand` if you want to use gamemode-specific cfgs.
 - `sig_mvm_robot_multiplier_tank_hp` if you want MvM health scaling to apply to tanks. Also depends on [rafmod](https://github.com/rafradek/sigsegv-mvm).
 
-Project structure:
+### Project structure:
+- `/arena_addons`
+  - Addons that utilize the official addon support in the [VScript Arena](https://steamcommunity.com/workshop/filedetails/?id=3360196477) community fix by Lizard of Oz.
 - `/common`
-  - Script files that may be included by any map-specific mod or global mod when needed. Typically contains templates that may require map-specific setup.
+  - Script files that may be included by any map-specific mod or global mod when needed. Typically contains templates that require map-specific setup (PLR is a good example of this).
 - `/globalmods`
   - Script files that are included on many/all maps. Can be used for gamemode specific stuff by using conditions evaluated on map launch (See mega_mod/globalmods/5cp_anti_stalemate.nut as an example).
   - Global mods must include these functions:
@@ -30,12 +37,14 @@ Project structure:
 # General Improvements
 
 ## Gamemode-specific .cfg support
+Internal name: `gamemode_cfg`
 
 By default, TF2 offers `server.cfg` for general configuration, plus map specific configs. But if you want to configure entire gamemodes with a single cfg, you're SOL.
 
 This mod offers gamemode-specific config execution. Unfortunately, this requires `sv_allow_point_servercommand` to be added to your `vscript_convar_allowlist.txt`. This mod will only enable server commands when it needs to, reducing the risk of any potentially malicious maps. However, there is still a vulnerability to malicious VScript, so be warned!
 
 ## Force Team Respawn when appropriate
+Internal name: `respawn_mod`
 
 In certain scenarios, it is beneficial to respawn the dead players on one or both teams to improve the gameplay experience.
 
@@ -44,6 +53,7 @@ In certain scenarios, it is beneficial to respawn the dead players on one or bot
   - RED team is respawned whenever a control point is captured. This helps prevent steamrolls.
 
 ## Better mp_timelimit enforcement on KOTH and 5CP.
+Internal name: `neutral_point_stalemate`
 
 Normally, mp_match_end_at_timelimit enforces a stalemate on these gamemodes when the map timer ends, regardless of the game state.
 
@@ -54,6 +64,7 @@ This mod will force `mp_match_end_at_timelimit 0`.
 # Gamemode Improvements
 
 ## 5CP Anti-stalemate
+Internal name: `5cp_anti_stalemate`
 
 Due to a lack of effective time limit, control point maps tend to be stalematey as hell. This mod makes the following changes:
 - A pair of KOTH-style timers replaces the usual round timer. These timers activate depending on which team owns the middle point.
@@ -75,11 +86,15 @@ On `cp_standin_final`, the same anti-stalemate functionality is present, with th
 
 ## Arena (VScript)
 
+Gamemode has official addon support. See `arena_addons/` folder.
+
 These improvements apply only to the [VScript Arena](https://steamcommunity.com/workshop/filedetails/?id=3360196477) community fix by Lizard of Oz.
 
 - Added a 3 minute round timer. When elapsed, the round is won by whichever team has more players alive, stalemating if a tie.
 
 ## Mann Vs Machine
+
+Internal name: `mvm_scaling`
 
 ### Health scaling above 6 players.
 
@@ -89,9 +104,11 @@ Also supports multiplying Tank health if [rafmod](https://github.com/rafradek/si
 
 ## Payload Race
 
-### Added Overtime
+No global mod used; mod has separate implementations for each supported map.
 
 Currently supported maps: `plr_bananabay`, `plr_cutter`, `plr_hacksaw`, `plr_hacksaw_event`, `plr_hightower`, `plr_hightower_event`, `plr_nightfall_final`, `plr_pipeline`, [`plr_highertower`](https://steamcommunity.com/sharedfiles/filedetails/?id=899335714).
+
+### Added Overtime
 
 Stage 1 and 2 of Nightfall feature an overtime. This mod copies that logic into other maps using nothing but VScript, with some additional QoL features.
 
@@ -118,17 +135,23 @@ To reduce the likelihood of steamrolls, the leading cart's speed is reduced base
 
 ## Special Delivery
 
+No global mod used; mod has separate implementations for each supported map.
+
 Added a 15 minute round timelimit. When elapsed, the round stalemates immediately (or goes to bumper cars on sd_doomsday_event).
 
 The time limit automatically reduces based on mp_timelimit.
 
 ## Tug of War
 
+Gamemode has official addon support. See `tug_of_war_addons/` folder.
+
 Tug of war can last forever, but not with this mod! After 10 minutes, the cart will move on its own towards the objective in favour of the cart owner's team. Every 30 seconds from then on, the cart's maximum speed will increase. Eventually, it'll be moving so fast that it can't help but be at either end of the track!
 
 The KOTH timer was increased to 3 minutes so that the round is unlikely to end before the anti-stalemate phase without sidelining the vanilla experience, as the anti-stalemate mechanics are really fun to play with.
 
 ## Versus Saxton Hale
+
+Gamemode has official addon support. See `vsh_addons/` folder.
 
 ### New Features:
 - **Damage logging**:
@@ -207,6 +230,8 @@ The KOTH timer was increased to 3 minutes so that the round is unlikely to end b
 
 ## Zombie Infection
 
+Internal name: `zi_mod`
+
 Zombie Infection is a promising gamemode, however the implementation leaves a lot to be desired in my opinion. Notably, the long respawn times for the Zombies result in long periods of time without any fighting. Rounds tend to drag on and on, and the variablity of round and respawn times results in an inconsistent experience.
 
 - Adjusted various timings to improve the gamemode's pacing.
@@ -243,7 +268,9 @@ Player count to Zombie count table:
 
 # Map Specific/Miscellanious Fixes
 
-## arena_perks
+All of these mods are map-specific unless specified.
+
+## arena_perks:
 
 ### Added a 2:50 time limit for each mini-round.
 Time limit chosen so the 2:00 mark coincides with the unlocking of the point. If the time limit is reached, then whichever team has more players alive wins. If both teams have the same amount of living players, then it's a tie.
@@ -251,7 +278,7 @@ Time limit chosen so the 2:00 mark coincides with the unlocking of the point. If
 ### Made ties less arbitrary.
 When both teams die at exactly the same time (or the time limit introduced by this mod is reached), both teams get a point. This is necessary as the game can't last more than 5 rounds. However, if the score is 2-2 and there's a tie, the winning team is chosen arbitrarily. If this rare situation occurs, this mod makes the win slightly less arbitrary by awarding the win to whichever team most recently lost a player to death (implying their team lasted longer).
 
-## cp_freaky_fair
+## cp_freaky_fair:
 
 ### Cash accumulates between rounds.
 Too often do people complain about capping on cp_freaky_fair, lest they lose their ability to ~~pay off the japanese mafia~~ purchase some insane combination of upgrades. To prevent this, the cash is preserved between rounds. Both teams start with the same amount of cash that the richer team had at the end of the previous round.
@@ -281,6 +308,8 @@ In Payload, the team scores are supposed to reflect how many control points that
 - In [pl_cactuscanyon_redux_final2](https://steamcommunity.com/sharedfiles/filedetails/?id=2579644293), some of the outputs that trigger point captures trigger twice; adding a slight delay fixes this.
 
 ## Prevent 'Meet the Medic" taunt from being used in water.
+
+Internal name: `jakemod`
 
 For the uninitiated, this taunt creates a VERY loud noise if the doves happen to spawn in water. This mod applies a countermeasure.
 Interally referred to as the "jakemod" after the person who "inspired" this mod's existence.
