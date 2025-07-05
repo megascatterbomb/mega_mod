@@ -103,12 +103,14 @@ function OnGameEvent_teamplay_round_start(params) {
 // Pipeline has an end-of-round win sequence that requires the winning cart to keep moving forward.
 function OnGameEvent_teamplay_round_win(params) {
     if (params.full_round == 1 && params.team != 0) {
+        ::BLOCK_RED <- true;
+        ::BLOCK_BLU <- true;
         if (params.team == 2) {
-            ::BLOCK_BLU <- true;
             StopBlu();
+            AdvanceRed(3, false);
         } else if (params.team == 3) {
-            ::BLOCK_RED <- true;
             StopRed();
+            AdvanceBlu(3, false);
         }
         return;
     }
