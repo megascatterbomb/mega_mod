@@ -1,3 +1,5 @@
+// OVERRIDE: main.nut::PerkGameStateVote::OnEnter
+// Forces the round timer to be replaced each round.
 function PerkGameStateVote::OnEnter() {
     // NetProps.SetPropInt(GAMERULES, "m_iRoundState", Constants.ERoundState.GR_STATE_RND_RUNNING);
 
@@ -26,6 +28,8 @@ function PerkGameStateVote::OnEnter() {
     }
 }
 
+// OVERRIDE: main.nut::PerkGameStateRound::OnEnter
+// Forces the round timer to be replaced each round.
 function PerkGameStateRound::OnEnter() {
     EntFire("arena_spawnpoints", "Enable", "", -1, null);
     EntFire("vote_spawnpoints", "Disable", "", -1, null);
@@ -37,7 +41,7 @@ function PerkGameStateRound::OnEnter() {
         start_paused = 0,
         targetname = "game_timer",
         timer_length = 170,
-        "OnFinished#1" : "!self,RunScriptFile,mega_mod/mapmods/arena_perks_stalemate,0,1"
+        "OnFinished#1" : "!self,RunScriptFile,mega_mod/mapmods/arena_perks/stalemate,0,1"
     });
     EntFireByHandle(GAME_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(GAME_TIMER, "Resume", "1", 0, null, null);
@@ -71,6 +75,8 @@ function PerkGameStateRound::OnEnter() {
     RunWithDelay(CountAlivePlayers, 0.5, [this, false]);
 }
 
+// OVERRIDE: main.nut::PerkGameStateRound::WinRound
+// Handles custom stalemate and timeout logic.
 function PerkGameStateRound::WinRound(winnerTeam) {
     EntFireByHandle(GAME_TIMER, "Disable", "", 0, null, null);
     if (winnerTeam) {
