@@ -7,6 +7,7 @@
 			|| NetProps.GetPropInt(player, "m_lifeState") != 0
 			|| !player.IsTaunting()
 			|| player.GetWaterLevel() == 0
+			|| player.GetPlayerClass() != 5 // TF_CLASS_MEDIC
 		) {
 			continue;
 		}
