@@ -20,6 +20,7 @@ special_round_categories <- {
     "double_trouble": ["unique"], // would be more catastrophic than average valve update
     "extended_round": ["boss_threshold"]
     "hale": ["weapon"],
+    "math_only": ["text"], // this one sucks enough as-is
     "merasmus": ["winners"],
     "mirrored_world": ["overlay"],
     "no_text": ["text"],
