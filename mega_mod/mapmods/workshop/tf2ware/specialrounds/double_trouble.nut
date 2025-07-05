@@ -2,70 +2,199 @@ special_round <- Ware_SpecialRoundData
 ({
 	name = "What have you done!?"
 	author = ["megascatterbomb", "ficool2"]
-	description = "Your server admin has gone crazy!"
+	description = "Multiple special rounds will be stacked together!"
 	category = "meta"
 })
+
+// Special rounds that share a category cannot be loaded together.
+// Special rounds with "unique" cannot be loaded via double_trouble at all
+// Special rounds with "first" must be the first loaded special round.
+special_round_categories <- {
+    "adrenaline_shot": ["timescale"],
+    "all_in": ["scores"],
+    "bonk": ["weapon"],
+    "boss_rush": ["unique"], // incompatible with double_trouble
+    "cocanium": ["overlay"],
+    "collisions": ["collisions"],
+    "cramped_quarters": ["collisions"],
+    "double_trouble": ["unique"], // would be more catastrophic than average valve update
+    "extended_round": ["boss_threshold"]
+    "hale": ["weapon"],
+    "merasmus": ["winners"],
+    "mirrored_world": ["overlay"],
+    "no_text": ["text"],
+    "non_stop": ["unique"], // incompatible with double_trouble
+    "nostalgia": ["overlay"],
+    "opposite_day": ["scores"],
+    "random_score": ["scores", "first"],
+    "reversed_text": ["text"],
+    "slow_mo": ["timescale", "boss_threshold"],
+    "speedrun": ["timescale"],
+    "sudden_death": ["scores"],
+    "swap_madness": ["teleport"],
+    "team_battles": ["scores", "winners"],
+    "time_attack": ["timescale"],
+    "two_bosses": ["bosses"],
+    "up_down": ["timescale", "first"],
+    "wipeout": ["unique"] // incompatible with double_trouble
+}
+
+special_round_requirements <- {
+    "collisions": function (player_count)
+    {
+        return player_count >= 2 && player_count <= 40;
+    },
+    "cramped_quarters": function (player_count)
+    {
+        return player_count >= 2;
+    },
+    "singleplayer": function (player_count)
+    {
+        return player_count >= 2;
+    },
+    "speedrun": function (player_count)
+    {
+        return player_count <= 40;
+    },
+    "squid_game": function (player_count)
+    {
+        return player_count >= 2;
+    },
+    "sudden_death": function (player_count)
+    {
+        return player_count >= 3;
+    },
+    "swap_madness": function (player_count)
+    {
+        return player_count >= 2;
+    },
+    "team_battles": function (player_count)
+    {
+        return player_count >= 4;
+    },
+    "wipeout": function (player_count)
+    {
+        return player_count >= 3;
+    },
+}
 
 scopes <- []
 
 function OnPick()
 {
-	local categories = clone(Ware_SpecialRoundCategories)
-	local random = true;
-	// don't include ourself...
-	if ("meta" in categories)
-		delete categories.meta
+	printl("MEGAMOD: Loading custom double_trouble logic...");
 
-	local special_rounds = []
+	local random = true;
+	local special_rounds = [];
+
+    local special_rounds_to_pick = RandomInt(2, 5);
+
 	if (Ware_DebugNextSpecialRound2.len() == 0)
 	{
-		foreach (category, file_names in categories)
+		foreach (file_name in Ware_SpecialRounds)
 		{
-			foreach (file_name in file_names)
-				special_rounds.append({category = category, file_name = file_name})
+			special_rounds.append(file_name)
 		}
 	}
 	else
 	{
-        foreach (file_name in Ware_DebugNextSpecialRound2) {
-            special_rounds.append({category = "none", file_name = file_name})
-        }
+		foreach (file_name in Ware_DebugNextSpecialRound2) {
+			special_rounds.append(file_name)
+		}
+        special_rounds_to_pick = Min(5, Ware_DebugNextSpecialRound2.len());
 		Ware_DebugNextSpecialRound2.clear()
-        random = false;
+		random = false;
 	}
 
 	local picks = [];
+	local selected_rounds = [];
+	local selected_categories = [];
 
 	local player_count = Ware_GetValidPlayers().len()
 
-    local special_rounds_count = special_rounds.len();
+	for (local round = 1; round <= special_rounds_to_pick; round++) {
+		while (special_rounds.len() > 0)
+		{
+			local pick;
+			if(random) {
+				pick = RemoveRandomElement(special_rounds)
+			} else {
+				pick = special_rounds.remove(0)
+			}
+			local skip = false;
 
-    for (local round = 1; round <= Min(5, special_rounds_count); round++) {
-        local player_count = Ware_GetValidPlayers().len()
-        local max_count = Min(16 * round, special_rounds_count)
-        for (local i = 0; i <  max_count; i++)
-        {
-            local pick;
-            if(random) {
-                pick = RemoveRandomElement(special_rounds)
-            } else {
-                pick = special_rounds.remove(0)
-            }
-            local skip = false;
-            foreach (p in picks) {
-                if (pick.category != "none" && pick.category == p.category) {
+            // Duplicate check.
+            foreach (p in selected_rounds) {
+                if (p == pick) {
                     skip = true;
+                    break;
                 }
             }
-            if(skip) continue;
 
-            local scope = Ware_LoadSpecialRound(pick.file_name, player_count, false)
-            if (scope)
-            {
-                picks.append(pick);
-                scopes.append(scope)
-                break
+            // Category check
+			if (special_round_categories.rawin(pick)) {
+                if (special_round_categories[pick].find("unique") != null) {
+                    skip = true; // we can't load "unique" special rounds with double_trouble
+                }
+                foreach (category in special_round_categories[pick]) {
+                    if (selected_categories.find(category) != null) {
+                        skip = true;
+                        break;
+                    }
+                }
+			}
+
+            if(skip) {
+                if (!random) { // manually selected round is incompatible.
+                    Ware_Error("Not loading '%s' as it is incompatible with other selected special rounds.", pick);
+                }
+                continue;
             }
+
+            // Requirements check. We don't want Ware_LoadSpecialRound to handle requirements because we
+            // need the ability to re-arrange load order after selecting the special rounds.
+            if (special_round_requirements.rawin(pick) && !special_round_requirements[pick](player_count)) {
+                continue;
+            }
+
+            selected_rounds.append(pick)
+
+            // Track categories we've selected
+            if (special_round_categories.rawin(pick)) {
+                foreach (category in special_round_categories[pick]) {
+                    selected_categories.append(category);
+                }
+            }
+
+            break;
+        }
+        if (random) { // repopulate special_rounds so we don't run out.
+            special_rounds.clear()
+            foreach (file_name in Ware_SpecialRounds)
+            {
+                special_rounds.append(file_name)
+            }
+        }
+    }
+
+    // Check for a special round that needs to be first.
+    // There can only be one because "first" protects against dupes like any other category.
+    for (local i = 0; i < selected_rounds.len(); i++) {
+        local pick = selected_rounds[i];
+        if (i > 0 && special_round_categories.rawin(pick) && special_round_categories[pick].find("first") != null) {
+            special_rounds.remove(i);
+            selected_rounds.insert(0, pick);
+            break;
+        }
+    }
+
+    // Theoretically none of these should fail because we already checked requirements.
+    foreach (pick in selected_rounds) {
+        local scope = Ware_LoadSpecialRound(pick, player_count, false)
+        if (scope)
+        {
+            picks.append({file_name = pick, category = "none"});
+            scopes.append(scope);
         }
     }
 
@@ -80,6 +209,34 @@ function OnPick()
         }
 	}
 	delete delegated_callbacks
+
+    // Update special round name and description based on the number of specials we're loading.
+    switch (scopes.len()) {
+    case 0: // In case ALL special rounds fail to load for some reason.
+        special_round.name = "404 Not Found";
+        special_round.description = "We tried to load a special round but failed spectacularly!";
+        return false;
+    case 1: // In case other special rounds fail to load for some reason.
+        special_round.name = scopes[0].special_round.name;
+        special_round.description = scopes[0].special_round.description;
+        break;
+    case 2:
+        special_round.name = "Double Trouble";
+        special_round.description = "Two special rounds will be stacked together!"
+        break;
+    case 3:
+        special_round.name = "Oh Baby a Triple!";
+        special_round.description = "Three special rounds will be stacked together!"
+        break;
+    case 4:
+        special_round.name = "QUAAAAAAAAAAAAAAD!!!!!!!";
+        special_round.description = "Four special rounds will be stacked together!"
+        break;
+    case 5:
+        special_round.name = "What have you done!?";
+        special_round.description = "Five special rounds will be stacked together!"
+        break;
+    }
 
 	local data = special_round
     local scope_data = []
@@ -124,6 +281,11 @@ function OnPick()
 
 function GetName()
 {
+	if (scopes.len() == 0) {
+        return "404 Not Found";
+    } else if (scopes.len() == 1) {
+        return scopes[0].special_round.name;
+    }
     local out = format("%s\n", special_round.name)
     foreach (scope in scopes)
     {
@@ -342,6 +504,42 @@ delegated_callbacks <-
         }
         if (call_failed) ret = false;
         return ret;
+	}
+
+    function OnShowChatText(player, fmt)
+	{
+        local fmt;
+        foreach (scope in scopes) {
+            local ret = DelegatedCall(scope, "OnShowChatText", player, fmt)
+            if (!call_failed) {
+                fmt = ret
+            }
+        }
+		return fmt
+	}
+
+	function OnShowGameText(players, channel, text)
+	{
+        local text;
+        foreach (scope in scopes) {
+            local ret = DelegatedCall(scope, "OnShowGameText", players, channel, text)
+            if (!call_failed) {
+                text = ret
+            }
+        }
+		return text
+	}
+
+	function OnShowOverlay(players, overlay_name)
+	{
+        local overlay_name;
+        foreach (scope in scopes) {
+            local ret = DelegatedCall(scope, "OnShowOverlay", players, overlay_name)
+            if (!call_failed) {
+                overlay_name = ret
+            }
+        }
+		return overlay_name
 	}
 
 	function OnPlayerConnect(player)

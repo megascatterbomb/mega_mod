@@ -7,7 +7,7 @@ local mega = root[prefix] <- {};
 mega.OnGameEvent_teamplay_round_start <- function (event) {
     printl("MEGAMOD: Loading custom tf2ware logic...");
 
-     // OVERRIDE: tf2ware_ultimate/main.nut::Ware_LoadSpecialRound
+    // OVERRIDE: tf2ware_ultimate/main.nut::Ware_LoadSpecialRound
     // Allow loading of special rounds from mega_mod.
     ::Ware_LoadSpecialRound <- function (file_name, player_count, is_forced)
     {
@@ -15,11 +15,11 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
         local scope = {}
         try
         {
-            IncludeScript(path, scope)
+            IncludeScript(format("mega_mod/mapmods/workshop/tf2ware/specialrounds/%s", file_name), scope)
         }
         catch (e)  {
             try {
-                IncludeScript(format("mega_mod/mapmods/workshop/tf2ware/specialrounds/%s", file_name), scope)
+                IncludeScript(path, scope)
             }
             catch (e) {
                 Ware_Error("Failed to load special round '%s'", file_name)
@@ -53,21 +53,16 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
     }
 
     // OVERRIDE: tf2ware_ultimate/dev.nut::Ware_DevCommands["nextspecial"]
-    // Allows "what_have_you_done" to be forced with specified special rounds.
+    // Allows "double_trouble" to be forced with up to 5 specified special rounds.
     ::Ware_DevCommands["nextspecial"] <- function (player, text)
     {
         local args = split(text, " ")
         if (args.len() >= 1)
         {
-            if (args.len() >= 3)
-            {
-                Ware_DebugNextSpecialRound = "what_have_you_done"
-                Ware_DebugNextSpecialRound2 = args;
-            }
-            else if (args.len() == 2)
+            if (args.len() >= 2)
             {
                 Ware_DebugNextSpecialRound = "double_trouble"
-                Ware_DebugNextSpecialRound2 = [args[0], args[1]]
+                Ware_DebugNextSpecialRound2 = args
             }
             else if (args[0] == "any")
             {
