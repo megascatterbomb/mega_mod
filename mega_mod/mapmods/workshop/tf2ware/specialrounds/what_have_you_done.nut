@@ -11,6 +11,7 @@ scopes <- []
 function OnPick()
 {
 	local categories = clone(Ware_SpecialRoundCategories)
+	local random = true;
 	// don't include ourself...
 	if ("meta" in categories)
 		delete categories.meta
@@ -30,6 +31,7 @@ function OnPick()
             special_rounds.append({category = "none", file_name = file_name})
         }
 		Ware_DebugNextSpecialRound2.clear()
+        random = false;
 	}
 
 	local picks = [];
@@ -43,7 +45,12 @@ function OnPick()
         local max_count = Min(16 * round, special_rounds_count)
         for (local i = 0; i <  max_count; i++)
         {
-            local pick = RemoveRandomElement(special_rounds)
+            local pick;
+            if(random) {
+                pick = RemoveRandomElement(special_rounds)
+            } else {
+                pick = special_rounds.remove(0)
+            }
             local skip = false;
             foreach (p in picks) {
                 if (pick.category != "none" && pick.category == p.category) {
@@ -307,7 +314,7 @@ delegated_callbacks <-
             if (call_failed || ret == false) continue;
             return ret
         }
-        ret == false
+        if (call_failed) ret = false;
 		return ret
 	}
 
@@ -317,9 +324,10 @@ delegated_callbacks <-
         foreach (scope in scopes)
         {
             ret = DelegatedCall(scope, "OnCalculateTopScorers", top_players)
-            if (call_failed) continue;
+            if (call_failed || ret == false) continue;
             return ret
         }
+        if (call_failed) ret = false;
         return ret;
 	}
 
@@ -329,9 +337,10 @@ delegated_callbacks <-
         foreach (scope in scopes)
         {
             ret = DelegatedCall(scope, "OnDeclareWinners", top_players, top_score, winner_count)
-            if (call_failed) continue;
+            if (call_failed || ret == false) continue;
             return ret
         }
+        if (call_failed) ret = false;
         return ret;
 	}
 
