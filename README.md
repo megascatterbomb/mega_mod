@@ -1,6 +1,6 @@
 # Megascatterbomb's server mods
 
-A collection of VScript mods for various maps that I think improve the overall gameplay experience. If you would like to play on a server with these mods, connect to `tf2.megascatterbomb.com`.
+A collection of VScript mods for various maps that I think improve the overall gameplay experience. If you would like to play on a server with these mods, connect to the [bomb shelter](https://megascatterbomb.com).
 
 ### Installation:
 - Copy the contents of the repo to `tf/scripts/vscripts`
