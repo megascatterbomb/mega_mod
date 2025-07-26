@@ -105,7 +105,7 @@ AddListener("dead_ringer", 0, function(attacker, victim, params)
 AddListener("setup_end", 11, function ()
 {
     ::MM_VSH_ROUND_START <- Time();
-    ::haleName <- NetProps.GetPropString(GetBossPlayers()[0], "m_szNetname");
+    ::haleName <- GetPropString(GetBossPlayers()[0], "m_szNetname");
 });
 
 AddListener("round_end", 5, function (winnerTeam)

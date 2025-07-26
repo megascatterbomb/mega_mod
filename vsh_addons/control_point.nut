@@ -73,7 +73,7 @@ function EndRoundTime() {
 AddListener("setup_end", 0, function()
 {
     // Out with the old...
-    local controlPoint = Entities.FindByClassname(null, "team_control_point");
+    local controlPoint = FindByClassname(null, "team_control_point");
     EntityOutputs.RemoveOutput(controlPoint,
         "OnCapTeam"+(TF_TEAM_MERCS-1),
         vsh_vscript_name,
@@ -215,7 +215,7 @@ function BeginEndgame() {
     EntFireByHandle(team_round_timer, "Pause", "", 0, null, null);
     EntFireByHandle(team_round_timer, "Disable", "", 0, null, null);
 
-    local controlPoint = Entities.FindByClassname(null, "team_control_point");
+    local controlPoint = FindByClassname(null, "team_control_point");
     EntFireByHandle(controlPoint, "SetLocked", "1", 0, null, null);
 
     haleLastDamage = Time();
@@ -293,11 +293,15 @@ function ReduceCooldownOfSaxtonAbilities()
         SetItemId(weapon, 444); //Mantreads
         CreateAoE(boss.GetCenter(), 500,
             function (target, deltaVector, distance) {
-                local damage = target.GetMaxHealth() * (1 - distance / 500);
+                local percentage = (1 - distance / 500);
+                if (percentage > 0.75)
+                    percentage = 0.75;
+                local damage = target.GetMaxHealth() * percentage;
                 if (!target.IsPlayer())
                     damage *= 2;
                 if (damage <= 30 && target.GetHealth() <= 30)
                     return; // We don't want to have people on low health die because Hale just Slammed a mile away.
+                custom_dmg_slam_collateral.SetAbsOrigin(bossLocal.GetOrigin());
                 target.TakeDamageEx(
                     custom_dmg_slam_collateral,
                     bossLocal,
@@ -324,7 +328,7 @@ function ReduceCooldownOfSaxtonAbilities()
     {
         if (meter != 0)
             return false;
-        meter -= -newSaxtonPunchCooldown;
+        meter -= newSaxtonPunchCooldown;
 
         vsh_vscript.Hale_SetRedArm(boss, false);
 
@@ -347,6 +351,7 @@ function ReduceCooldownOfSaxtonAbilities()
                 local damage = target.GetMaxHealth() * (0.7 - distance / 2000);
                 if (!target.IsPlayer())
                     damage *= 2;
+                custom_dmg_saxton_punch_aoe.SetAbsOrigin(boss.GetOrigin());
                 target.TakeDamageEx(
                     custom_dmg_saxton_punch_aoe,
                     boss,
@@ -369,7 +374,7 @@ function ReduceCooldownOfSaxtonAbilities()
         return true;
     }
 
-    // OVERRIDE: bosses\saxton_hale\abilities\sweeping_charge.nut::SweepingChargeTrait::Perform
+    // OVERRIDE: bosses\saxton_hale\abilities\sweeping_charge.nut::SweepingChargeTrait::Finish
     SweepingChargeTrait.Finish <- function ()
     {
         vsh_vscript.Hale_SetBlueArm(boss, false);

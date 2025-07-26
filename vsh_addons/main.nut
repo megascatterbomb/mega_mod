@@ -17,10 +17,10 @@ AddListener("tick_always", 5, function(timeDelta)
 ::COLOR_SPECIAL <- "\x07FCD303"
 
 // Credit to valve wiki: https://developer.valvesoftware.com/wiki/Team_Fortress_2/Scripting/VScript_Examples#Getting_the_userid_from_a_player_handle
-::PlayerManager <- Entities.FindByClassname(null, "tf_player_manager")
+::PlayerManager <- FindByClassname(null, "tf_player_manager")
 ::GetPlayerUserID <- function(player)
 {
-    return NetProps.GetPropIntArray(PlayerManager, "m_iUserID", player.entindex())
+    return GetPropIntArray(PlayerManager, "m_iUserID", player.entindex())
 }
 
 // Helper to erase listeners we want to replace.
