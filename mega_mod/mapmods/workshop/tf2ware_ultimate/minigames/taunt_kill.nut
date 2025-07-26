@@ -1,4 +1,4 @@
-// TODO: Remove this file if my pr gets accepted into main tf2ware when I make it
+// TODO: Remove this file if my pr gets accepted into main tf2ware when I make it -kiwi
 
 ITEM_MAP["Taunt: Texan Trickshot"] <-
 {
