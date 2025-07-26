@@ -388,10 +388,13 @@ function ReduceCooldownOfSaxtonAbilities()
     }
 
     // Update the meters to reflect the correct cooldowns
+    // If a cooldown is active, ensure it's less than the new cooldown duration.
 
     // OVERRIDE: bosses\saxton_hale\abilities\mighty_slam.nut::MightySlamTrait::MeterAsPercentage
     MightySlamTrait.MeterAsPercentage <- function ()
     {
+        if (meter < -newMightySlamCooldown)
+            meter = -newMightySlamCooldown;
         if (meter < 0)
             return (newMightySlamCooldown + meter) * 90 / newMightySlamCooldown;
         return inUse ? 200 : 100
@@ -400,6 +403,8 @@ function ReduceCooldownOfSaxtonAbilities()
     // OVERRIDE: bosses\saxton_hale\abilities\saxton_punch.nut::SaxtonPunchTrait::MeterAsPercentage
     SaxtonPunchTrait.MeterAsPercentage <- function ()
     {
+        if (meter < -newSaxtonPunchCooldown)
+            meter = -newSaxtonPunchCooldown;
         if (meter < 0)
             return (newSaxtonPunchCooldown + meter) * 90 / newSaxtonPunchCooldown;
         return 200;
@@ -408,6 +413,8 @@ function ReduceCooldownOfSaxtonAbilities()
     // OVERRIDE: bosses\saxton_hale\abilities\sweeping_charge.nut::SweepingChargeTrait::MeterAsPercentage
     SweepingChargeTrait.MeterAsPercentage <- function ()
     {
+        if (meter < -newSweepingChargeCooldown)
+            meter = -newSweepingChargeCooldown;
         if (meter < 0)
             return (newSweepingChargeCooldown + meter) * 90 / newSweepingChargeCooldown;
         return isCurrentlyDashing ? 200 : 100
