@@ -21,7 +21,7 @@ function OnStart()
 		[ TF_CLASS_DEMOMAN,      "Eyelander"        	  , @(player) SuicideLine(player, 128.0)   ],
 		[ TF_CLASS_HEAVYWEAPONS, "Fists"            	  , @(player) SuicideLine(player, 500.0)   ],
 		[ TF_CLASS_ENGINEER,     "Frontier Justice" 	  , @(player) SuicideLine(player, 128.0)   ],
-		[ TF_CLASS_ENGINEER,     "Taunt: Texan Trickshot" , @(player) SuicideLine(player, 175.0)   ],
+		[ TF_CLASS_ENGINEER,     "Taunt: Texan Trickshot" , @(player) SuicideLine(player, 500.0)   ],
 		[ TF_CLASS_ENGINEER,     "Gunslinger"       	  , @(player) SuicideLine(player, 128.0)   ],
 		[ TF_CLASS_MEDIC,        "Ubersaw"          	  , @(player) SuicideLine(player, 128.0)   ],
 		[ TF_CLASS_SNIPER,       "Huntsman"         	  , @(player) SuicideLine(player, 128.0)   ],
