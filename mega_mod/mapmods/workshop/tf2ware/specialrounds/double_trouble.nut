@@ -1,3 +1,8 @@
+// OVERRIDE: tf2ware_ultimate/specialrounds/double_trouble.nut
+// This entire file is based on the original double_trouble special round.
+// Modifications are tagged with MEGAMOD
+
+// MEGAMOD: Update metadata and credits.
 special_round <- Ware_SpecialRoundData
 ({
 	name = "What have you done!?"
@@ -6,6 +11,7 @@ special_round <- Ware_SpecialRoundData
 	category = "meta"
 })
 
+// MEGAMOD: Table of incompatible special rounds.
 // Special rounds that share a category cannot be loaded together.
 // Special rounds with "unique" cannot be loaded via double_trouble at all
 // Special rounds with "first" must be the first loaded special round.
@@ -40,6 +46,7 @@ special_round_categories <- {
     "wipeout": ["unique"] // incompatible with double_trouble
 }
 
+// MEGAMOD: Table of special round requirement checks.
 special_round_requirements <- {
     "collisions": function (player_count)
     {
@@ -81,10 +88,12 @@ special_round_requirements <- {
 
 scopes <- []
 
+// OVERRIDE: tf2ware_ultimate/specialrounds/double_trouble.nut::OnPick
 function OnPick()
 {
 	printl("MEGAMOD: Loading custom double_trouble logic...");
 
+    // MEGAMOD: Completely rewrote the logic for picking special rounds.
 	local random = true;
 	local special_rounds = [];
 
@@ -280,6 +289,7 @@ function OnPick()
 	return true
 }
 
+// MEGAMOD: Rewrote to support 3 or more special rounds.
 function GetName()
 {
 	if (scopes.len() == 0) {
@@ -295,6 +305,7 @@ function GetName()
 	return out;
 }
 
+// MEGAMOD: Rewrote to support 3 or more special rounds.
 // called externally
 function IsSet(file_name)
 {
@@ -308,6 +319,7 @@ function IsSet(file_name)
 	return false;
 }
 
+// MEGAMOD: Rewrote to support 3 or more special rounds.
 function OnStartInternal()
 {
     foreach(scope in scopes)
@@ -332,6 +344,7 @@ function DelegatedCall(scope, name, ...)
 	call_failed = true
 }
 
+// MEGAMOD: Rewrote to support 3 or more special rounds.
 delegated_callbacks <-
 {
 	function OnStart()
