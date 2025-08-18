@@ -25,8 +25,6 @@ function Setup5CPKothTimer() {
     local gamerules = Entities.FindByClassname(null, "tf_gamerules");
     local mp_timelimit = Convars.GetInt("mp_timelimit");
 
-    EntFireByHandle(gamerules, "SetStalemateOnTimelimit", "0", 5, null, null);
-
     local MM_5CP_TIME_UPPER_LIMIT = 600;
     local MM_5CP_TIME_LOWER_LIMIT = 300;
 

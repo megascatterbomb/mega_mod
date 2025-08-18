@@ -45,4 +45,7 @@ if(matchEndAtTimelimit) {
     Convars.SetValue("mp_match_end_at_timelimit", 0);
 }
 
+EntFireByHandle(Entities.FindByClassname(null, "tf_gamerules"), "SetStalemateOnTimelimit", "0", 5, null, null);
+
+
 MM_CreateDummyThink("MM_NEUTRAL_POINT_STALEMATE_THINK");
