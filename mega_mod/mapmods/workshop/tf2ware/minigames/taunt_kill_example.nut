@@ -1,4 +1,6 @@
-// TODO: Remove this file if my pr gets accepted into main tf2ware when I make it -kiwi
+// We did it Grommit! We saved the cheese!
+// Renamed to _example after https://github.com/ficool2/TF2Ware_Ultimate/pull/182 was merged, since it isn't needed anymore, but serves
+// as a good example for how overriding values in minigames could go.
 
 IncludeScript("tf2ware_ultimate/minigames/taunt_kill.nut")
 
