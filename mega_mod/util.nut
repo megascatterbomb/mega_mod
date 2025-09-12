@@ -45,7 +45,7 @@ function MM_CreateDummyThink(funcName) {
     AddThinkToEnt(relay, funcName);
 }
 
-function GetTickCount() { // ticks since server start
+function Tick() { // ticks since server start
 	// netprop exists on tf_player_manager and tf_player_manager always exists
 	return NetProps.GetPropInt(Entities.FindByClassname(null, "tf_player_manager"), "m_nSimulationTick")
 }

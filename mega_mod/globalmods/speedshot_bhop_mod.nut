@@ -19,11 +19,11 @@
 		}
 
 		local scope = player.GetScriptScope()
-		if (!(player.GetFlags() & Constants.FPlayer.FL_ONGROUND) && GetTickCount() <= scope.rocket_land_tick)
+		if (!(player.GetFlags() & Constants.FPlayer.FL_ONGROUND) && Tick() <= scope.rocket_land_tick)
 		{
 			if (!scope.jumped)
 			{
-				// printl(GetTickCount().tostring() + " " + (scope.rocket_land_tick).tostring())
+				// printl(Tick().tostring() + " " + (scope.rocket_land_tick).tostring())
 				// if(NetProps.GetPropBool(player, "m_Shared.m_bJumping")){
 				// 	// bhop_combo += 1
 				// 	ClientPrint(player, 3, "Perfomed \"fake\" bhop!")
@@ -59,9 +59,9 @@ ApplyMod <- function () {
 
 	this.OnGameEvent_rocket_jump_landed <- function(params) {
 		local player = GetPlayerFromUserID(params.userid)
-		player.GetScriptScope().rocket_land_tick = GetTickCount()
+		player.GetScriptScope().rocket_land_tick = Tick()
 		player.GetScriptScope().jumped =  false
-		// printl("OnGameEvent_rocket_jump_landed @ " + GetTickCount())
+		// printl("OnGameEvent_rocket_jump_landed @ " + Tick())
 		// printl(player.GetVelocity())
 	}.bindenv(this);
 
