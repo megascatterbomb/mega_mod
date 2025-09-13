@@ -26,7 +26,6 @@
 
 // Unlock point and resume timer
 // Caller cannot be null otherwise SetOwner does nothing.
-
 ::MM_ON_BOSS_DEAD <- function(cpName) {
     printl("MEGAMOD: no_truce mod firing ON_BOSS_DEAD for " + cpName);
     local cp = MM_GetEntByName(cpName);
@@ -43,6 +42,24 @@ function StripBossRelays(cpName) {
 	local bossExitRelay = MM_GetEntByName("boss_exit_relay");
 	local bossDeadRelay = MM_GetEntByName("boss_dead_relay");
 
+    if (!bossEnterRelay) {
+        bossEnterRelay = SpawnEntityFromTable("logic_relay", {
+            targetname = "boss_enter_relay"
+        });
+    }
+
+    if (!bossExitRelay) {
+        bossExitRelay = SpawnEntityFromTable("logic_relay", {
+            targetname = "boss_exit_relay"
+        });
+    }
+
+    if (!bossDeadRelay) {
+        bossDeadRelay = SpawnEntityFromTable("logic_relay", {
+            targetname = "boss_dead_relay"
+        });
+    }
+
     EntityOutputs.RemoveOutput(bossEnterRelay, "OnTrigger", cpName, "Disable", "");
     EntityOutputs.RemoveOutput(bossExitRelay, "OnTrigger", cpName, "Enable", "");
     EntityOutputs.RemoveOutput(bossDeadRelay, "OnTrigger", cpName, "Enable", "");
@@ -55,6 +72,20 @@ function StripBossRelays(cpName) {
 
     EntityOutputs.AddOutput(cp, "OnCapTeam1", "!self", "RunScriptCode", "::MM_LAST_CAPTURE_BY = 2", 0, -1);
     EntityOutputs.AddOutput(cp, "OnCapTeam2", "!self", "RunScriptCode", "::MM_LAST_CAPTURE_BY = 3", 0, -1);
+}
+
+// Don't need this for merasmus.
+// Call after include, NOT in teamplay_round_start
+function HookBossRelaysManual(cpName, bossType) {
+    this["OnGameEvent_" + bossType + "_summoned"] <- function(params) {
+        MM_ON_BOSS_ENTER(cpName);
+    };
+    this["OnGameEvent_" + bossType + "_killed"] <- function(params) {
+        MM_ON_BOSS_DEAD(cpName);
+    };
+    this["OnGameEvent_" + bossType + "_escaped"] <- function(params) {
+        MM_ON_BOSS_EXIT(cpName);
+    };
 }
 
 // no_truce function by LizardOfOz
