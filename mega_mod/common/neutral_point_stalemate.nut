@@ -1,9 +1,13 @@
-// If a neutral point is present when mp_timelimit expires, end the map.
-// Intended for use on koth and 5cp maps to prevent indefinite stalling of a mapchange
+// If the netural point hasn't been capped when mp_timelimit expires, end the map.
+// Intended for use on koth and 5cp maps to prevent indefinite stalling of a mapchange.
+
+// Recommended to use alongside no_truce mod for koth_lakeside_event and koth_viaduct_event for best results,
+// otherwise the map will end whenever a boss spawns.
 
 // Include this file in OnGameEvent_teamplay_round_start
 
 ::MM_NEUTRAL_POINT_STALEMATE_TRIGGERED <- false;
+::MM_NEUTRAL_POINT_CAPPED <- false;
 
 ::MM_NEUTRAL_POINT_STALEMATE_THINK <- function () {
 
@@ -17,7 +21,7 @@
         }
     }
 
-    if (neutralPointPresent) {
+    if (neutralPointPresent && !MM_NEUTRAL_POINT_CAPPED) {
         local gamerules = Gamerules();
         local mp_timelimit = Convars.GetInt("mp_timelimit");
 
@@ -33,6 +37,8 @@
                 EntFireByHandle(stalemate, "RoundWin", "", 0, null, null);
             }
         }
+    } else {
+        MM_NEUTRAL_POINT_CAPPED <- true;
     }
 
     return 1;
