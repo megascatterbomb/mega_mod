@@ -6,7 +6,7 @@
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
 
 function MM_Zombie_Infection() {
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     if (gamerules != null)  {
         // Delay so our settings overwrite those set by logic_auto ents.
         EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "5", 5, null, null);
@@ -49,7 +49,7 @@ function MM_ZI_OverrideZombieSelection() {
         local _playerArr = [];
         local _lowPriorityPlayerArr = [];
 
-        local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+        local gamerules = Gamerules();
         local gamerules_scope = gamerules.GetScriptScope();
 
         // gamerules_scope["zi_chosen_zombies"].map(function(p) {
@@ -109,7 +109,7 @@ function MM_ZI_OverrideSetupFinished() {
     local scope = logic_script.GetScriptScope();
 
     // Some maps might set gamerules at the end of setup time. This is just a safety check.
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     if (gamerules != null)  {
         EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 1, null, null);
         EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 1, null, null);

@@ -80,7 +80,7 @@ function InitGlobalVars() {
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
 
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     local tcpMaster = Entities.FindByClassname(null, "team_control_point_master");
     EntFireByHandle(gamerules, "SetStalemateOnTimelimit", "0", 0, null, null);
     EntFireByHandle(tcpMaster, "AddOutput", "play_all_rounds 1", 0, null, null);
@@ -104,7 +104,7 @@ function GetRoundTimeString(setup = 0) {
 
 function GetRoundTime(setup = 0) {
     local time = MM_PLR_TIME_UPPER_LIMIT;
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     local mp_timelimit = Convars.GetInt("mp_timelimit");
     // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
     if (mp_timelimit != null && mp_timelimit > 0) {

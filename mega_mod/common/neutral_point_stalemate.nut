@@ -18,7 +18,7 @@
     }
 
     if (neutralPointPresent) {
-        local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+        local gamerules = Gamerules();
         local mp_timelimit = Convars.GetInt("mp_timelimit");
 
         if (mp_timelimit != null && mp_timelimit > 0 && !MM_NEUTRAL_POINT_STALEMATE_TRIGGERED) {
@@ -45,7 +45,7 @@ if(matchEndAtTimelimit) {
     Convars.SetValue("mp_match_end_at_timelimit", 0);
 }
 
-EntFireByHandle(Entities.FindByClassname(null, "tf_gamerules"), "SetStalemateOnTimelimit", "0", 5, null, null);
+EntFireByHandle(Gamerules(), "SetStalemateOnTimelimit", "0", 5, null, null);
 
 
 MM_CreateDummyThink("MM_NEUTRAL_POINT_STALEMATE_THINK");

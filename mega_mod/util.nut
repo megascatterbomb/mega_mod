@@ -50,6 +50,10 @@ function Tick() { // ticks since server start
 	return NetProps.GetPropInt(Entities.FindByClassname(null, "tf_player_manager"), "m_nSimulationTick")
 }
 
+function Gamerules() {
+    return Entities.FindByClassname(null, "tf_gamerules");
+}
+
 
 ::MM_Gamemodes <- {
     UNKNOWN = null,

@@ -2,7 +2,7 @@
 //Feel free to use
 
 ::no_truce <- {
-    gamerules = Entities.FindByClassname(null, "tf_gamerules"),
+    gamerules = Gamerules(),
     OnGameEvent_recalculate_truce = function(params)
     {
         local isTruce = NetProps.GetPropBool(gamerules, "m_bTruceActive");
@@ -24,4 +24,4 @@
     }
 };
 
-EntFireByHandle(Entities.FindByClassname(null, "tf_gamerules"), "RunScriptCode", "::__CollectGameEventCallbacks(no_truce)", 1, null, null);
+EntFireByHandle(Gamerules(), "RunScriptCode", "::__CollectGameEventCallbacks(no_truce)", 1, null, null);
