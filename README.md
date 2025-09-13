@@ -61,6 +61,12 @@ This mod only forces a stalemate if no-one has capped a point (i.e. there is a n
 
 This mod will force `mp_match_end_at_timelimit 0`.
 
+## Reliable Bunnyhopping for market gardening at high ping
+
+Does some serverside shenanigans to re-apply the rocket jumping state as you bhop. Now you can reliably hit gardens at 350 ping!
+
+Inspired by the MGA Rewrite Project https://mgatf.org/ and ported from https://github.com/kiwitf2/kiwimands by @kiwitf2
+ 
 # Gamemode Improvements
 
 ## 5CP Anti-stalemate
@@ -289,9 +295,11 @@ Reduced durations for the kritz canteen (10s -> 8s) and the Uber canteen (10s ->
 ### Damage resistances provide Melee resistance.
 Each tick of Fire, Bullet, or Blast resistance gives 5% resistance to Melee damage; up to a total of 45% resistance.
 
-## No truces on koth_lakeside_event & koth_viaduct_event
+## Boss fights on koth_lakeside_event & koth_viaduct_event
 
-Self-explanatory. Ghost Fort's timer was also reduced to 3:00 (from 7:00).
+Truces are removed, and the point retains its owner during the boss fight. The clock pauses when the boss spawns in and resumes once the boss leaves or is defeated.
+
+The point model hides during the boss fight (the point is *technically* netural during the boss fight and this was the easiest way to make it not look stupid).
 
 ## Edict optimization on pl_bloodwater
 
