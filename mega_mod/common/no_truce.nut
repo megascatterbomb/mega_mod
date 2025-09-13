@@ -4,35 +4,38 @@
 ::MM_ON_BOSS_ENTER <- function(cpName) {
     printl("MEGAMOD: no_truce mod firing ON_BOSS_ENTER for " + cpName);
     local cp = MM_GetEntByName(cpName);
-    local capArea = Entities.FindByClassname(null, "trigger_capture_area");
     local objectiveRes = Entities.FindByClassname(null, "tf_objective_resource");
-    NetProps.SetPropIntArray(objectiveRes, "m_iOwner", ::MM_LAST_CAPTURE_BY, 0);
 
-    capArea.SetTeam(::MM_LAST_CAPTURE_BY);
-    cp.AcceptInput("SetOwner", "" + ::MM_LAST_CAPTURE_BY, null, null);
+    NetProps.SetPropIntArray(objectiveRes, "m_iOwner", ::MM_LAST_CAPTURE_BY, 0);
     cp.AcceptInput("SetLocked", "1", null, null);
+    cp.AcceptInput("HideModel", "", null, null);
 }.bindenv(this);
 
 // Unlock point and resume timer
+// Caller cannot be null otherwise SetOwner does nothing.
 ::MM_ON_BOSS_EXIT <- function(cpName) {
     printl("MEGAMOD: no_truce mod firing ON_BOSS_EXIT for " + cpName);
     local cp = MM_GetEntByName(cpName);
-    local owner = cp.GetTeam();
+    cp.AcceptInput("SetOwner", "" + ::MM_LAST_CAPTURE_BY, null, Gamerules());
     cp.AcceptInput("SetLocked", "0", null, null);
+    cp.AcceptInput("ShowModel", "", null, null);
 
-    local kothTimer = MM_GetEntByName(owner == 2 ? "zz_red_koth_timer" : "zz_blue_koth_timer");
-    kothTimer.AcceptInput("ResumeTimer", "", null, null);
+    local kothTimer = MM_GetEntByName(::MM_LAST_CAPTURE_BY == 2 ? "zz_red_koth_timer" : "zz_blue_koth_timer");
+    kothTimer.AcceptInput("Resume", "", null, null);
 }.bindenv(this);
 
 // Unlock point and resume timer
+// Caller cannot be null otherwise SetOwner does nothing.
+
 ::MM_ON_BOSS_DEAD <- function(cpName) {
     printl("MEGAMOD: no_truce mod firing ON_BOSS_DEAD for " + cpName);
     local cp = MM_GetEntByName(cpName);
-    local owner = cp.GetTeam();
+    cp.AcceptInput("SetOwner", "" + ::MM_LAST_CAPTURE_BY, null, Gamerules());
     cp.AcceptInput("SetLocked", "0", null, null);
+    cp.AcceptInput("ShowModel", "", null, null);
 
-    local kothTimer = MM_GetEntByName(owner == 2 ? "zz_red_koth_timer" : "zz_blue_koth_timer");
-    kothTimer.AcceptInput("ResumeTimer", "", null, null);
+    local kothTimer = MM_GetEntByName(::MM_LAST_CAPTURE_BY == 2 ? "zz_red_koth_timer" : "zz_blue_koth_timer");
+    kothTimer.AcceptInput("Resume", "", null, null);
 }.bindenv(this);
 
 function StripBossRelays(cpName) {
