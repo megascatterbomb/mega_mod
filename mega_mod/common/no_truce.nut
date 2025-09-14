@@ -20,7 +20,15 @@
     cp.AcceptInput("SetLocked", "0", null, null);
     cp.AcceptInput("ShowModel", "", null, null);
 
-    local kothTimer = MM_GetEntByName(::MM_LAST_CAPTURE_BY == 2 ? "zz_red_koth_timer" : "zz_blue_koth_timer");
+    local kothTimer;
+    if (::MM_LAST_CAPTURE_BY == 2) {
+        kothTimer = MM_GetEntByName("zz_red_koth_timer");
+    } else if (::MM_LAST_CAPTURE_BY == 3) {
+        kothTimer = MM_GetEntByName("zz_blue_koth_timer");
+    } else {
+        return;
+    }
+
     kothTimer.AcceptInput("Resume", "", null, null);
 }.bindenv(this);
 
@@ -33,11 +41,21 @@
     cp.AcceptInput("SetLocked", "0", null, null);
     cp.AcceptInput("ShowModel", "", null, null);
 
-    local kothTimer = MM_GetEntByName(::MM_LAST_CAPTURE_BY == 2 ? "zz_red_koth_timer" : "zz_blue_koth_timer");
+    local kothTimer;
+    if (::MM_LAST_CAPTURE_BY == 2) {
+        kothTimer = MM_GetEntByName("zz_red_koth_timer");
+    } else if (::MM_LAST_CAPTURE_BY == 3) {
+        kothTimer = MM_GetEntByName("zz_blue_koth_timer");
+    } else {
+        return;
+    }
+
     kothTimer.AcceptInput("Resume", "", null, null);
 }.bindenv(this);
 
 function StripBossRelays(cpName) {
+    ::MM_LAST_CAPTURE_BY <- 0;
+
     local bossEnterRelay = MM_GetEntByName("boss_enter_relay");
 	local bossExitRelay = MM_GetEntByName("boss_exit_relay");
 	local bossDeadRelay = MM_GetEntByName("boss_dead_relay");

@@ -12,16 +12,23 @@
 ::MM_NEUTRAL_POINT_STALEMATE_THINK <- function () {
 
     local neutralPointPresent = false;
+    local neutralPointPresentAndUnlocked = false;
 
     for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
         local owner = cp.GetTeam();
+        local locked = NetProps.GetPropBool(cp, "m_bLocked");
+
+        // Point may be locked if there's a halloween boss active, let the bossfight play out then stalemate.
         if (owner == 0) {
             neutralPointPresent = true;
+            if (!locked) {
+                neutralPointPresentAndUnlocked = true;
+            }
             break;
         }
     }
 
-    if (neutralPointPresent && !MM_NEUTRAL_POINT_CAPPED) {
+    if (neutralPointPresentAndUnlocked && !MM_NEUTRAL_POINT_CAPPED) {
         local gamerules = Gamerules();
         local mp_timelimit = Convars.GetInt("mp_timelimit");
 
@@ -37,7 +44,7 @@
                 EntFireByHandle(stalemate, "RoundWin", "", 0, null, null);
             }
         }
-    } else {
+    } else if (!neutralPointPresent) {
         MM_NEUTRAL_POINT_CAPPED <- true;
     }
 
