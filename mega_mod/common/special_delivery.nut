@@ -12,7 +12,7 @@
     ::MM_SD_TIME_UPPER_LIMIT <- 900;
     ::MM_SD_TIME_LOWER_LIMIT <- 300;
 
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
 
     EntFireByHandle(gamerules, "SetStalemateOnTimelimit", "0", 0, null, null);
 

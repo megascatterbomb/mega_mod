@@ -11,7 +11,7 @@ function MM_Respawn_Mod(full_reset) {
 }
 
 function MM_RespawnEndOfRound() {
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     EntityOutputs.AddOutput(gamerules, "OnWonByTeam1", "!self", "RunScriptCode", "::MM_RESPAWN_DISABLE <- true", 0, -1);
     EntityOutputs.AddOutput(gamerules, "OnWonByTeam2", "!self", "RunScriptCode", "::MM_RESPAWN_DISABLE <- true", 0, -1);
 }

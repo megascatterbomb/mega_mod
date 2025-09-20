@@ -22,7 +22,7 @@ function Setup5CPKothTimer() {
     local time = NetProps.GetPropInt(oldTimer, "m_nTimerInitialLength");
     oldTimer.Kill();
 
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     local mp_timelimit = Convars.GetInt("mp_timelimit");
 
     local MM_5CP_TIME_UPPER_LIMIT = 600;
@@ -79,7 +79,7 @@ function Setup5CPKothTimer() {
 }
 
 function AttachMid() {
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     // Identify the neutral point and get it to handle KOTH I/O.
     for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
         local owner = NetProps.GetPropInt(cp, "m_iDefaultOwner");
@@ -92,7 +92,7 @@ function AttachMid() {
 }
 
 function HandleSetup() {
-    local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+    local gamerules = Gamerules();
     NetProps.SetPropBool(gamerules, "m_bPlayingKoth", false);
     local logic = MM_GetEntByName("tf_logic_koth");
     if (logic) logic.Kill();

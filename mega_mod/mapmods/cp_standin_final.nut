@@ -69,7 +69,7 @@ function OnGameEvent_teamplay_round_start(params)
                 delta--;
             }
         }
-        local gamerules = Entities.FindByClassname(null, "tf_gamerules");
+        local gamerules = Gamerules();
         if(delta > 0) {
             gamerules.AcceptInput("SetRedKothClockActive", "", null, null);
         } else if (delta < 0) {
