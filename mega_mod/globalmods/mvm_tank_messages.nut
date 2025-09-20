@@ -32,12 +32,12 @@ function LoadAlongsideMapMods() {
     ClientPrint(null, 3, "\x0799CCFFTank spawned with " + tank.GetMaxHealth().tostring() + " health!");
 }
 
-::MM_MVM_HandleTankDamage <- function(entID, attacker, damage) {
+::MM_MVM_HandleTankDamage <- function(params) {
     local tankInfo = null;
 
     foreach(t in ::MM_MVM_Tanks) {
         if (!t.handle || !t.handle.IsValid()) continue;
-        if (t.entID == entID) {
+        if (t.entID == params.entindex) {
             tankInfo = t;
             break;
         }
@@ -45,11 +45,14 @@ function LoadAlongsideMapMods() {
 
     if (tankInfo == null) return;
 
-    if(!tankInfo.playerDamages.rawin(attacker)) {
-        tankInfo.playerDamages[attacker] <- 0;
+    if(!tankInfo.playerDamages.rawin(params.attacker_player)) {
+        tankInfo.playerDamages[params.attacker_player] <- 0;
     }
 
-    tankInfo.playerDamages[attacker] <- tankInfo.playerDamages[attacker] + damage;
+    // Prevent over-crediting of killing hit to tank.
+    local damage = params.damageamount > params.health ? params.health : params.damageamount;
+
+    tankInfo.playerDamages[params.attacker_player] <- tankInfo.playerDamages[params.attacker_player] + damage;
 
     EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_HandleTankDeath()", 0, null);
 }
@@ -73,9 +76,10 @@ function LoadAlongsideMapMods() {
         local player = userID != null ? GetPlayerFromUserID(userID) : null;
         local name = NetProps.GetPropString(player, "m_szNetname");
         local damage = mvp != null ? mvp[1] : 0;
+        local damagePercent = floor((damage.tofloat() / tankInfo.startHealth) * 100);
 
         ClientPrint(null, 3, "\x07FF3F3FTank MVP: "
-            + (player != null ? (name + " (" + damage + " damage)") : "<unknown>"));
+            + (player != null ? (name + " (" + damage + " damage, " + damagePercent +  "%)") : "<unknown>"));
     }
 }
 
@@ -86,9 +90,7 @@ ApplyMod <- function () {
         EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_HookTankMessages()", 0, null);
     }.bindenv(this);
 
-    this.OnGameEvent_npc_hurt <- function (params) {
-        ::MM_MVM_HandleTankDamage(params.entindex, params.attacker_player, params.damageamount);
-    }
+    this.OnGameEvent_npc_hurt <- MM_MVM_HandleTankDamage;
 
     ::MM_MVM_HookTankMessages();
 
