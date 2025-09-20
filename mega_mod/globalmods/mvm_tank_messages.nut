@@ -6,29 +6,78 @@ function LoadAlongsideMapMods() {
     return true;
 }
 
+::MM_MVM_Tanks <- [];
+
 ::MM_MVM_HookTankMessages <- function () {
     local path = Entities.FindByClassname(null, "path_track");
     while (path) {
         EntityOutputs.AddOutput(path, "OnPass", "tf_gamerules", "RunScriptCode", "::MM_MVM_HandleTank(activator)", 0, -1)
         path = Entities.FindByClassname(path, "path_track")
     }
-
-    ClientPrint(null, 3, "\x0799CCFF[MM] Tank messages hooked.");
 }
 
 ::MM_MVM_HandleTank <- function(tank) {
     if (tank.GetClassname() != "tank_boss" || tank.GetScriptScope() != null) {
-        printl("Not a tank or already has a scope: " + tank)
         return;
     }
     tank.ValidateScriptScope();
-    local tankScope = tank.GetScriptScope();
 
-    tankScope.startHealth <- tank.GetMaxHealth();
+    ::MM_MVM_Tanks.append({
+        entID = tank.entindex()
+        startHealth = tank.GetMaxHealth()
+        playerDamages = {}
+        handle = tank
+    });
 
-    ClientPrint(null, 3, "\x0799CCFFTank spawned with " + tankScope.startHealth.tostring() + " health!");
+    ClientPrint(null, 3, "\x0799CCFFTank spawned with " + tank.GetMaxHealth().tostring() + " health!");
 }
 
+::MM_MVM_HandleTankDamage <- function(entID, attacker, damage) {
+    local tankInfo = null;
+
+    foreach(t in ::MM_MVM_Tanks) {
+        if (!t.handle || !t.handle.IsValid()) continue;
+        if (t.entID == entID) {
+            tankInfo = t;
+            break;
+        }
+    }
+
+    if (tankInfo == null) return;
+
+    if(!tankInfo.playerDamages.rawin(attacker)) {
+        tankInfo.playerDamages[attacker] <- 0;
+    }
+
+    tankInfo.playerDamages[attacker] <- tankInfo.playerDamages[attacker] + damage;
+
+    EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_HandleTankDeath()", 0, null);
+}
+
+::MM_MVM_HandleTankDeath <- function () {
+
+    for (local i = ::MM_MVM_Tanks.len() - 1; i >= 0; i--) {
+        local tankInfo = ::MM_MVM_Tanks[i];
+        if(tankInfo.handle != null && tankInfo.handle.IsValid()) continue;
+
+        ::MM_MVM_Tanks.remove(i);
+
+        local playerDamages = [];
+        foreach (userID, damage in tankInfo.playerDamages) {
+            playerDamages.append([userID, damage]);
+        }
+
+        local mvp = playerDamages.sort(function(a, b) { return b[1] - a[1]; })[0];
+
+        local userID = mvp != null ? mvp[0] : null;
+        local player = userID != null ? GetPlayerFromUserID(userID) : null;
+        local name = NetProps.GetPropString(player, "m_szNetname");
+        local damage = mvp != null ? mvp[1] : 0;
+
+        ClientPrint(null, 3, "\x07FF3F3FTank MVP: "
+            + (player != null ? (name + " (" + damage + " damage)") : "<unknown>"));
+    }
+}
 
 ApplyMod <- function () {
     local root = getroottable();
@@ -36,6 +85,10 @@ ApplyMod <- function () {
     this.OnGameEvent_teamplay_round_start <- function (event) {
         EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_HookTankMessages()", 0, null);
     }.bindenv(this);
+
+    this.OnGameEvent_npc_hurt <- function (params) {
+        ::MM_MVM_HandleTankDamage(params.entindex, params.attacker_player, params.damageamount);
+    }
 
     ::MM_MVM_HookTankMessages();
 
