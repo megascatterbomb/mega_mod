@@ -9,6 +9,7 @@ function LoadAlongsideMapMods() {
 ::MM_MVM_Tanks <- [];
 
 ::MM_MVM_HookTankMessages <- function () {
+    ::MM_MVM_Tanks <- [];
     local path = Entities.FindByClassname(null, "path_track");
     while (path) {
         EntityOutputs.AddOutput(path, "OnPass", "tf_gamerules", "RunScriptCode", "::MM_MVM_HandleTank(activator)", 0, -1)
