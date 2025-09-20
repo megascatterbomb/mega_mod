@@ -100,13 +100,19 @@ These improvements apply only to the [VScript Arena](https://steamcommunity.com/
 
 ## Mann Vs Machine
 
-Internal name: `mvm_scaling`
-
 ### Health scaling above 6 players.
+
+Internal name: `mvm_scaling`
 
 Robots gain a multipler on their health based on how many players are on RED. For example, if there are 12 players on RED, robots spawn with 200% HP. Health is multiplied by modifying `tf_populator_health_multiplier`.
 
 Also supports multiplying Tank health if [rafmod](https://github.com/rafradek/sigsegv-mvm) is installed. Requires `sig_mvm_robot_multiplier` to be non-zero and `sig_mvm_robot_multiplier_tank_hp` to be in `cfg/vscript_convar_allowlist.txt`.
+
+### Tank Announcements
+
+Internal name: `mvm_tank_messages`
+
+When a tank spawns, its health will be announced in chat. When a tank is destroyed, whoever dealt the most damage will be credited in chat.
 
 ## Payload Race
 
