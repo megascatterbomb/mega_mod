@@ -201,6 +201,6 @@ function MM_IncludeGlobalMod(mod, hasMapMod = null) {
             // printl("MEGAMOD: Skipping global mod '" + mod + "'...");
         }
     } catch (e) {
-        printl("MEGAMOD ERROR: Global mod '" + mod + "' errored when loading! Have you implemented the required functions?");
+        printl("MEGAMOD ERROR: Global mod '" + mod + "' errored when loading! Error:\n" + e);
     }
 }

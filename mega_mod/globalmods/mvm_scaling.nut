@@ -34,7 +34,7 @@ function LoadAlongsideMapMods() {
     }
 
     local healthRatioInt = floor(healthRatio * 100);
-    ClientPrint(null, 3, "\x07FCD303Robots and Tanks spawn with " + healthRatioInt + "% HP as there are " + newValue + " players on RED.");
+    ClientPrint(null, 3, "\x0799CCFFRobots and Tanks spawn with " + healthRatioInt + "% HP as there are " + newValue + " players on RED.");
 }
 
 

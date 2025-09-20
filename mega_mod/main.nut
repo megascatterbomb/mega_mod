@@ -55,6 +55,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     "gamemode_cfg"
     "neutral_point_stalemate"
     "mvm_scaling"
+    "mvm_tank_messages"
     "speedshot_bhop_mod"
 ];
 
