@@ -24,7 +24,7 @@ function LoadAlongsideMapMods() {
     local gamemode = MM_GetGamemode();
 
     if (gamemode == null) {
-        printl("MEGAMOD ERROR: Could not identify gamemode. Skipping gamemode config execution.");
+        printl("MEGAMOD WARNING: Could not identify gamemode. Skipping gamemode config execution.");
         return;
     }
 
@@ -37,7 +37,7 @@ function LoadAlongsideMapMods() {
 
     if (Convars.GetStr("sv_allow_point_servercommand") != "always" && !Convars.IsConVarOnAllowList("sv_allow_point_servercommand")) {
         // bail out
-        printl("MEGAMOD ERROR: sv_allow_point_servercommand is not set to 'always' and is not in the allow list. Skipping gamemode config execution.");
+        printl("MEGAMOD WARNING: sv_allow_point_servercommand is not set to 'always' and is not in the allow list. Skipping gamemode config execution.");
     } else if (Convars.GetStr("sv_allow_point_servercommand") != "always") {
         local oldValue = Convars.GetStr("sv_allow_point_servercommand");
         Convars.SetValue("sv_allow_point_servercommand", "always");
