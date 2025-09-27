@@ -341,3 +341,7 @@ A modified "Double Trouble" is included that allows up to 5 special rounds to be
 ### "Texan Trickshot" added to Taunt Kill minigame
 
 The Taunt Kill minigame can now use the Texan Trickshot taunt.
+
+## VScript Error Cleanup on pass_jerma
+
+I was gonna do some more stuff with this but I decided it wasn't necessary, so I just kept the function overrides that prevent VScript errors from being spammed in console.
