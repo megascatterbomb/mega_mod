@@ -334,13 +334,15 @@ Framework for injecting mods into the official workshop version of TF2Ware Ultim
 
 If you need to modify the map itself, you're far better off forking the [TF2Ware Ultimate](https://github.com/ficool2/TF2Ware_Ultimate) repo which has everything you need.
 
+Within `mapmods\workshop\tf2ware` there are several folders of interest:
+
+- `bossgames`: Files placed here function as if they were in `scripts\vscripts\tf2ware_ultimate\bossgames` in the TF2Ware project.
+- `minigames`: Files placed here function as if they were in `scripts\vscripts\tf2ware_ultimate\minigames` in the TF2Ware project.
+- `specialrounds`: Files placed here function as if they were in `scripts\vscripts\tf2ware_ultimate\specialrounds` in the TF2Ware project.
+
 ### "Double Trouble" upgrade
 
-A modified "Double Trouble" is included that allows up to 5 special rounds to be loaded at once. This version comes with more advanced compatibility checks to ensure the best experience. You can test any combination of special rounds by typing `/ware_nextspecial <special1> <special2> <special3> <special4> <special5>` in chat.
-
-### "Texan Trickshot" added to Taunt Kill minigame
-
-The Taunt Kill minigame can now use the Texan Trickshot taunt.
+A modified "Double Trouble" is included that allows up to 5 special rounds to be loaded at once. This version comes with more advanced compatibility checks to ensure the best experience. You can test any combination of special rounds by typing `/ware_nextspecial <special1> <special2> <special3> <special4> <special5>` in chat, or use one of the following commands.
 
 ## VScript Error Cleanup on pass_jerma
 
