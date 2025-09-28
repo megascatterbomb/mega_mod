@@ -11,6 +11,10 @@ special_round <- Ware_SpecialRoundData
 	category = "meta"
 })
 
+if (!getroottable().rawin("Ware_DoubleTroubleSpecialRoundCount")) {
+    ::Ware_DoubleTroubleSpecialRoundCount <- 0; // Number of special rounds to stack, 0 means choose at random.
+}
+
 // MEGAMOD: Table of incompatible special rounds.
 // Special rounds that share a category cannot be loaded together.
 // Special rounds with "unique" cannot be loaded via double_trouble at all
@@ -97,7 +101,11 @@ function OnPick()
 	local random = true;
 	local special_rounds = [];
 
-    local special_rounds_to_pick = RandomInt(2, 5);
+    local special_rounds_to_pick = ::Ware_DoubleTroubleSpecialRoundCount > 0
+        ? ::Ware_DoubleTroubleSpecialRoundCount
+        : RandomInt(2, 5);
+
+    ::Ware_DoubleTroubleSpecialRoundCount = 0;
 
 	if (Ware_DebugNextSpecialRound2.len() == 0)
 	{

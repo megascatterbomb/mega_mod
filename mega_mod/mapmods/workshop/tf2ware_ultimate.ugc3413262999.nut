@@ -119,9 +119,33 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
                 Ware_DebugNextSpecialRound = "double_trouble"
                 Ware_DebugNextSpecialRound2 = args
             }
-            else if (args[0] == "any")
+            else if (args[0] == "any1" || args[0] == "any")
             {
                 Ware_ForceSpecialRound()
+            }
+            else if (args[0] == "multiple") {
+                Ware_DebugNextSpecialRound = "double_trouble";
+                ::Ware_DoubleTroubleSpecialRoundCount <- 0
+            }
+            else if (args[0] == "any2" || args[0] == "double_trouble")
+            {
+                Ware_DebugNextSpecialRound = "double_trouble";
+                ::Ware_DoubleTroubleSpecialRoundCount <- 2;
+            }
+            else if (args[0] == "any3" || args[0] == "oh_baby_a_triple")
+            {
+                Ware_DebugNextSpecialRound = "double_trouble";
+                ::Ware_DoubleTroubleSpecialRoundCount <- 3;
+            }
+            else if (args[0] == "any4" || args[0] == "quad")
+            {
+                Ware_DebugNextSpecialRound = "double_trouble";
+                ::Ware_DoubleTroubleSpecialRoundCount <- 4;
+            }
+            else if (args[0] == "any5" || args[0] == "what_have_you_done")
+            {
+                Ware_DebugNextSpecialRound = "double_trouble";
+                ::Ware_DoubleTroubleSpecialRoundCount <- 5;
             }
             else
             {
