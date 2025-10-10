@@ -13,6 +13,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
 
 ::MM_ALL_MAP_MODS <- [
     "arena_perks"
+    "cp_cowerhouse"
     "cp_freaky_fair"
     "cp_standin_final"
     "koth_lakeside_event"
