@@ -307,9 +307,15 @@ Truces are removed, and the point retains its owner during the boss fight. The c
 
 The point model hides during the boss fight (the point is *technically* netural during the boss fight and this was the easiest way to make it not look stupid).
 
-## Edict optimization on pl_bloodwater
+## Edict optimizations
 
-Saved over 300 edicts by removing gameplay-irrelevant elements.
+Kills several entities to save on edicts. View individual mod files for specifics.
+
+Approximate savings:
+
+- `cp_cowerhouse`: 365 edicts
+- `pl_bloodwater`: 300 edicts
+- `plr_hacksaw`: 6 edicts
 
 ## Prevent players going the wrong way on pl_breadspace
 
