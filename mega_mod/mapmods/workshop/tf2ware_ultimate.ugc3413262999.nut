@@ -1,4 +1,4 @@
-// Credit to Mr. Burguers for figuring this out and sharing how to do it in the TF2Maps discord.
+// Credit to Mr. Burguers for figuring out how to inject code into existing VScript scopes.
 
 local root = getroottable();
 local prefix = DoUniqueString("mega");
