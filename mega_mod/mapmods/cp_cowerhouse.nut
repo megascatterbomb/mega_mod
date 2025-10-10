@@ -4,6 +4,8 @@ local root = getroottable()
 local prefix = DoUniqueString("mega")
 local mega = root[prefix] <- {}
 
+if (MM_ModIsEnabled("5cp_anti_stalemate")) IncludeScript("mega_mod/common/5cp_anti_stalemate.nut");
+
 mega.OnGameEvent_teamplay_round_start <- function (event) {
     EntFireByHandle(Entities.FindByClassname(null, "logic_script"), "RunScriptCode", "MegaModRoundStart()", 0, null, null);
 }
@@ -44,6 +46,9 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
     }
 
     printl("MEGAMOD: Killed " + killed + " entities.");
+
+     // Load the 5CP anti stalemate logic.
+    if (MM_ModIsEnabled("5cp_anti_stalemate")) MM_5CP_Activate();
 }
 
 MegaModRoundStart();
