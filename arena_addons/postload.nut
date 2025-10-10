@@ -6,7 +6,9 @@ function DisplayCountdown()
     }
     ::MM_ARENA_START_TIME <- Time();
     ::MM_ARENA_ROUND_TIME <- 180;
-    local team_round_timer = SpawnEntityFromTableFix("team_round_timer", {
+
+    // SpawnEntityFromTableFix is used in the vanilla arena rewrite but arena_afterlife doesn't have that.
+    local team_round_timer = SpawnEntityFromTable("team_round_timer", {
         auto_countdown = 1,
         max_length = 0,
         timer_length = MM_ARENA_ROUND_TIME,
