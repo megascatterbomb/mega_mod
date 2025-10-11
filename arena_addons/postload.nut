@@ -34,10 +34,23 @@ function DisplayCountdown()
     EntityOutputs.AddOutput(team_round_timer, "On1SecRemain", "!self", "RunScriptCode", "CountdownEnd()", 1, -1);
 }
 
+EndMiniRoundBase <- EndMiniRound;
+EndMiniRound <- function (winnerTeam, wipeout = true)
+{
+    local timer = Entities.FindByClassname(null, "team_round_timer");
+    timer.AcceptInput("Pause", "", null, null);
+
+    EndMiniRoundBase(winnerTeam, wipeout);
+}
+
 ::CountdownEnd <- function () {
     if (Time() - ::MM_ARENA_START_TIME < ::MM_ARENA_ROUND_TIME) {
         return;
     }
+
+    if (isMiniRoundOver || isMiniRoundSetup)
+        return;
+
     local redAlive = GetAlivePlayers(TF_TEAM_RED).len();
     local bluAlive = GetAlivePlayers(TF_TEAM_BLUE).len();
     if (redAlive > bluAlive)
