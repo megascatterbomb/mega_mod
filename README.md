@@ -266,6 +266,7 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
     - Survivors can only win by killing all the remaining Zombies.
     - Zombies win by killing all the remaining Survivors (as usual).
   - Zombies experience bleed with increasing damage over time to guarantee a round end.
+    - The damage halves on every survivor death.
   - Survivors can enter Zombie spawnrooms during Overtime.
 
 Player count to Zombie count table:

@@ -4,6 +4,7 @@
 ::MM_ZI_STARTING_SURVIVORS <- 1;
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
+::MM_ZI_OVERTIME_DAMAGE_INCREASE <- 1.0/7.0;
 
 function MM_Zombie_Infection() {
     local gamerules = Gamerules();
@@ -57,7 +58,7 @@ function MM_ZI_OverrideZombieSelection() {
         //     return true;
         // });
 
-        printl("# of low prio players " + gamerules_scope["zi_chosen_zombies"].len())
+        // printl("# of low prio players: " + gamerules_scope["zi_chosen_zombies"].len())
 
         foreach ( _hPlayer in GetAllPlayers() )
         {
@@ -524,6 +525,9 @@ function MM_ZI_OverrideDeath() {
             EntFireByHandle(_hRoundTimer, "AddTime", ceil(adjustedTimeToAdd).tostring(), 0, null, null);
 
             MM_ZI_LAST_SURVIVOR_DEATH <- Time();
+
+            // MEGAMOD: Halve damage on survivor death to reward Zombie activity.
+            ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE / 2.0;
         } else {
             // MEGAMOD: If game hasn't started, instantly respawn.
             if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 0.1, null, _hPlayer);
@@ -705,15 +709,22 @@ function MM_ZI_EnableOvertime() {
 
     foreach( _hNextPlayer in GetAllPlayers() ) {
         if (_hNextPlayer.GetTeam() == 3 && GetPropInt(_hNextPlayer, "m_lifeState") == 0 && floor(MM_ZI_OVERTIME_DAMAGE) >= 1) {
+            local multiplier = _hNextPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS ? (1.0 / 0.65) : 1.0;
+            local rawDamage = floor(MM_ZI_OVERTIME_DAMAGE);
+            local damage = (rawDamage * multiplier).tointeger();
             local vecPunch = GetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle");
+            SendGlobalGameEvent("player_healonhit", {
+                entindex = _hNextPlayer.entindex(),
+                amount = -rawDamage
+            });
             _hNextPlayer.TakeDamageCustom(null, _hNextPlayer, null,
                 Vector(Epsilon, Epsilon, Epsilon), _hNextPlayer.GetOrigin(),
-                floor(MM_ZI_OVERTIME_DAMAGE), DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
+                damage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
             SetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle", vecPunch);
         }
     }
 
-    ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE + 0.1;
+    ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE + MM_ZI_OVERTIME_DAMAGE_INCREASE;
 
     local logic_script = Entities.FindByClassname(null, "logic_script");
     EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
