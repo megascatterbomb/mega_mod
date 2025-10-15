@@ -59,6 +59,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     "mvm_scaling"
     "mvm_tank_messages"
     "speedshot_bhop_mod"
+    "reduced_messaging"
 ];
 
 // You should not have to touch anything below this point.
