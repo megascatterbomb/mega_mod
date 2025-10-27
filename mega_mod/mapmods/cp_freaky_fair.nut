@@ -100,6 +100,7 @@ mega.OnGameEvent_post_inventory_application <- function (params) {
 
     // Set the player's melee resistance in their script scope
     // "but kiwi, why are u using a script scope?" because this shit sucks ass and the melee damage multipler attribute is capped for god knows why
+    player.ValidateScriptScope()
     player.GetScriptScope().meleeResistance <- calculated_melee_resistance
 }
 
