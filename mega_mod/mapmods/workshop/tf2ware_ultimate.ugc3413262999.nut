@@ -106,57 +106,14 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
         return null
     }
 
-
-    // OVERRIDE: tf2ware_ultimate/dev.nut::Ware_DevCommands["nextspecial"]
-    // Allows "double_trouble" to be forced with up to 5 specified special rounds.
-    ::Ware_DevCommands["nextspecial"] <- function (player, text)
-    {
-        local args = split(text, " ")
-        if (args.len() >= 1)
-        {
-            if (args.len() >= 2)
-            {
-                Ware_DebugNextSpecialRound = "double_trouble"
-                Ware_DebugNextSpecialRound2 = args
-            }
-            else if (args[0] == "any1" || args[0] == "any")
-            {
-                Ware_ForceSpecialRound()
-            }
-            else if (args[0] == "multiple") {
-                Ware_DebugNextSpecialRound = "double_trouble";
-                ::Ware_DoubleTroubleSpecialRoundCount <- 0
-            }
-            else if (args[0] == "any2" || args[0] == "double_trouble")
-            {
-                Ware_DebugNextSpecialRound = "double_trouble";
-                ::Ware_DoubleTroubleSpecialRoundCount <- 2;
-            }
-            else if (args[0] == "any3" || args[0] == "oh_baby_a_triple")
-            {
-                Ware_DebugNextSpecialRound = "double_trouble";
-                ::Ware_DoubleTroubleSpecialRoundCount <- 3;
-            }
-            else if (args[0] == "any4" || args[0] == "quad")
-            {
-                Ware_DebugNextSpecialRound = "double_trouble";
-                ::Ware_DoubleTroubleSpecialRoundCount <- 4;
-            }
-            else if (args[0] == "any5" || args[0] == "what_have_you_done")
-            {
-                Ware_DebugNextSpecialRound = "double_trouble";
-                ::Ware_DoubleTroubleSpecialRoundCount <- 5;
-            }
-            else
-            {
-                Ware_DebugNextSpecialRound = args[0]
-            }
-        }
-        else
-        {
-            Ware_DebugNextSpecialRound = ""
-        }
-        Ware_ChatPrint(null, "{str} forced next special round to '{str}'", Ware_DevCommandTitle(player), Ware_DebugNextSpecialRound)
+    // Account for my nativevotes fork triggering map changes earlier than mp_maxrounds would imply.
+    if (
+        Convars.IsConVarOnAllowList("sm_mapvote_instant_change") &&
+        Convars.IsConVarOnAllowList("sm_mapvote_startround") &&
+        Convars.GetBool("sm_mapvote_instant_change") &&
+        ::Ware_MaxRounds - Convars.GetInt("sm_mapvote_startround") > 0
+    ) {
+        ::Ware_MaxRounds -= Convars.GetInt("sm_mapvote_startround");
     }
 }
 

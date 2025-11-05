@@ -347,9 +347,11 @@ Within `mapmods\workshop\tf2ware` there are several folders of interest:
 - `minigames`: Files placed here function as if they were in `scripts\vscripts\tf2ware_ultimate\minigames` in the TF2Ware project.
 - `specialrounds`: Files placed here function as if they were in `scripts\vscripts\tf2ware_ultimate\specialrounds` in the TF2Ware project.
 
-### "Double Trouble" upgrade
+### Change round counter to account for my nativevotes fork.
 
-A modified "Double Trouble" is included that allows up to 5 special rounds to be loaded at once. This version comes with more advanced compatibility checks to ensure the best experience. You can test any combination of special rounds by typing `/ware_nextspecial <special1> <special2> <special3> <special4> <special5>` in chat, or use one of the following commands.
+If you happen to be using my [fork](https://github.com/megascatterbomb/sourcemod-nativevotes-updated) of nativevotes, then the round counter will account for the use of `sm_mapvote_instant_change 1`.
+
+Requires `sm_mapvote_instant_change` and `sm_mapvote_startround` to be whitelisted in `vscript_convar_allowlist.txt`.
 
 ## VScript Error Cleanup on pass_jerma
 
