@@ -110,10 +110,17 @@ mega.OnGameEvent_teamplay_round_start <- function (event) {
     if (
         Convars.IsConVarOnAllowList("sm_mapvote_instant_change") &&
         Convars.IsConVarOnAllowList("sm_mapvote_startround") &&
-        Convars.GetBool("sm_mapvote_instant_change") &&
-        ::Ware_MaxRounds - Convars.GetInt("sm_mapvote_startround") > 0
+        Convars.GetBool("sm_mapvote_instant_change")
     ) {
-        ::Ware_MaxRounds -= Convars.GetInt("sm_mapvote_startround");
+        if (::Ware_MaxRounds - Convars.GetInt("sm_mapvote_startround") > 0) {
+            // Adjust max_rounds down to account for early map change.
+            ::Ware_MaxRounds -= Convars.GetInt("sm_mapvote_startround");
+        }
+        if (Ware_CurrentMapRound + 1 > ::Ware_MaxRounds) {
+            // Adjust max_rounds up after an extension.
+            local old_maxrounds = ::Ware_MaxRounds;
+            ::Ware_MaxRounds <- old_maxrounds + Convars.GetInt("sm_extendmap_roundstep");
+        }
     }
 }
 
