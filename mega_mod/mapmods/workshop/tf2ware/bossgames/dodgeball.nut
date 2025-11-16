@@ -3,13 +3,13 @@ minigame <- Ware_MinigameData
 	name           = "Dodgeball"
 	author         = ["megascatterbomb"]
 	description    = "Reflect the homing rockets!"
-	duration       = 145.0
+	duration       = 168.0
 	end_delay      = 2.0
 	location       = "boxarena"
 	music          = "dodgeball" // TODO
 	min_players    = 2
 	start_pass     = true
-	start_freeze   = 0.5
+	start_freeze   = 2.0
 	custom_overlay = "airblast_rockets"
 })
 
@@ -20,9 +20,10 @@ rocket_speed_increment <- 25.0
 rocket_stall_threshold <- 10.0
 
 GetMinRocketCount <- @(num_players) ceil(num_players / 25.0)
-GetMaxRocketCount <- @(num_players) floor(sqrt(num_players)) + 2
+GetMaxRocketCount <- @(num_players) floor(sqrt(num_players)) + target_rocket_count_extra
 
 target_rocket_count <- 1
+target_rocket_count_extra <- 0 // make things spicier over time for smaller player counts.
 rocket_end <- false
 
 launcher_origin <- Vector(0, 0, 0)
@@ -69,9 +70,22 @@ function OnStart()
 	Ware_SetGlobalLoadout(TF_CLASS_PYRO, "Flame Thrower")
 
 	target_rocket_count <- GetMinRocketCount(Ware_GetAlivePlayers().len())
-	Ware_CreateTimer(10.0 + (10.0 * target_rocket_count), IncreaseRocketCount)
+	Ware_CreateTimer(2.0, CheckSpawnRocket)
+	Ware_CreateTimer(10.0, IncreaseRocketCount)
+	Ware_CreateTimer(45.0, @() target_rocket_count_extra++)
+	Ware_CreateTimer(95.0, @() target_rocket_count_extra++)
 	Ware_CreateTimer(180.0, @() rocket_end <- true)
-	Ware_CreateTimer(3.0, CheckSpawnRocket)
+}
+
+function GetRocketCountTarget() {
+	local num_players = Ware_GetAlivePlayers().len()
+	local min = GetMinRocketCount(num_players)
+	if (target_rocket_count < min)
+		return min
+	local max = GetMaxRocketCount(num_players)
+	if (target_rocket_count > max)
+		return max
+	return target_rocket_count
 }
 
 function IncreaseRocketCount()
@@ -82,6 +96,8 @@ function IncreaseRocketCount()
 
 function CheckSpawnRocket()
 {
+	if (rockets.len() < target_rocket_count)
+		SpawnRocket()
 	Ware_CreateTimer(1.0, CheckSpawnRocket)
 }
 
@@ -93,7 +109,7 @@ function SpawnRocket(team = null)
 
 function GetRockets(team = null)
 {
-
+	return rockets.filter(@(r) r.handle != null && r.handle.IsValid() && (r.team == team || team == null || team == TF_TEAM_ANY))
 }
 
 function SelectRocketTarget(reflector = null)
@@ -103,8 +119,8 @@ function SelectRocketTarget(reflector = null)
 	if (!reflector)
 	{
 		// TODO: select random alive player:
-		// - if team is not specified: calculate per team "alive player count minus rockets targeting team" and choose team with highest value
-		// - randomly choose player on team, always prefer players without target if possible
+		// - if team is not specified: calculate per team "alive player count minus rockets targeting team" and choose team with highest value (random if tied)
+		// - of players on team with the fewest amount of rockets targeting them: randomly choose one
 	} else
 	{
 		local team = reflector.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED
