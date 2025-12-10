@@ -3,7 +3,8 @@ function ShouldApply() {
         MM_Gamemodes.AD,
         MM_Gamemodes.AD_MS,
         MM_Gamemodes.PL,
-        MM_Gamemodes.PL_MS
+        MM_Gamemodes.PL_MS,
+        MM_Gamemodes.CPPL
     ];
     return gamemodes.find(MM_GetGamemode()) != null;
 }

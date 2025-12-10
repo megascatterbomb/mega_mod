@@ -57,11 +57,13 @@ function Gamerules() {
 
 ::MM_Gamemodes <- {
     UNKNOWN = null,
+    TWOKOTH = "2koth",
     ARENA = "arena",
     AD = "cp_ad" ,
     AD_MS = "cp_ad_ms",
     CTF =  "ctf",
     CP = "5cp",
+    CPPL = "cppl",
     KOTH = "koth",
     PL = "pl",
     PL_MS = "pl_ms",
