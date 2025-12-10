@@ -124,7 +124,7 @@ Currently supported maps: `plr_bananabay`, `plr_cutter`, `plr_hacksaw`, `plr_hac
 
 Stage 1 and 2 of Nightfall feature an overtime. This mod copies that logic into other maps using nothing but VScript, with some additional QoL features.
 
-After 10 minutes (or less if mp_timelimit has nearly elapsed), the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain. Multistage maps will also always play to the final stage, even if mp_timelimit has expired.
+After 30 minutes (or less if mp_timelimit is lower), the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain. Multistage maps will also always play to the final stage, even if mp_timelimit has expired.
 
 ### Dynamic cart speed
 

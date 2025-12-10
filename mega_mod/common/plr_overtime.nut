@@ -1,5 +1,5 @@
-::MM_PLR_TIME_UPPER_LIMIT <- 600;
-::MM_PLR_TIME_LOWER_LIMIT <- 90;
+::MM_PLR_TIME_UPPER_LIMIT <- 1800;
+::MM_PLR_TIME_LOWER_LIMIT <- 180;
 
 // Defines minimum multiplier applied to cart speed for the dynamic speed system.
 ::MM_PLR_MINIMUM_SPEED_RATIO <- 0.35;
