@@ -57,7 +57,6 @@ function Gamerules() {
 
 ::MM_Gamemodes <- {
     UNKNOWN = null,
-    TWOKOTH = "2koth",
     ARENA = "arena",
     AD = "cp_ad" ,
     AD_MS = "cp_ad_ms",
@@ -65,6 +64,7 @@ function Gamerules() {
     CP = "5cp",
     CPPL = "cppl",
     KOTH = "koth",
+    TWOKOTH = "2koth",
     PL = "pl",
     PL_MS = "pl_ms",
     PLR = "plr",
@@ -103,10 +103,14 @@ function MM_GetGamemode() {
             return MM_Gamemodes.ARENA;
         case "cp":
             return MM_Gamemode_CheckCPGamemode();
+        case "cppl":
+            return MM_Gamemodes.CPPL;
         case "ctf":
             return MM_Gamemode_CheckForMannpower();
         case "koth":
             return MM_Gamemodes.KOTH;
+        case "2koth":
+            return MM_Gamemodes.TWOKOTH;
         case "pl":
             return MM_Gamemode_CheckIfMultiStage() ? MM_Gamemodes.PL_MS : MM_Gamemodes.PL;
         case "plr":
