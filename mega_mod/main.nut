@@ -12,6 +12,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
 // You should not have to touch anything above this point.
 
 ::MM_ALL_MAP_MODS <- [
+    "2koth_abbey"
     "arena_perks"
     "cp_cowerhouse"
     "cp_freaky_fair"
