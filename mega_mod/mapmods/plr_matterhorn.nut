@@ -2,6 +2,9 @@ ClearGameEventCallbacks();
 IncludeScript("mega_mod/common/plr_overtime.nut");
 
 function OnGameEvent_teamplay_round_start(params) {
+
+    InitGlobalVars();
+
 	::PLR_TIMER_NAME <- "ssplr_timer";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
@@ -25,6 +28,8 @@ function OnGameEvent_teamplay_round_start(params) {
 
     ::RED_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_red", "Red");
     ::BLU_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_blu", "Blu");
+
+    ::ELEVATOR_OVERTIME_SPEED <- 0.1;
 
     EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
     EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
@@ -80,6 +85,50 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(red_embark, "OnTrigger", "!self", "RunScriptCode", "::RED_ON_ELV <- true", 0, -1);
     EntityOutputs.AddOutput(blu_embark, "OnTrigger", "!self", "RunScriptCode", "::BLU_ON_ELV <- true", 0, -1);
 
+    // rollback logic replacement
+
+    // these sit between ssplr_red_lift_finale1_rollback and ssplr_red_lift_rollback_relay_rb1
+    // once overtime hits, we detour through this branch, which is set to true if the opposite cart (NOT LIFT) is being pushed.
+    // if true, we pass to the vanilla rollback relay. if false, we pass to our own relay which advances the cart.
+
+    local red_rollback_postcheck = SpawnEntityFromTable("logic_branch", {
+        targetname = "mm_ssplr_red_rollback_postcheck"
+        InitialValue = "0"
+        "OnTrue#1" : "ssplr_red_lift_rollback_relay_rb1,Trigger,,0,-1"
+        "OnFalse#1" : "ssplr_red_lift_rollback_relay_overtime,Trigger,,0,-1"
+    });
+    local blu_rollback_postcheck = SpawnEntityFromTable("logic_branch", {
+        targetname = "mm_ssplr_blu_rollback_postcheck"
+        InitialValue = "0"
+        "OnTrue#1" : "ssplr_blu_lift_rollback_relay_rb1,Trigger,,0,-1"
+        "OnFalse#1" : "ssplr_blu_lift_rollback_relay_overtime,Trigger,,0,-1"
+    });
+
+    local red_rollback_overtime_relay = SpawnEntityFromTable("logic_relay", {
+        targetname = "ssplr_red_lift_rollback_relay_overtime"
+        "OnTrigger#1" : "ssplr_red_train,SetSpeedDirAccel," + ELEVATOR_OVERTIME_SPEED + ",0,-1"
+        "OnTrigger#2" : "ssplr_red_lift_finale1_train,SetSpeedDirAccel," + ELEVATOR_OVERTIME_SPEED + ",0,-1"
+        "OnTrigger#3" : "ssplr_red_lift_finale1_lights,Start,,0,-1"
+        "OnTrigger#4" : "wheel_red,SetSpeed," + ELEVATOR_OVERTIME_SPEED + ",0,-1"
+        "OnTrigger#5" : "ssplr_red_lift_finale1_sparks,StopSpark,,0,-1"
+        "OnTrigger#6": "ssplr_red_lift_finale1_crush,Disable,,0,-1"
+    });
+    local blu_rollback_overtime_relay = SpawnEntityFromTable("logic_relay", {
+        targetname = "ssplr_blu_lift_rollback_relay_overtime"
+        "OnTrigger#1" : "ssplr_blu_train,SetSpeedDirAccel," + ELEVATOR_OVERTIME_SPEED + ",0,-1"
+        "OnTrigger#2" : "ssplr_blu_lift_finale1_train,SetSpeedDirAccel," + ELEVATOR_OVERTIME_SPEED + ",0,-1"
+        "OnTrigger#3" : "ssplr_blu_lift_finale1_lights,Start,,0,-1"
+        "OnTrigger#4" : "wheel_blu,SetSpeed," + ELEVATOR_OVERTIME_SPEED + ",0,-1"
+        "OnTrigger#5" : "ssplr_blu_lift_finale1_sparks,StopSpark,,0,-1"
+        "OnTrigger#6": "ssplr_blu_lift_finale1_crush,Disable,,0,-1"
+    });
+
+    // TODO:
+    // send output from cart pushzone to set the opposite cart's postcheck branch
+    // send output when cart reaches elevator to set this branch to true again.
+    // rewire ssplr_red_lift_finale1_rollback to this logic when overtime starts.
+    // repeat this for blu.
+
     // Add thinks to carts
     CreateCartAutoUpdater(RED_TRAIN, 2);
     CreateCartAutoUpdater(BLU_TRAIN, 3);
@@ -89,9 +138,8 @@ function OnGameEvent_teamplay_round_start(params) {
 
 function StartOvertime() {
 
-    // elevator movement logic replacement
+    // elevator movement logic replacement - staycase
 
-    local elevator_overtime_speed = 0.1;
 
     local red_staycase = MM_GetEntByName("ssplr_red_lift_finale1_staycase");
     local blu_staycase = MM_GetEntByName("ssplr_blu_lift_finale1_staycase");
@@ -113,16 +161,41 @@ function StartOvertime() {
     //EntityOutputs.RemoveOutput(red_staycase, "OnCase02", "ssplr_red_lift_finale1_crush", "Disable", "");
     EntityOutputs.AddOutput(red_staycase, "OnCase02", "ssplr_red_lift_finale1_lights", "Start", "", 0, -1);
     //EntityOutputs.RemoveOutput(red_staycase, "OnCase02", "ssplr_red_lift_finale1_sparks", "StopSpark", "");
-    EntityOutputs.AddOutput(red_staycase, "OnCase02", "ssplr_red_lift_finale1_train", "SetSpeedDirAccel", "" + elevator_overtime_speed, 0, -1);
-    EntityOutputs.AddOutput(red_staycase, "OnCase02", "ssplr_red_train", "SetSpeedDirAccel", "" + elevator_overtime_speed, 0, -1);
-    EntityOutputs.AddOutput(red_staycase, "OnCase02", "wheel_red", "SetSpeed", "" + elevator_overtime_speed, 0, -1);
+    EntityOutputs.AddOutput(red_staycase, "OnCase02", "ssplr_red_lift_finale1_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(red_staycase, "OnCase02", "ssplr_red_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(red_staycase, "OnCase02", "wheel_red", "SetSpeed", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
 
     //EntityOutputs.RemoveOutput(blu_staycase, "OnCase02", "ssplr_blu_lift_finale1_crush", "Disable", "");
     EntityOutputs.AddOutput(blu_staycase, "OnCase02", "ssplr_blu_lift_finale1_lights", "Start", "", 0, -1);
     //EntityOutputs.RemoveOutput(blu_staycase, "OnCase02", "ssplr_blu_lift_finale1_sparks", "StopSpark", "");
-    EntityOutputs.AddOutput(blu_staycase, "OnCase02", "ssplr_blu_lift_finale1_train", "SetSpeedDirAccel", "" + elevator_overtime_speed, 0, -1);
-    EntityOutputs.AddOutput(blu_staycase, "OnCase02", "ssplr_blu_train", "SetSpeedDirAccel", "" + elevator_overtime_speed, 0, -1);
-    EntityOutputs.AddOutput(blu_staycase, "OnCase02", "wheel_blu", "SetSpeed", "" + elevator_overtime_speed, 0, -1);
+    EntityOutputs.AddOutput(blu_staycase, "OnCase02", "ssplr_blu_lift_finale1_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(blu_staycase, "OnCase02", "ssplr_blu_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(blu_staycase, "OnCase02", "wheel_blu", "SetSpeed", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+
+    // elevator movement logic replacement - rollback branch
+
+    local red_rollback = MM_GetEntByName("ssplr_red_lift_finale1_rollback");
+    local blu_rollback = MM_GetEntByName("ssplr_blu_lift_finale1_rollback");
+
+    EntityOutputs.RemoveOutput(red_rollback, "OnTrigger", "ssplr_red_lift_finale1_lights", "Stop", "0");
+    EntityOutputs.RemoveOutput(red_rollback, "OnTrigger", "ssplr_red_lift_finale1_train", "SetSpeedDirAccel", "0");
+    EntityOutputs.RemoveOutput(red_rollback, "OnTrigger", "ssplr_red_train", "SetSpeedDirAccel", "0");
+    EntityOutputs.RemoveOutput(red_rollback, "OnTrigger", "wheel_red", "Stop", "0");
+
+    EntityOutputs.RemoveOutput(blu_rollback, "OnTrigger", "ssplr_blu_lift_finale1_lights", "Stop", "0");
+    EntityOutputs.RemoveOutput(blu_rollback, "OnTrigger", "ssplr_blu_lift_finale1_train", "SetSpeedDirAccel", "0");
+    EntityOutputs.RemoveOutput(blu_rollback, "OnTrigger", "ssplr_blu_train", "SetSpeedDirAccel", "0");
+    EntityOutputs.RemoveOutput(blu_rollback, "OnTrigger", "wheel_blu", "Stop", "0");
+
+    EntityOutputs.AddOutput(red_rollback, "OnTrigger", "ssplr_red_lift_finale1_lights", "Start", "", 0, -1);
+    EntityOutputs.AddOutput(red_rollback, "OnTrigger", "ssplr_red_lift_finale1_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(red_rollback, "OnTrigger", "ssplr_red_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(red_rollback, "OnTrigger", "wheel_red", "SetSpeed", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+
+    EntityOutputs.AddOutput(blu_rollback, "OnTrigger", "ssplr_blu_lift_finale1_lights", "Start", "", 0, -1);
+    EntityOutputs.AddOutput(blu_rollback, "OnTrigger", "ssplr_blu_lift_finale1_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(blu_rollback, "OnTrigger", "ssplr_blu_train", "SetSpeedDirAccel", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
+    EntityOutputs.AddOutput(blu_rollback, "OnTrigger", "wheel_blu", "SetSpeed", "" + ELEVATOR_OVERTIME_SPEED, 0, -1);
 
     StartOvertimeBase();
 }
