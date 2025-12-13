@@ -28,6 +28,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     "plr_hacksaw_event"
     "plr_hightower"
     "plr_hightower_event"
+    "plr_matterhorn"
     "plr_nightfall_final"
     "plr_pipeline"
     "sd_doomsday"
