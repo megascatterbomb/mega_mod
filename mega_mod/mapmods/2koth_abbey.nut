@@ -7,6 +7,7 @@ function LockPoint(cp) {
 		area.AcceptInput("SetTeamCanCap", "3 0", null, null);
 		area.AcceptInput("SetControlPoint", cp.GetName(), null, null);
 	}
+	cp.AcceptInput("SetOwner", "0", null, null);
 }
 
 function RewireTimer(team, forceTimer) {
@@ -26,6 +27,23 @@ function RewireTimer(team, forceTimer) {
 		max = "1"
 		"OnHitMax#1" : "relay_blu_timer,Trigger,,0,-1"
 	});
+
+	SpawnEntityFromTable("game_round_win", {
+        targetname = "zz_gamewin_red"
+        force_map_reset = true // prevents crashes
+        TeamNum = 2
+    });
+    SpawnEntityFromTable("game_round_win", {
+        targetname = "zz_gamewin_blue"
+        force_map_reset = true // prevents crashes
+        TeamNum = 3
+    });
+
+	NetProps.SetPropInt(MM_GetEntByName("zz_gamewin_red"), "m_iWinReason", 4);
+	NetProps.SetPropInt(MM_GetEntByName("zz_gamewin_blue"), "m_iWinReason", 4);
+
+	EntityOutputs.AddOutput(MM_GetEntByName("zz_red_koth_timer"), "OnFinished", "zz_gamewin_red", "RoundWin", "", 0, -1);
+	EntityOutputs.AddOutput(MM_GetEntByName("zz_blue_koth_timer"), "OnFinished", "zz_gamewin_blue", "RoundWin", "", 0, -1);
 
 	// We don't need to fire the outputs if we expect the correct timer to already be ticking.
 	local input = forceTimer ? "SetValue" : "SetValueNoFire";
@@ -80,7 +98,6 @@ function RewireTimer(team, forceTimer) {
 	} else if (neutralPoints.len() == 1) { // Lock neutral point, play regular koth on remaining point.
 		local neutralPoint = neutralPoints[0];
 		local timerTeam = redPoints.len() == 1 ? 2 : 3;
-		local pointToUse = redPoints.len() == 1 ? redPoints[0] : bluPoints[0];
 
 		LockPoint(neutralPoint);
 		RewireTimer(timerTeam, true);
@@ -88,13 +105,23 @@ function RewireTimer(team, forceTimer) {
 		local redTimer = MM_GetEntByName("zz_red_koth_timer");
 		local bluTimer = MM_GetEntByName("zz_blue_koth_timer");
 
-		local redTimeRemaining = min(GetPropFloat(redTimer, "m_flTimerEndTime") - Time(), GetPropFloat(redTimer, "m_flTimeRemaining"));
-		local bluTimeRemaining = min(GetPropFloat(bluTimer, "m_flTimerEndTime") - Time(), GetPropFloat(bluTimer, "m_flTimeRemaining"));
+		local min = @(a, b) a < b ? a : b;
+		local redTimeRemaining = min(NetProps.GetPropFloat(redTimer, "m_flTimerEndTime") - Time(), NetProps.GetPropFloat(redTimer, "m_flTimeRemaining"));
+		local bluTimeRemaining = min(NetProps.GetPropFloat(bluTimer, "m_flTimerEndTime") - Time(), NetProps.GetPropFloat(bluTimer, "m_flTimeRemaining"));
 
-		local timerTeam = redTimeRemaining > bluTimeRemaining ? 2 : 3;
-		local pointToLock = redTimeRemaining > bluTimeRemaining ? redPoints[0] : bluPoints[0];
-		local pointToUse = redTimeRemaining > bluTimeRemaining ? bluPoints[0] : redPoints[0];
-
+		local timerTeam = 0;
+		local pointToLock = null;
+		if (redTimeRemaining > bluTimeRemaining) {
+			timerTeam = 3;
+			pointToLock = redPoints[0];
+		} else if (bluTimeRemaining > redTimeRemaining) {
+			timerTeam = 2;
+			pointToLock = bluPoints[0];
+		} else {
+			// Equal time remaining (e.g. if neither team ever started their clocks)
+			timerTeam = 5 - MM_LATEST_CAPTURE_TEAM; // choose whoever captured first.
+			pointToLock = timerTeam == 2 ? bluPoints[0] : redPoints[0];
+		}
 		LockPoint(pointToLock);
 		RewireTimer(timerTeam, true);
 	} else { // One team controls both points, lock a random point.
@@ -114,6 +141,12 @@ function OnGameEvent_teamplay_round_start(params)
 {
 
 	::MM_NEUTRAL_POINT_STALEMATE_TRIGGERED <- false;
+	::MM_LATEST_CAPTURE_TEAM <- 0;
+
+	for (local area = null; area = Entities.FindByClassname(area, "trigger_capture_area");) {
+		EntityOutputs.AddOutput(area, "OnCapTeam1", "!self", "RunScriptCode", "::MM_LATEST_CAPTURE_TEAM <- 2", 0, -1);
+		EntityOutputs.AddOutput(area, "OnCapTeam2", "!self", "RunScriptCode", "::MM_LATEST_CAPTURE_TEAM <- 3", 0, -1);
+	}
 
     // Force mp_match_end_at_timelimit to 0 as we don't want the game ending the map for us.
     local matchEndAtTimelimit = Convars.GetBool("mp_match_end_at_timelimit");
