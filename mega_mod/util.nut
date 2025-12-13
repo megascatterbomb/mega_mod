@@ -45,9 +45,18 @@ function MM_CreateDummyThink(funcName) {
     AddThinkToEnt(relay, funcName);
 }
 
-function GetTickCount() { // ticks since server start
+function MM_GetTickCount() { // ticks since server start
 	// netprop exists on tf_player_manager and tf_player_manager always exists
 	return NetProps.GetPropInt(Entities.FindByClassname(null, "tf_player_manager"), "m_nSimulationTick")
+}
+
+function MM_GetCapAreaByPoint(cp) {
+	for (local area = null; area = Entities.FindByClassname(area, "trigger_capture_area");) {
+		if (NetProps.GetPropString(area, "m_iszCapPointName") == cp.GetName()) {
+			return area;
+		}
+	}
+	return null;
 }
 
 function Gamerules() {

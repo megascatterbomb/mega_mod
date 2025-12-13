@@ -1,9 +1,18 @@
-ClearGameEventCallbacks()
+ClearGameEventCallbacks();
+
+function LockPoint(cp) {
+	local area = MM_GetCapAreaByPoint(cp);
+	if (area != null) {
+		area.AcceptInput("SetTeamCanCap", "2 0", null, null);
+		area.AcceptInput("SetTeamCanCap", "3 0", null, null);
+		area.AcceptInput("SetControlPoint", cp.GetName(), null, null);
+	}
+}
 
 function RewireTimer(team, forceTimer) {
 	// SetMaxValueNoFire does not exist in TF2, so we have to recreate the counters.
 	MM_GetEntByName("math_counter_red").Kill();
-	MM_GetEntByName("math_counter_blue").Kill();
+	MM_GetEntByName("math_counter_blu").Kill();
 
 	local redCounter = SpawnEntityFromTable("math_counter", {
 		targetname = "math_counter_red"
@@ -12,10 +21,10 @@ function RewireTimer(team, forceTimer) {
 		"OnHitMax#1" : "relay_red_timer,Trigger,,0,-1"
 	});
 	local bluCounter = SpawnEntityFromTable("math_counter", {
-		targetname = "math_counter_blue"
+		targetname = "math_counter_blu"
 		startvalue = "0"
 		max = "1"
-		"OnHitMax#1" : "relay_blue_timer,Trigger,,0,-1"
+		"OnHitMax#1" : "relay_blu_timer,Trigger,,0,-1"
 	});
 
 	// We don't need to fire the outputs if we expect the correct timer to already be ticking.
@@ -47,8 +56,18 @@ function RewireTimer(team, forceTimer) {
 		}
 	}
 
-	// TODO: Check for in-progress captures
-	if (MM_NEUTRAL_POINT_STALEMATE_TRIGGERED) {
+	local gamerules = Gamerules();
+	local mp_timelimit = Convars.GetInt("mp_timelimit");
+
+	if (mp_timelimit != null && mp_timelimit > 0 && !MM_NEUTRAL_POINT_STALEMATE_TRIGGERED) {
+
+		local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
+		if(remainingTime < 0) {
+			::MM_NEUTRAL_POINT_STALEMATE_TRIGGERED <- true;
+		} else {
+			return 1;
+		}
+	} else {
 		return 1;
 	}
 
@@ -62,8 +81,9 @@ function RewireTimer(team, forceTimer) {
 		local neutralPoint = neutralPoints[0];
 		local timerTeam = redPoints.len() == 1 ? 2 : 3;
 		local pointToUse = redPoints.len() == 1 ? redPoints[0] : bluPoints[0];
-		EntFireByHandle(neutralPoint, "SetLocked", "1", 0, null, null);
-		RewireTimer(timerTeam, false);
+
+		LockPoint(neutralPoint);
+		RewireTimer(timerTeam, true);
 	} else if (redPoints.len() == bluPoints.len()) { // Lock point for team with more time remaining
 		local redTimer = MM_GetEntByName("zz_red_koth_timer");
 		local bluTimer = MM_GetEntByName("zz_blue_koth_timer");
@@ -75,17 +95,15 @@ function RewireTimer(team, forceTimer) {
 		local pointToLock = redTimeRemaining > bluTimeRemaining ? redPoints[0] : bluPoints[0];
 		local pointToUse = redTimeRemaining > bluTimeRemaining ? bluPoints[0] : redPoints[0];
 
-		EntFireByHandle(pointToLock, "SetLocked", "1", 0, null, null);
-		EntFireByHandle(pointToLock, "SetOwner", "0", 0, null, null);
+		LockPoint(pointToLock);
 		RewireTimer(timerTeam, true);
 	} else { // One team controls both points, lock a random point.
 		local timerTeam = redPoints.len() == 2 ? 2 : 3;
 		local points = redPoints.len() == 2 ? redPoints : bluPoints;
 		local i = RandomInt(0, 1);
 		local pointToLock = points[i];
-		EntFireByHandle(pointToLock, "SetLocked", "1", 0, null, null);
-		EntFireByHandle(pointToLock, "SetOwner", "0", 0, null, null);
-		local pointToUse = points[1 - i];
+
+		LockPoint(pointToLock);
 		RewireTimer(timerTeam, false);
 	}
 
