@@ -30,16 +30,18 @@ launcher_origin <- Vector(0, 0, 0)
 launcher_effect <- null
 launcher_effect_offset <- launcher_origin + Vector(0, 0, 0)
 
+rocket_offset <- Vector(0, 0, 48.0)
+
 class Rocket {
 	handle = null
-	team = null
+	team = null // team of the rocket (targets other team)
 	target = null
 	speed = rocket_speed_initial
 	last_reflect_time = 0.0
 
-	constructor(team, target = null)
+	constructor(targetTeam, target = null)
 	{
-		this.target = target ? target : SelectRocketTarget(team)
+		this.target = target ? target : SelectRocketTarget(targetTeam)
 		this.team = this.target.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED
 		this.last_reflect_time = Time()
 
@@ -49,6 +51,38 @@ class Rocket {
 			teamnumber = this.team
 			origin = launcher_origin
 		})
+
+		this.handle.ValidateScriptScope()
+		this.handle.think <- this.RocketThink
+
+		AddThinkToEnt(this.handle, "RocketThink")
+	}
+
+	function RocketThink()
+	{
+		local rocketPos = this.handle.GetOrigin()
+		local rocketVelocity = this.handle.GetVelocity()
+
+		local targetVector = null
+
+		if (!this.target || !this.target.IsValid() || !this.target.IsAlive())
+		{
+			// No target, reassign if possible
+			this.target = SelectRocketTarget(this.handle.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED)
+		}
+
+		if (this.target && this.target.IsValid() && this.target.IsAlive())
+		{
+			targetVector = this.target.GetOrigin().Subtract(rocketPos + rocket_offset)
+			targetVector.z += 48.0 // aim a bit higher
+		} else {
+			// No target, go straight up
+			targetVector = Vector(0, 0, 1)
+		}
+
+		// TODO: learn how to rotate the vector (max of speed / 200 degrees per tick)
+
+		return -1
 	}
 }
 
@@ -118,20 +152,122 @@ function SelectRocketTarget(reflector = null)
 		return null // go straight up
 	if (!reflector)
 	{
-		// TODO: select random alive player:
-		// - if team is not specified: calculate per team "alive player count minus rockets targeting team" and choose team with highest value (random if tied)
-		// - of players on team with the fewest amount of rockets targeting them: randomly choose one
-	} else
+		// calculate per team "alive player count - rockets targeting team" and choose team with highest value (combine both if tied)
+		// of the selected group, choose the least targeted player (randomly choose if tied)
+
+		local redRockets = GetRockets(TF_TEAM_RED)
+		local blueRockets = GetRockets(TF_TEAM_BLUE)
+
+		local redPlayers = Ware_GetAlivePlayers(TF_TEAM_RED)
+		local bluePlayers = Ware_GetAlivePlayers(TF_TEAM_BLUE)
+
+		local redCount = redPlayers - redRockets.len()
+		local blueCount = bluePlayers - blueRockets.len()
+
+		local candidates = []
+
+		if (redCount > blueCount)
+			candidates = redPlayers
+		else if (blueCount > redCount)
+			candidates = bluePlayers
+		else
+			candidates = redPlayers + bluePlayers
+
+		local rocketCounts = {}
+		local minRockets = null
+		local leastTargetedPlayers = []
+
+		foreach (player in candidates)
+			rocketCounts[player.GetEntityIndex()] <- 0
+
+		foreach (rocket in rockets)
+		{
+			if (rocket.target != null && rocket.target.IsValid())
+			{
+				local targetIndex = rocket.target.GetEntityIndex()
+				if (targetIndex in rocketCounts)
+				{
+					rocketCounts[targetIndex] += 1
+				}
+			}
+		}
+
+		foreach (player in candidates)
+		{
+			local count = rocketCounts[player.GetEntityIndex()]
+			if (minRockets == null || count < minRockets)
+			{
+				minRockets = count
+			}
+		}
+
+		foreach (player in candidates)
+		{
+			local count = rocketCounts[player.GetEntityIndex()]
+			if (count == minRockets)
+			{
+				leastTargetedPlayers.append(player)
+			}
+		}
+
+		if (leastTargetedPlayers.len() == 0)
+			if (candidates.len() == 0)
+				return null
+			else
+				return candidates[Maths.RandomInt(0, candidates.len() - 1)]
+
+		return leastTargetedPlayers[Maths.RandomInt(0, leastTargetedPlayers.len() - 1)]
+	}
+	else
 	{
+		// calculate per enemy player "(shortest distance of enemy to reflector's line of sight) minus (distance to enemy along reflector's LOS axis)" and take highest value
 		local team = reflector.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED
-		// calculate per enemy player "(shortest distance of enemy to reflector's line of sight ) minus (distance to enemy along reflector's LOS axis)" and take highest value
+
+		local origin = reflector.GetOrigin()
+		local lookVector = reflector.EyeAngles().Forward()
+
+		lookVector.z = 0 // don't factor in vertical angles.
+		lookVector.Norm()
+
+		local distanceToLOS = @(p) p.GetOrigin().Subtract(origin).Cross(lookVector).Length() / lookVector.Length()
+		local distanceAlongLOS = @(p) p.GetOrigin().Subtract(origin).Dot(lookVector) / lookVector.Length()
+
+		local candidates = Ware_GetAlivePlayers(team)
+		local scores = {}
+
+		foreach (player in candidates)
+		{
+			scores[player.GetEntityIndex()] <- distanceToLOS(player) - distanceAlongLOS(player)
+		}
+
+		local bestScore = null
+		local bestTarget = null
+		foreach (player in candidates)
+		{
+			local score = scores[player.GetEntityIndex()]
+			if (bestScore == null || score > bestScore)
+			{
+				bestScore = score
+				bestTarget = player
+			}
+		}
+
+		return bestTarget
 	}
 }
 
 function OnCheckEnd()
 {
-	// TODO: either when everyone dies, or one team dies and that team has no active rockets
-	return Ware_GetAlivePlayers().len() == 0
+	// either when everyone dies, or one team dies and that team has no active rockets
+	return Ware_GetAlivePlayers().len() == 0 ||
+		(
+			Ware_GetAlivePlayers(TF_TEAM_RED).len() == 0 &&
+			GetRockets(TF_TEAM_RED).len() == 0
+		) ||
+		(
+			Ware_GetAlivePlayers(TF_TEAM_BLUE).len() == 0 &&
+			GetRockets(TF_TEAM_BLUE).len() == 0
+		)
 }
 
 function OnEnd()
