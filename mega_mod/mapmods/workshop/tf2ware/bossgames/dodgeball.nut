@@ -8,10 +8,11 @@ minigame <- Ware_MinigameData
 	location       = "boxarena"
 	music          = "dodgeball" // TODO
 	min_players    = 2
-	start_pass     = true
 	start_freeze   = 2.0
 	custom_overlay = "airblast_rockets"
 })
+
+db_scope <- this
 
 rockets <- []
 
@@ -26,63 +27,86 @@ target_rocket_count <- 1
 target_rocket_count_extra <- 0 // make things spicier over time for smaller player counts.
 rocket_end <- false
 
-launcher_origin <- Vector(0, 0, 0)
+launcher_origin <- Ware_Location.boxarena.center + Vector(0, 0, 200)
 launcher_effect <- null
 launcher_effect_offset <- launcher_origin + Vector(0, 0, 0)
+launcher <- null
 
-rocket_offset <- Vector(0, 0, 48.0)
+rocket_target_offset <- Vector(0, 0, 48.0)
 
 class Rocket {
 	handle = null
-	team = null // team of the rocket (targets other team)
+	rocketTeam = null // team of the rocket (targets other team)
 	target = null
 	speed = rocket_speed_initial
 	last_reflect_time = 0.0
+	db_scope = db_scope
+	think = null
+
+	RocketThink = null
+	OnReflect = null
 
 	constructor(targetTeam, target = null)
 	{
-		this.target = target ? target : SelectRocketTarget(targetTeam)
-		this.team = this.target.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED
+		this.target = target ? target : db_scope.SelectRocketTarget()
+		this.rocketTeam = this.target.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED
 		this.last_reflect_time = Time()
 
-		this.handle = SpawnEntityFromTableSafe("tf_projectile_rocket",
+		//db_scope.launcher.SetTeam(TEAM_SPECTATOR)
+		db_scope.launcher.AcceptInput("FireOnce", "", null, null)
+
+		local rocket = FindByClassname(null, "tf_projectile_rocket")
+		if (rocket != null)
 		{
-			basevelocity = Vector(0, 0, rocket_speed_initial)
-			teamnumber = this.team
-			origin = launcher_origin
-		})
+			MarkForPurge(rocket)
+			rocket.SetTeam(TEAM_SPECTATOR)
+			rocket.KeyValueFromString("classname", "ware_projectile")
+			this.handle = rocket
+		} else {
+			printl("Failed to find rocket after firing launcher!")
+			return
+		}
+
+		this.RocketThink = function ()
+		{
+			local rocketPos = this.handle.GetOrigin()
+			local rocketVelocity = this.handle.GetAbsVelocity()
+
+			local targetVector = null
+
+			if (!this.target || !this.target.IsValid() || !this.target.IsAlive())
+			{
+				// No target, reassign if possible
+				this.target = db_scope.SelectRocketTarget()
+			}
+
+			if (this.target && this.target.IsValid() && this.target.IsAlive())
+			{
+				targetVector = (this.target.GetOrigin() - rocketPos) + db_scope.rocket_target_offset
+			} else {
+				// No target, go straight up
+				targetVector = Vector(0, 0, 1)
+			}
+
+			// TODO: learn how to rotate the vector (max of speed / 200 degrees per tick)
+			targetVector.Norm()
+			this.handle.SetAbsVelocity(targetVector * this.speed)
+
+			return -1
+		}.bindenv(this)
+
+		this.OnReflect = function (reflector)
+		{
+			this.last_reflect_time = Time()
+			this.speed += db_scope.rocket_speed_increment
+			this.team = reflector.GetTeam() == TF_TEAM_RED ? TF_TEAM_RED : TF_TEAM_BLUE
+			this.target = db_scope.SelectRocketTarget(reflector)
+		}
 
 		this.handle.ValidateScriptScope()
-		this.handle.think <- this.RocketThink
-
-		AddThinkToEnt(this.handle, "RocketThink")
-	}
-
-	function RocketThink()
-	{
-		local rocketPos = this.handle.GetOrigin()
-		local rocketVelocity = this.handle.GetVelocity()
-
-		local targetVector = null
-
-		if (!this.target || !this.target.IsValid() || !this.target.IsAlive())
-		{
-			// No target, reassign if possible
-			this.target = SelectRocketTarget(this.handle.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED)
-		}
-
-		if (this.target && this.target.IsValid() && this.target.IsAlive())
-		{
-			targetVector = this.target.GetOrigin().Subtract(rocketPos + rocket_offset)
-			targetVector.z += 48.0 // aim a bit higher
-		} else {
-			// No target, go straight up
-			targetVector = Vector(0, 0, 1)
-		}
-
-		// TODO: learn how to rotate the vector (max of speed / 200 degrees per tick)
-
-		return -1
+		this.handle.GetScriptScope().ClassScope <- this
+		this.handle.GetScriptScope().Think <- this.RocketThink
+		AddThinkToEnt(this.handle, "Think")
 	}
 }
 
@@ -101,14 +125,26 @@ function OnTeleport(players)
 
 function OnStart()
 {
+	launcher = Ware_SpawnEntity("tf_point_weapon_mimic",
+	{
+		origin 	= launcher_origin
+		WeaponType = 0
+		SpeedMin   = rocket_speed_initial
+		SpeedMax   = rocket_speed_initial
+		Damage     = 20 + (Ware_GetAlivePlayers().len())
+		Crits      = true
+		angles     = QAngle(90, 0, 0)
+	})
+	launcher.SetTeam(TEAM_SPECTATOR)
+
 	Ware_SetGlobalLoadout(TF_CLASS_PYRO, "Flame Thrower")
 
 	target_rocket_count <- GetMinRocketCount(Ware_GetAlivePlayers().len())
-	Ware_CreateTimer(2.0, CheckSpawnRocket)
-	Ware_CreateTimer(10.0, IncreaseRocketCount)
-	Ware_CreateTimer(45.0, @() target_rocket_count_extra++)
-	Ware_CreateTimer(95.0, @() target_rocket_count_extra++)
-	Ware_CreateTimer(180.0, @() rocket_end <- true)
+	Ware_CreateTimer(CheckSpawnRocket, 2.0)
+	Ware_CreateTimer(IncreaseRocketCount, 10.0)
+	Ware_CreateTimer(@() target_rocket_count_extra++, 45.0)
+	Ware_CreateTimer(@() target_rocket_count_extra++, 95.0)
+	Ware_CreateTimer(@() rocket_end <- true, 165.0)
 }
 
 function GetRocketCountTarget() {
@@ -125,14 +161,15 @@ function GetRocketCountTarget() {
 function IncreaseRocketCount()
 {
 	target_rocket_count = Min(target_rocket_count + 1, GetMaxRocketCount(Ware_GetAlivePlayers().len()))
-	Ware_CreateTimer(10.0, IncreaseRocketCount)
+	Ware_CreateTimer(IncreaseRocketCount, 10.0)
 }
 
 function CheckSpawnRocket()
 {
 	if (rockets.len() < target_rocket_count)
 		SpawnRocket()
-	Ware_CreateTimer(1.0, CheckSpawnRocket)
+	rockets = rockets.filter(@(i, r) r.handle != null && r.handle.IsValid())
+	Ware_CreateTimer(CheckSpawnRocket, 1.0)
 }
 
 function SpawnRocket(team = null)
@@ -143,7 +180,7 @@ function SpawnRocket(team = null)
 
 function GetRockets(team = null)
 {
-	return rockets.filter(@(r) r.handle != null && r.handle.IsValid() && (r.team == team || team == null || team == TF_TEAM_ANY))
+	return rockets.filter(@(i, r) r.handle != null && r.handle.IsValid() && (r.rocketTeam == team || team == null || team == 0))
 }
 
 function SelectRocketTarget(reflector = null)
@@ -161,17 +198,15 @@ function SelectRocketTarget(reflector = null)
 		local redPlayers = Ware_GetAlivePlayers(TF_TEAM_RED)
 		local bluePlayers = Ware_GetAlivePlayers(TF_TEAM_BLUE)
 
-		local redCount = redPlayers - redRockets.len()
-		local blueCount = bluePlayers - blueRockets.len()
+		local redCount = redPlayers.len() - redRockets.len()
+		local blueCount = bluePlayers.len() - blueRockets.len()
 
 		local candidates = []
 
-		if (redCount > blueCount)
-			candidates = redPlayers
-		else if (blueCount > redCount)
-			candidates = bluePlayers
-		else
-			candidates = redPlayers + bluePlayers
+		if (redCount >= blueCount)
+			candidates.extend(redPlayers)
+		if (blueCount >= redCount)
+			candidates.extend(bluePlayers)
 
 		local rocketCounts = {}
 		local minRockets = null
@@ -214,12 +249,13 @@ function SelectRocketTarget(reflector = null)
 			if (candidates.len() == 0)
 				return null
 			else
-				return candidates[Maths.RandomInt(0, candidates.len() - 1)]
+				return candidates[RandomInt(0, candidates.len() - 1)]
 
-		return leastTargetedPlayers[Maths.RandomInt(0, leastTargetedPlayers.len() - 1)]
+		return leastTargetedPlayers[RandomInt(0, leastTargetedPlayers.len() - 1)]
 	}
 	else
 	{
+		printl("Selecting target for reflector " + reflector)
 		// calculate per enemy player "(shortest distance of enemy to reflector's line of sight) minus (distance to enemy along reflector's LOS axis)" and take highest value
 		local team = reflector.GetTeam() == TF_TEAM_RED ? TF_TEAM_BLUE : TF_TEAM_RED
 
@@ -229,8 +265,8 @@ function SelectRocketTarget(reflector = null)
 		lookVector.z = 0 // don't factor in vertical angles.
 		lookVector.Norm()
 
-		local distanceToLOS = @(p) p.GetOrigin().Subtract(origin).Cross(lookVector).Length() / lookVector.Length()
-		local distanceAlongLOS = @(p) p.GetOrigin().Subtract(origin).Dot(lookVector) / lookVector.Length()
+		local distanceToLOS = @(p) (p.GetOrigin() - origin).Cross(lookVector).Length() / lookVector.Length()
+		local distanceAlongLOS = @(p)(p.GetOrigin() - origin).Dot(lookVector) / lookVector.Length()
 
 		local candidates = Ware_GetAlivePlayers(team)
 		local scores = {}
@@ -256,6 +292,27 @@ function SelectRocketTarget(reflector = null)
 	}
 }
 
+function OnGameEvent_object_deflected(params)
+{
+	printl("REFLECTION EVENT")
+	local player = GetPlayerFromUserID(params.userid)
+	if (player == null)
+		return
+
+	local object = EntIndexToHScript(params.object_entindex)
+	if (object != null && object.GetClassname() == "ware_projectile")
+	{
+		foreach (rocket in rockets)
+		{
+			if (rocket.handle == object && rocket.handle.entindex() == params.object_entindex)
+			{
+				rocket.OnReflect(player)
+				break
+			}
+		}
+	}
+}
+
 function OnCheckEnd()
 {
 	// either when everyone dies, or one team dies and that team has no active rockets
@@ -273,10 +330,8 @@ function OnCheckEnd()
 function OnEnd()
 {
 	// TODO: award points to surviving players
-	// is this needed with start_pass = true?
-}
-
-function OnCleanup()
-{
-	// delete rockets, launchers, and effects
+	foreach (player in Ware_GetAlivePlayers())
+	{
+		Ware_PassPlayer(player, true)
+	}
 }
