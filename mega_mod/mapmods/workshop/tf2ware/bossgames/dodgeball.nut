@@ -59,6 +59,7 @@ class Rocket {
 		if (rocket != null)
 		{
 			MarkForPurge(rocket)
+			rocket.SetOwner(this.target)
 			rocket.SetTeam(TEAM_SPECTATOR)
 			rocket.KeyValueFromString("classname", "ware_projectile")
 			this.handle = rocket
@@ -69,6 +70,9 @@ class Rocket {
 
 		this.RocketThink = function ()
 		{
+			if(!db_scope)
+				return 10.0 // stop thinking, we're gonna be purged soon anyway
+
 			local rocketPos = this.handle.GetOrigin()
 			local rocketVelocity = this.handle.GetAbsVelocity()
 
@@ -91,6 +95,7 @@ class Rocket {
 			// TODO: learn how to rotate the vector (max of speed / 200 degrees per tick)
 			targetVector.Norm()
 			this.handle.SetAbsVelocity(targetVector * this.speed)
+			this.handle.SetForwardVector(targetVector)
 
 			return -1
 		}.bindenv(this)
@@ -99,7 +104,7 @@ class Rocket {
 		{
 			this.last_reflect_time = Time()
 			this.speed += db_scope.rocket_speed_increment
-			this.team = reflector.GetTeam() == TF_TEAM_RED ? TF_TEAM_RED : TF_TEAM_BLUE
+			this.rocketTeam = reflector.GetTeam() == TF_TEAM_RED ? TF_TEAM_RED : TF_TEAM_BLUE
 			this.target = db_scope.SelectRocketTarget(reflector)
 		}
 
@@ -131,7 +136,7 @@ function OnStart()
 		WeaponType = 0
 		SpeedMin   = rocket_speed_initial
 		SpeedMax   = rocket_speed_initial
-		Damage     = 20 + (Ware_GetAlivePlayers().len())
+		Damage     = 20 + 2 * (Ware_GetAlivePlayers().len())
 		Crits      = true
 		angles     = QAngle(90, 0, 0)
 	})
@@ -145,6 +150,22 @@ function OnStart()
 	Ware_CreateTimer(@() target_rocket_count_extra++, 45.0)
 	Ware_CreateTimer(@() target_rocket_count_extra++, 95.0)
 	Ware_CreateTimer(@() rocket_end <- true, 165.0)
+}
+
+function OnTakeDamage(params)
+{
+	if (params.const_entity.IsPlayer())
+	{
+		params.weapon = null
+		params.attacker = World
+
+		local inflictor = params.inflictor
+		if (inflictor != null && inflictor.GetClassname() == "ware_projectile")
+		{
+			// prevents server crash because of attacker not being a player
+			SetPropEntity(inflictor, "m_hLauncher", null)
+		}
+	}
 }
 
 function GetRocketCountTarget() {
@@ -329,9 +350,16 @@ function OnCheckEnd()
 
 function OnEnd()
 {
-	// TODO: award points to surviving players
 	foreach (player in Ware_GetAlivePlayers())
 	{
 		Ware_PassPlayer(player, true)
 	}
+}
+
+function OnCleanup() {
+	for (local rocket = null; rocket = FindByClassname(rocket, "ware_projectile"); )
+	{
+		MarkForPurge(rocket)
+	}
+	db_scope = null
 }
