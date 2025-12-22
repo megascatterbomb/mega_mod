@@ -44,7 +44,6 @@ class Rocket {
 	handle = null
 	rocketTeam = null // team of the rocket (targets other team)
 	target = null
-	speed = rocket_speed_initial
 	reflect_time = 0.0
 	reflect_count = 0
 	db_scope = db_scope
@@ -122,7 +121,7 @@ class Rocket {
 				targetVector = Vector(0, 0, 1)
 			}
 
-			local actualSpeed = this.speed
+			local actualSpeed = db_scope.rocket_speed_initial * pow(db_scope.rocket_speed_ratio, this.reflect_count)
 			if (Time() - this.reflect_time > db_scope.rocket_stall_threshold)
 				actualSpeed += (Time() - this.reflect_time - db_scope.rocket_stall_threshold) * db_scope.rocket_stall_speed_increase
 
@@ -138,7 +137,7 @@ class Rocket {
 		{
 			this.reflect_time = Time()
 			this.reflect_count++
-			this.speed *= db_scope.rocket_speed_ratio
+			printl("Reflect count: " + reflect_count)
 			this.rocketTeam = reflector.GetTeam() == TF_TEAM_RED ? TF_TEAM_RED : TF_TEAM_BLUE
 			this.target = db_scope.SelectRocketTargetByReflector(reflector)
 		}
