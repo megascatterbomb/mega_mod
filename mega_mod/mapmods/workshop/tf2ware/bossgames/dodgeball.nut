@@ -9,6 +9,7 @@ minigame <- Ware_MinigameData
 	music          = "dodgeball" // TODO
 	min_players    = 2
 	start_freeze   = 2.0
+	allow_damage   = true
 	custom_overlay = "airblast_rockets"
 })
 
@@ -71,7 +72,7 @@ class Rocket {
 		this.RocketThink = function ()
 		{
 			if(!db_scope)
-				return 10.0 // stop thinking, we're gonna be purged soon anyway
+				return 10.0 // stop thinking, we're gonna be purged soon anyway)
 
 			local rocketPos = this.handle.GetOrigin()
 			local rocketVelocity = this.handle.GetAbsVelocity()
@@ -86,7 +87,14 @@ class Rocket {
 
 			if (this.target && this.target.IsValid() && this.target.IsAlive())
 			{
-				targetVector = (this.target.GetOrigin() - rocketPos) + db_scope.rocket_target_offset
+				local targetPos = this.target.GetOrigin()
+				// if the rocket is a spectator rocket, it won't explode on its target because we set its owner to the initial target,
+				// check if the rocket is close enough to contact initial target then remove owner tag.
+				if (this.handle.GetTeam() == TEAM_SPECTATOR && ((targetPos + db_scope.rocket_target_offset) - rocketPos).Length() < 24.0)
+				{
+					this.handle.SetOwner(null)
+				} 
+				targetVector = (targetPos - rocketPos) + db_scope.rocket_target_offset
 			} else {
 				// No target, go straight up
 				targetVector = Vector(0, 0, 1)
@@ -359,7 +367,6 @@ function OnEnd()
 function OnCleanup() {
 	for (local rocket = null; rocket = FindByClassname(rocket, "ware_projectile"); )
 	{
-		MarkForPurge(rocket)
+		rocket.Kill()
 	}
-	db_scope = null
 }
