@@ -25,6 +25,9 @@ rocket_speed_initial <- 250.0 // hu/s
 rocket_speed_ratio <- 1.1
 rocket_stall_threshold <- 10.0 // seconds
 rocket_stall_speed_increase <- 50.0 // hu/s per second
+rocket_turn_speed_base <- 0 // degrees per second
+rocket_turn_speed_deg <- @(s) rocket_turn_speed_base + (0.004 * s * s) // degrees per second, s is the speed of the rocket
+rocket_turn_speed_rad <- @(s) rocket_turn_speed_deg(s) * PI / 180.0
 
 GetMinRocketCount <- @(num_players) ceil(num_players / 25.0)
 GetMaxRocketCount <- @(num_players) floor(sqrt(num_players)) + target_rocket_count_extra
@@ -125,10 +128,32 @@ class Rocket {
 			if (Time() - this.reflect_time > db_scope.rocket_stall_threshold)
 				actualSpeed += (Time() - this.reflect_time - db_scope.rocket_stall_threshold) * db_scope.rocket_stall_speed_increase
 
-			// TODO: learn how to rotate the vector (max of speed / 200 degrees per tick)
+			local actualVector = rocketVelocity
 			targetVector.Norm()
-			this.handle.SetAbsVelocity(targetVector * actualSpeed)
-			this.handle.SetForwardVector(targetVector)
+			actualVector.Norm()
+			
+			local dot = Min(Max(actualVector.Dot( targetVector ), -1.0), 1.0);
+    		local angle = acos(dot);
+			local maxTurnAngleRad = db_scope.rocket_turn_speed_rad(actualSpeed) * FrameTime()
+			
+			if (angle < maxTurnAngleRad) // directly face target
+			{
+				actualVector = targetVector
+			}
+			else // rotate towards target by max turn angle
+			{
+				local axis = actualVector.Cross( targetVector )
+				axis.Norm()
+				local cosA = cos( maxTurnAngleRad );
+    			local sinA = sin( maxTurnAngleRad );
+
+				actualVector = actualVector * cosA +
+					axis.Cross( actualVector ) * sinA +
+					axis * axis.Dot( actualVector ) * ( 1 - cosA );
+			}
+
+			this.handle.SetAbsVelocity(actualVector * actualSpeed)
+			this.handle.SetForwardVector(actualVector)
 
 			return -1
 		}.bindenv(this)
@@ -226,7 +251,7 @@ function GetRocketCountTarget() {
 
 function IncreaseRocketCount()
 {
-	target_rocket_count = Min(target_rocket_count + 1, GetMaxRocketCount(Ware_GetAlivePlayers().len()))
+	target_rocket_count++
 	Ware_CreateTimer(IncreaseRocketCount, 10.0)
 }
 
@@ -235,7 +260,7 @@ function CheckSpawnRocket()
 	if (rocket_end || (Ware_GetAlivePlayers(TF_TEAM_RED).len() == 0 || Ware_GetAlivePlayers(TF_TEAM_BLUE).len() == 0))
 		return
 	
-	if (rockets.len() < target_rocket_count)
+	if (rockets.len() < GetRocketCountTarget())
 		SpawnRocket()
 	rockets = rockets.filter(@(i, r) r.handle != null && r.handle.IsValid())
 	Ware_CreateTimer(CheckSpawnRocket, 1.0)
@@ -350,6 +375,7 @@ function SelectRocketTargetByReflector(reflector = null)
 	lookVector.z = 0 // don't factor in vertical angles.
 	lookVector.Norm()
 
+	// TODO: fix the target selection being wrong.
 	local distanceToLOS = @(p) (p.GetOrigin() - origin).Cross(lookVector).Length() / lookVector.Length()
 	local distanceAlongLOS = @(p)(p.GetOrigin() - origin).Dot(lookVector) / lookVector.Length()
 
