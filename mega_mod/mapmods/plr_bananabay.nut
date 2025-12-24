@@ -118,7 +118,7 @@ function CheckCartRed() {
     if (CASE_RED == 0 && !OVERTIME_ACTIVE) return;
     if (!RED_AT_CUTOFF) return;
 
-    printl("CHECK CART RED");
+    // printl("CHECK CART RED");
     UpdateRedCart(CASE_RED);
 }
 
@@ -127,7 +127,7 @@ function CheckCartBlu() {
     if (CASE_BLU == 0 && !OVERTIME_ACTIVE) return;
     if (!BLU_AT_CUTOFF) return;
 
-    printl("CHECK CART BLU");
+    // printl("CHECK CART BLU");
     UpdateBluCart(CASE_BLU);
 }
 
