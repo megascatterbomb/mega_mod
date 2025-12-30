@@ -14,7 +14,6 @@ You can disable any mods you don't want to use by modifying `scriptdata/mega_mod
 
 Some mods depend on certain cvars being in vscript_convar_allowlist:
 - `sv_allow_point_servercommand` if you want to use gamemode-specific cfgs.
-- `sig_mvm_robot_multiplier_tank_hp` if you want MvM health scaling to apply to tanks. Also depends on [rafmod](https://github.com/rafradek/sigsegv-mvm).
 
 ### Project structure:
 - `/arena_addons`
@@ -100,13 +99,31 @@ These improvements apply only to the [VScript Arena](https://steamcommunity.com/
 
 ## Mann Vs Machine
 
+### Per-mission configuration for `tf_mvm_defenders_team_size`
+
+Internal name: `mvm_max_defenders`
+
+I found the `MaxRedTeam` KV for Rafmod would kick players above the usual team size into spectator upon wave failure. To bypass this, I implemented this mod with allows you to customize the amount of RED players via `scriptdata/mega_mod_mvm_max_defenders.txt`. Example config below:
+
+```
+mvm_area_52_rc3_click_expert1=24
+mvm_bigrock_click_expert1=24
+mvm_cliffside_b8_click_expert1=24
+mvm_coaltown_click_expert1=24
+mvm_coastrock_rc3_master=24
+mvm_decoy_click_expert1=24
+mvm_ghost_town_tank_endurance=24
+mvm_mannhattan_click_expert1=24
+mvm_mannworks_click_expert1=24
+mvm_rottenburg_click_expert1=24
+mvm_tensai_rc5_click_expert1=24
+```
+
 ### Health scaling above 6 players.
 
 Internal name: `mvm_scaling`
 
-Robots gain a multipler on their health based on how many players are on RED. For example, if there are 12 players on RED, robots spawn with 200% HP. Health is multiplied by modifying `tf_populator_health_multiplier`.
-
-Also supports multiplying Tank health if [rafmod](https://github.com/rafradek/sigsegv-mvm) is installed. Requires `sig_mvm_robot_multiplier` to be non-zero and `sig_mvm_robot_multiplier_tank_hp` to be in `cfg/vscript_convar_allowlist.txt`.
+Robots and Tanks gain a multipler on their health based on how many players are on RED. For example, if there are 12 players on RED, robots spawn with 200% HP. Health is multiplied by modifying `tf_populator_health_multiplier`.
 
 ### Tank Announcements
 

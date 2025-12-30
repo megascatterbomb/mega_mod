@@ -29,9 +29,10 @@ function LoadAlongsideMapMods() {
     if(healthRatio < 1.0) healthRatio = 1.0;
 
     Convars.SetValue("tf_populator_health_multiplier", healthRatio);
-    if (Convars.GetFloat("sig_mvm_robot_multiplier_tank_hp") != null) {
-        Convars.SetValue("sig_mvm_robot_multiplier_tank_hp", healthRatio);
-    }
+    // OBSOLETE: tf_populator_health_multiplier accounts for this.
+    // if (Convars.GetFloat("sig_mvm_robot_multiplier_tank_hp") != null) {
+    //     Convars.SetValue("sig_mvm_robot_multiplier_tank_hp", healthRatio);
+    // }
 
     local healthRatioInt = floor(healthRatio * 100);
     ClientPrint(null, 3, "\x0799CCFFRobots and Tanks spawn with " + healthRatioInt + "% HP as there are " + newValue + " players on RED.");
