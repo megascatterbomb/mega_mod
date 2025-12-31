@@ -58,10 +58,12 @@ function InitGlobalVars() {
     ::RED_LAST_UPDATE <- Time();
     ::BLU_LAST_UPDATE <- Time();
 
+    ::ROLLBACK_SPEED_RED <- -1.0;
     ::TIMES_1_SPEED_RED <- 0.55;
     ::TIMES_2_SPEED_RED <- 0.77;
     ::TIMES_3_SPEED_RED <- 1.0;
 
+    ::ROLLBACK_SPEED_BLU <- -1.0;
     ::TIMES_1_SPEED_BLU <- 0.55;
     ::TIMES_2_SPEED_BLU <- 0.77;
     ::TIMES_3_SPEED_BLU <- 1.0;
@@ -252,7 +254,7 @@ function TriggerRollbackRed() {
         EntFireByHandle(spark, "StartSpark", "", 0, null, null);
     }
     if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
+    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_RED, 0, null, null);
 
     ::RED_LAST_UPDATE <- Time();
 }
@@ -289,7 +291,7 @@ function TriggerRollbackBlu() {
         EntFireByHandle(spark, "StartSpark", "", 0, null, null);
     }
     if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
+    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_BLU, 0, null, null);
 
     ::BLU_LAST_UPDATE <- Time();
 }

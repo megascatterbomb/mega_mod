@@ -34,9 +34,6 @@ function OnGameEvent_teamplay_round_start(params) {
 
     ::ELEVATOR_OVERTIME_SPEED <- 0.1;
 
-    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
-    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
-
     // Rollback zones
     AddRollbackZone("ssplr_red_path_lift_finale1_4", null, "ssplr_red_path_lift_finale1_1", "Red");
     AddRollbackZone("ssplr_blu_path_lift_finale1_4", null, "ssplr_blu_path_lift_finale1_1", "Blu");
@@ -64,6 +61,9 @@ function OnGameEvent_teamplay_round_start(params) {
     NetProps.SetPropBool(BLU_WATCHER, "m_bHandleTrainMovement", false);
 
     // Hook pre-lift pushzones.
+    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
+    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
+
     EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "ssplr_red_watcherA", "SetNumTrainCappers", "", 0, -1);
     EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "ssplr_blu_watcherA", "SetNumTrainCappers", "", 0, -1);
 
@@ -107,6 +107,7 @@ function OnGameEvent_teamplay_round_start(params) {
         "ssplr_red_lift_finale1_staycase"
         "ssplr_red_lift_rollback_relay_rb1"
         "ssplr_red_lift_finale1_rollback"
+        "ssplr_red_lift_finale1_relay_embark"
 
         // BLU - movement decision logic
         "ssplr_blu_lift_finale1_pushingcase"
@@ -114,6 +115,7 @@ function OnGameEvent_teamplay_round_start(params) {
         "ssplr_blu_lift_finale1_staycase"
         "ssplr_blu_lift_rollback_relay_rb1"
         "ssplr_blu_lift_finale1_rollback"
+        "ssplr_blu_lift_finale1_relay_embark"
 
         // RED - listener logic
         "count_redPushers1"
@@ -140,13 +142,25 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).Kill();
     }
 
-    local ssplr_red_lift_finale1_relay_embark = MM_GetEntByName("ssplr_red_lift_finale1_relay_embark");
-    local ssplr_blu_lift_finale1_relay_embark = MM_GetEntByName("ssplr_blu_lift_finale1_relay_embark");
+    local ssplr_red_lift_finale1_relay_embark = SpawnEntityFromTable("logic_relay", {
+        targetname = "ssplr_red_lift_finale1_relay_embark"
+    });
+    local ssplr_blu_lift_finale1_relay_embark = SpawnEntityFromTable("logic_relay", {
+        targetname = "ssplr_blu_lift_finale1_relay_embark"
+    });
 
-    EntityOutputs.AddOutput(ssplr_red_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "::BLOCK_RED <- true", 0, -1)
-    EntityOutputs.AddOutput(ssplr_red_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "::BLOCK_RED <- false", 1.05, -1)
-    EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "::BLOCK_BLU <- true", 0, -1)
-    EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "::BLOCK_BLU <- false", 1.05, -1)
+    EntityOutputs.AddOutput(ssplr_red_lift_finale1_relay_embark, "OnTrigger", "ssplr_red_train", "AddOutput", "manualaccelspeed 999", 0.3, -1)
+    EntityOutputs.AddOutput(ssplr_red_lift_finale1_relay_embark, "OnTrigger", "ssplr_red_train", "AddOutput", "manualdecelspeed 999", 0.3, -1)
+    EntityOutputs.AddOutput(ssplr_red_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "StopRed(); ::BLOCK_RED <- true; SwitchToElevatorRed()", 0, 1)
+    EntityOutputs.AddOutput(ssplr_red_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "::BLOCK_RED <- false", 1.05, 1)
+
+    EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "ssplr_blu_train", "AddOutput", "manualaccelspeed 999", 0.3, -1)
+    EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "ssplr_blu_train", "AddOutput", "manualdecelspeed 999", 0.3, -1)
+    EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "StopBlu(); ::BLOCK_BLU <- true; SwitchToElevatorBlu()", 0, 1)
+    EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "::BLOCK_BLU <- false", 1.05, 1)
+
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_3reverse"), "OnTrigger", "!self", "RunScriptCode", "if (!BLOCK_RED) ::RED_AT_BOTTOM <- true; UpdateBluCart(CASE_BLU)", 0, -1)
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_3reverse"), "OnTrigger", "!self", "RunScriptCode", "if (!BLOCK_BLU) ::BLU_AT_BOTTOM <- true; UpdateRedCart(CASE_RED)", 0, -1)
 
     // Add thinks to carts
     CreateCartAutoUpdater(RED_TRAIN, 2);
@@ -182,42 +196,49 @@ function StartOvertime() {
 function AdvanceRed(speed, dynamic = true) {
     if (RED_ELV) dynamic = false;
     AdvanceRedBase(speed, dynamic);
+    if (RED_ELV) {
+        ::RED_AT_BOTTOM = false;
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
+    }
 }
 
 function StopRed() {
-    if (RED_ELV) {
-        return;
-    }
     StopRedBase();
+    if (RED_ELV) {
+        local currentSpeed = NetProps.GetPropFloat(RED_ELV, "m_flSpeed");
+        if (currentSpeed == 0) EntFireByHandle(RED_ELV, "Stop", "", 0, null, null);
+    }
 }
 
-// TODO: change rollback speed to match vanilla
 function TriggerRollbackRed() {
-    if (RED_ELV) {
-        return;
-    }
     TriggerRollbackRedBase();
+    if(RED_ELV) {
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_RED, 0, null, null);
+    }
 }
 
 function AdvanceBlu(speed, dynamic = true) {
-    if (BLU_ELV) {
-        dynamic = false;
-    }
+    if (BLU_ELV) dynamic = false;
     AdvanceBluBase(speed, dynamic);
+    if (BLU_ELV) {
+        ::BLU_AT_BOTTOM = false;
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
+    }
 }
 
 function StopBlu() {
-    if (BLU_ELV) {
-        return;
-    }
     StopBluBase();
+    if (BLU_ELV) {
+        local currentSpeed = NetProps.GetPropFloat(BLU_ELV, "m_flSpeed");
+        if (currentSpeed == 0) EntFireByHandle(BLU_ELV, "Stop", "", 0, null, null);
+    }
 }
 
 function TriggerRollbackBlu() {
-    if (BLU_ELV) {
-        return;
-    }
     TriggerRollbackBluBase();
+    if(BLU_ELV) {
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_BLU, 0, null, null);
+    }
 }
 
 // The RED/BLU specific hud only appears when the respective counter-boost is active.
@@ -245,7 +266,7 @@ function UpdateRedCart(caseNumber) {
 
     if(BLOCK_RED) return;
 
-    local isCounterBoost = BLU_ELV && !BLU_AT_BOTTOM && CASE_BLU == 0;
+    local isCounterBoost = !RED_ELV || (BLU_ELV && !BLU_AT_BOTTOM && CASE_BLU) == 0;
     local speedFactor = isCounterBoost ? 1.0 : 0.5;
 
     if(CASE_RED == 1) {
@@ -280,7 +301,7 @@ function UpdateBluCart(caseNumber) {
 
     if(BLOCK_BLU) return;
 
-    local isCounterBoost = RED_ELV && !RED_AT_BOTTOM && CASE_RED == 0;
+    local isCounterBoost = !BLU_ELV || (RED_ELV && !RED_AT_BOTTOM && CASE_RED) == 0;
     local speedFactor = isCounterBoost ? 1.0 : 0.5;
 
     if(CASE_BLU == 1) {
@@ -313,18 +334,28 @@ function UpdateBluCart(caseNumber) {
 // New speeds assume counter-boost is in effect (if not, use 50% of given value)
 function SwitchToElevatorRed() {
     ::RED_ELV <- MM_GetEntByName("ssplr_red_lift_finale1_train");
+    ::RED_PUSHZONE <- MM_GetEntByName("ssplr_red_lift_finale1_pushzone");
+    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
+    ROLLBACK_SPEED_RED = -0.5;
     OVERTIME_SPEED_RED = 0.1;
     TIMES_1_SPEED_RED = 0.33;
     TIMES_2_SPEED_RED = 0.5;
     TIMES_3_SPEED_RED = 0.66;
+
+    UpdateHUD();
 }
 
 function SwitchToElevatorBlu() {
     ::BLU_ELV <- MM_GetEntByName("ssplr_blu_lift_finale1_train");
+    ::BLU_PUSHZONE <- MM_GetEntByName("ssplr_blu_lift_finale1_pushzone");
+    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
+    ROLLBACK_SPEED_BLU = -0.5;
     OVERTIME_SPEED_BLU = 0.1;
     TIMES_1_SPEED_BLU = 0.33;
     TIMES_2_SPEED_BLU = 0.5;
     TIMES_3_SPEED_BLU = 0.66;
+
+    UpdateHUD();
 }
 
 __CollectGameEventCallbacks(this);
