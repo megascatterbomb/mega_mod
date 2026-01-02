@@ -32,8 +32,12 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_red", "Red");
     ::BLU_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_blu", "Blu");
 
+    ::RED_LIFT_FLASHINGLIGHTS <- MM_GetEntArrayByName("ssplr_red_lift_finale1_lights");
+    ::BLU_LIFT_FLASHINGLIGHTS <- MM_GetEntArrayByName("ssplr_blu_lift_finale1_lights");
+
     ::ELEVATOR_OVERTIME_SPEED <- 0.1;
-    ::LIFT_BOTTOM_THRESHOLD <- 0.675;
+    ::LIFT_BOTTOM_THRESHOLD <- 0.677;
+    ::LIFT_BOTTOM_HYSTERESIS <- 0.001;
 
     // Rollback zones
     AddRollbackZone("ssplr_red_path_lift_finale1_4", null, "ssplr_red_path_lift_finale1_1", "Red");
@@ -70,28 +74,25 @@ function OnGameEvent_teamplay_round_start(params) {
 
     // elevator logic replacement
 
-    // There's two copies of each of these entities. Remove the ones on the negative X side.
-    // I chose that side because the +x side has more modern logic (e.g. HUD overlay logic)
-    foreach(entName in [
-        "gate1_overload_relay"
-        "gate1_alarm_relay"
+    foreach (entName in [
+        // HUD logic
+        // We have to kill these then recreate the status relays as is because we need to enable fast retriggers.
+        // Also there's two copies of each of these entities for some reason.
+        "status_red"
         "status_red"
         "status_blu"
+        "status_blu"
+        "status_yellow"
         "status_yellow"
         "status_white"
+        "status_white"
+        "status_off"
         "status_off"
         "branch_bottomOut"
-    ]) {
-        local ents = MM_GetEntArrayByName(entName);
-        foreach(ent in ents) {
-            if (ent.GetOrigin().x < 0) {
-                ent.Kill();
-                break;
-            }
-        }
-    }
+        "branch_bottomOut"
+        "gate1_overload_relay"
+        "gate1_alarm_relay"
 
-    foreach (entName in [
         // Listeners
         "listener_bothPushing"
         "listener_bothLoaded"
@@ -158,15 +159,57 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "ssplr_blu_train", "AddOutput", "manualdecelspeed 999", 0.3, -1)
     EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorBlu()", 0, 1)
 
-    // Enable counterboost HUD logic
-    foreach(entName in [
-        "status_off"
-        "status_blu"
-        "status_red"
-        "status_yellow"
-    ]) {
-        MM_GetEntByName(entName).AcceptInput("Enable", "", null, null);
-    }
+    SpawnEntityFromTable("logic_relay", {
+        targetname = "status_off"
+        spawnflags = "2"
+        "OnTrigger#1": "gate1_alarm_yellow_flash,Stop,,0,-1"
+        "OnTrigger#2": "gate1_emergency_light,SetAnimation,idle,0,-1"
+        "OnTrigger#3": "gate1_emergency_light,Skin,1,0,-1"
+        "OnTrigger#4": "status_sign_blu,Skin,4,0,-1"
+        "OnTrigger#5": "status_sign_hold,Skin,0,0,-1"
+        "OnTrigger#6": "status_sign_red,Skin,2,0,-1"
+        "OnTrigger#7": "player,RunScriptCode,self.SetScriptOverlayMaterial(\"hud/plr_gray\")"
+    });
+ 
+    SpawnEntityFromTable("logic_relay", {
+        targetname = "status_red"
+        spawnflags = "2"
+        "OnTrigger#1": "gate1_alarm_yellow_flash,Stop,,0,-1"
+        "OnTrigger#2": "gate1_emergency_light,SetAnimation,spin,0,-1"
+        "OnTrigger#3": "gate1_emergency_light,Skin,4,0,-1"
+        "OnTrigger#4": "status_sign_blu,Skin,4,0,-1"
+        "OnTrigger#5": "status_sign_hold,Skin,0,0,-1"
+        "OnTrigger#6": "status_sign_red,Skin,3,0,-1"
+        "OnTrigger#7": "player,RunScriptCode,self.SetScriptOverlayMaterial(\"hud/plr_red\")"
+        "OnTrigger#8": "gate1_alarm_relay,Trigger,,0,-1"
+        "OnTrigger#9": "gate1_overload_relay,Trigger,,0,-1"
+    });
+
+    SpawnEntityFromTable("logic_relay", {
+        targetname = "status_blu"
+        spawnflags = "2"
+        "OnTrigger#1": "gate1_alarm_yellow_flash,Stop,,0,-1"
+        "OnTrigger#2": "gate1_emergency_light,SetAnimation,spin,0,-1"
+        "OnTrigger#3": "gate1_emergency_light,Skin,3,0,-1"
+        "OnTrigger#4": "status_sign_blu,Skin,5,0,-1"
+        "OnTrigger#5": "status_sign_hold,Skin,0,0,-1"
+        "OnTrigger#6": "status_sign_red,Skin,2,0,-1"
+        "OnTrigger#7": "player,RunScriptCode,self.SetScriptOverlayMaterial(\"hud/plr_blue\")"
+        "OnTrigger#8": "gate1_alarm_relay,Trigger,,0,-1"
+        "OnTrigger#9": "gate1_overload_relay,Trigger,,0,-1"
+    });
+
+    SpawnEntityFromTable("logic_relay", {
+        targetname = "status_yellow"
+        spawnflags = "2"
+        "OnTrigger#1": "gate1_alarm_yellow_flash,Start,,0,-1"
+        "OnTrigger#2": "gate1_emergency_light,SetAnimation,spin,0,-1"
+        "OnTrigger#3": "gate1_emergency_light,Skin,2,0,-1"
+        "OnTrigger#4": "status_sign_blu,Skin,4,0,-1"
+        "OnTrigger#5": "status_sign_hold,Skin,1,0,-1"
+        "OnTrigger#6": "status_sign_red,Skin,2,0,-1"
+        "OnTrigger#7": "player,RunScriptCode,self.SetScriptOverlayMaterial(\"hud/plr_yellow\")"
+    });
 
     // track elevator bottom out
     AddThinkToEnt(RED_WATCHER, "CheckBottomRedThink");
@@ -181,12 +224,12 @@ function OnGameEvent_teamplay_round_start(params) {
 ::CartThinkBluBase <- CartThinkBlu;
 
 function CartThinkRed() {
-    if (RED_AT_BOTTOM) return;
+    if (::RED_AT_BOTTOM) return 0.5;
     CartThinkRedBase();
 }
 
 function CartThinkBlu() {
-    if (BLU_AT_BOTTOM) return;
+    if (::BLU_AT_BOTTOM) return 0.5;
     CartThinkBluBase();
 }
 
@@ -206,6 +249,9 @@ function AdvanceRed(speed, dynamic = true) {
     if (RED_ELV) {
         ::RED_AT_BOTTOM = false;
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
+        foreach(light in RED_LIFT_FLASHINGLIGHTS) {
+            EntFireByHandle(light, "Start", "", 0, null, null);
+        }
     }
 }
 
@@ -215,6 +261,9 @@ function StopRed() {
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
         local currentSpeed = NetProps.GetPropFloat(RED_ELV, "m_flSpeed");
         if (currentSpeed == 0) EntFireByHandle(RED_ELV, "Stop", "", 0, null, null);
+        foreach(light in RED_LIFT_FLASHINGLIGHTS) {
+            EntFireByHandle(light, "Stop", "", 0, null, null);
+        }
     }
 }
 
@@ -222,6 +271,9 @@ function TriggerRollbackRed() {
     TriggerRollbackRedBase();
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_RED, 0, null, null);
+        foreach(light in RED_LIFT_FLASHINGLIGHTS) {
+            EntFireByHandle(light, "Stop", "", 0, null, null);
+        }
     }
 }
 
@@ -231,6 +283,9 @@ function AdvanceBlu(speed, dynamic = true) {
     if (BLU_ELV) {
         ::BLU_AT_BOTTOM = false;
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
+        foreach(light in BLU_LIFT_FLASHINGLIGHTS) {
+            EntFireByHandle(light, "Start", "", 0, null, null);
+        }
     }
 }
 
@@ -240,6 +295,9 @@ function StopBlu() {
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
         local currentSpeed = NetProps.GetPropFloat(BLU_ELV, "m_flSpeed");
         if (currentSpeed == 0) EntFireByHandle(BLU_ELV, "Stop", "", 0, null, null);
+        foreach(light in BLU_LIFT_FLASHINGLIGHTS) {
+            EntFireByHandle(light, "Stop", "", 0, null, null);
+        }
     }
 }
 
@@ -247,6 +305,9 @@ function TriggerRollbackBlu() {
     TriggerRollbackBluBase();
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_BLU, 0, null, null);
+        foreach(light in BLU_LIFT_FLASHINGLIGHTS) {
+            EntFireByHandle(light, "Stop", "", 0, null, null);
+        }
     }
 }
 
@@ -292,7 +353,7 @@ function UpdateRedCart(caseNumber) {
         if(CASE_BLU == 0 && OVERTIME_ACTIVE) {
             AdvanceRed(OVERTIME_SPEED_RED);
             if(!BLOCK_BLU) AdvanceBlu(OVERTIME_SPEED_BLU);
-        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && RED_ROLLSTATE == -1
+        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && RED_ROLLSTATE == -1 && !RED_AT_BOTTOM
             && !(RED_ELV && BLU_ELV && CASE_BLU == 0)) { // If BLU cart is on the lift and not being pushed, activate HOLD state.
             TriggerRollbackRed();
         } else {
@@ -327,7 +388,7 @@ function UpdateBluCart(caseNumber) {
         if(CASE_RED == 0 && OVERTIME_ACTIVE) {
             AdvanceBlu(OVERTIME_SPEED_BLU);
             if(!BLOCK_RED) AdvanceRed(OVERTIME_SPEED_RED);
-        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && BLU_ROLLSTATE == -1
+        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && BLU_ROLLSTATE == -1 && !BLU_AT_BOTTOM
             && !(BLU_ELV && RED_ELV && CASE_RED == 0)) { // If both carts are on the lift and not being pushed, activate HOLD state.
             TriggerRollbackBlu();
         } else {
@@ -346,8 +407,14 @@ function SwitchToElevatorRed() {
     ::RED_AT_BOTTOM <- true;
     AdvanceRed(1.0);
 
+    RED_FLASHINGLIGHT.AcceptInput("Stop", "", null, null);
+    foreach (spark in RED_CARTSPARKS_ARRAY) spark.AcceptInput("Stop", "", null, null);
+
     ::RED_ELV <- MM_GetEntByName("ssplr_red_lift_finale1_train");
     ::RED_PUSHZONE <- MM_GetEntByName("ssplr_red_lift_finale1_pushzone");
+    ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("ssplr_red_lift_finale1_sparks")
+    ::RED_FLASHINGLIGHT <- null;
+
     EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
     ROLLBACK_SPEED_RED = -0.5;
     OVERTIME_SPEED_RED = 0.05;
@@ -358,6 +425,9 @@ function SwitchToElevatorRed() {
     EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", RED_TRAIN.GetName(), "Stop", "", 0, 1);
     EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", RED_ELV.GetName(), "Stop", "", 0, 1);
     EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0.05, 1);
+
+    EntFireByHandle(MM_GetEntByName("ssplr_red_flashinglight"), "Stop", "", 1.0, null, null);
+    foreach (spark in MM_GetEntArrayByName("ssplr_red_cartsparks")) EntFireByHandle(spark, "Stop", "", 0.1, null, null);
 
     EntFireByHandle(Gamerules(), "RunScriptCode", "StopRed(); ::BLOCK_RED <- false", 1.0, null, null);
     EntFireByHandle(Gamerules(), "RunScriptCode", "UpdateRedCart(CASE_RED)", 1.05, null, null);
@@ -372,6 +442,9 @@ function SwitchToElevatorBlu() {
 
     ::BLU_ELV <- MM_GetEntByName("ssplr_blu_lift_finale1_train");
     ::BLU_PUSHZONE <- MM_GetEntByName("ssplr_blu_lift_finale1_pushzone");
+    ::BLU_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("ssplr_blu_lift_finale1_sparks")
+    ::BLU_FLASHINGLIGHT <- null;
+
     EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
     ROLLBACK_SPEED_BLU = -0.5;
     OVERTIME_SPEED_BLU = 0.05;
@@ -383,6 +456,9 @@ function SwitchToElevatorBlu() {
     EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", BLU_ELV.GetName(), "Stop", "", 0, 1)
     EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0.05, 1);
 
+    EntFireByHandle(MM_GetEntByName("ssplr_blu_flashinglight"), "Stop", "", 1.0, null, null);
+    foreach (spark in MM_GetEntArrayByName("ssplr_blu_cartsparks")) EntFireByHandle(spark, "Stop", "", 0.1, null, null);
+
     EntFireByHandle(Gamerules(), "RunScriptCode", "StopBlu(); ::BLOCK_BLU <- false", 1.0, null, null);
     EntFireByHandle(Gamerules(), "RunScriptCode", "UpdateBluCart(CASE_BLU)", 1.05, null, null);
 
@@ -391,27 +467,35 @@ function SwitchToElevatorBlu() {
 
 function CheckBottomRedThink() {
     local oldValue = RED_AT_BOTTOM;
-    local newValue = RED_ELV && NetProps.GetPropFloat(RED_WATCHER, "m_flTotalProgress") < LIFT_BOTTOM_THRESHOLD;
+    local position = NetProps.GetPropFloat(RED_WATCHER, "m_flTotalProgress");
 
-    if (oldValue != newValue) {
-        RED_AT_BOTTOM <- newValue;
+    local newValue = null;
+    if (RED_ELV && position > LIFT_BOTTOM_THRESHOLD + LIFT_BOTTOM_HYSTERESIS) newValue = false;
+    else if (RED_ELV && position < LIFT_BOTTOM_THRESHOLD) newValue = true;
+
+    if (newValue != null && oldValue != newValue) {
+        ::RED_AT_BOTTOM <- newValue;
+        //printl("RED_AT_BOTTOM: " + newValue);
         UpdateRedCart(CASE_RED);
         UpdateBluCart(CASE_BLU);
     }
-
     return -1;
 }
 
 function CheckBottomBluThink() {
     local oldValue = BLU_AT_BOTTOM;
-    local newValue = BLU_ELV && NetProps.GetPropFloat(BLU_WATCHER, "m_flTotalProgress") < LIFT_BOTTOM_THRESHOLD;
+    local position = NetProps.GetPropFloat(BLU_WATCHER, "m_flTotalProgress");
 
-    if (oldValue != newValue) {
-        BLU_AT_BOTTOM <- newValue;
+    local newValue = null;
+    if (BLU_ELV && position > LIFT_BOTTOM_THRESHOLD + LIFT_BOTTOM_HYSTERESIS) newValue = false;
+    else if (BLU_ELV && position < LIFT_BOTTOM_THRESHOLD) newValue = true;
+
+    if (newValue != null && oldValue != newValue) {
+        ::BLU_AT_BOTTOM <- newValue;
+        //printl("BLU_AT_BOTTOM: " + newValue);
         UpdateBluCart(CASE_BLU);
         UpdateRedCart(CASE_RED);
     }
-
     return -1;
 }
 
