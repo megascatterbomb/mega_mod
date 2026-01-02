@@ -23,8 +23,8 @@ function OnGameEvent_teamplay_round_start(params) {
     ::RED_ELV <- null;
     ::BLU_ELV <- null;
 
-    ::RED_AT_BOTTOM <- true;
-    ::BLU_AT_BOTTOM <- true;
+    ::RED_AT_BOTTOM <- false;
+    ::BLU_AT_BOTTOM <- false;
 
     ::RED_WATCHER <- MM_GetEntByName("ssplr_red_watcherA");
     ::BLU_WATCHER <- MM_GetEntByName("ssplr_blu_watcherA");
@@ -33,6 +33,7 @@ function OnGameEvent_teamplay_round_start(params) {
     ::BLU_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_blu", "Blu");
 
     ::ELEVATOR_OVERTIME_SPEED <- 0.1;
+    ::LIFT_BOTTOM_THRESHOLD <- 0.675;
 
     // Rollback zones
     AddRollbackZone("ssplr_red_path_lift_finale1_4", null, "ssplr_red_path_lift_finale1_1", "Red");
@@ -167,25 +168,26 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).AcceptInput("Enable", "", null, null);
     }
 
+    // track elevator bottom out
+    AddThinkToEnt(RED_WATCHER, "CheckBottomRedThink");
+    AddThinkToEnt(BLU_WATCHER, "CheckBottomBluThink");
+
     // Add thinks to carts
     CreateCartAutoUpdater(RED_TRAIN, 2);
     CreateCartAutoUpdater(BLU_TRAIN, 3);
-
-    EntFireByHandle(Gamerules(), "RunScriptCode", "DelayedSetup()", 1.0, null, null);
 }
 
-// executes after logic_auto does its thing
-function DelayedSetup()
-{
+::CartThinkRedBase <- CartThinkRed;
+::CartThinkBluBase <- CartThinkBlu;
 
+function CartThinkRed() {
+    if (RED_AT_BOTTOM) return;
+    CartThinkRedBase();
 }
 
-::StartOvertimeBase <- StartOvertime;
-
-function StartOvertime() {
-
-
-    StartOvertimeBase();
+function CartThinkBlu() {
+    if (BLU_AT_BOTTOM) return;
+    CartThinkBluBase();
 }
 
 ::AdvanceRedBase <- AdvanceRed;
@@ -210,6 +212,7 @@ function AdvanceRed(speed, dynamic = true) {
 function StopRed() {
     StopRedBase();
     if (RED_ELV) {
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
         local currentSpeed = NetProps.GetPropFloat(RED_ELV, "m_flSpeed");
         if (currentSpeed == 0) EntFireByHandle(RED_ELV, "Stop", "", 0, null, null);
     }
@@ -234,6 +237,7 @@ function AdvanceBlu(speed, dynamic = true) {
 function StopBlu() {
     StopBluBase();
     if (BLU_ELV) {
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
         local currentSpeed = NetProps.GetPropFloat(BLU_ELV, "m_flSpeed");
         if (currentSpeed == 0) EntFireByHandle(BLU_ELV, "Stop", "", 0, null, null);
     }
@@ -339,13 +343,14 @@ function UpdateBluCart(caseNumber) {
 // New speeds assume counter-boost is in effect (if not, use 50% of given value)
 function SwitchToElevatorRed() {
     ::BLOCK_RED <- true;
+    ::RED_AT_BOTTOM <- true;
     AdvanceRed(1.0);
 
     ::RED_ELV <- MM_GetEntByName("ssplr_red_lift_finale1_train");
     ::RED_PUSHZONE <- MM_GetEntByName("ssplr_red_lift_finale1_pushzone");
     EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
     ROLLBACK_SPEED_RED = -0.5;
-    OVERTIME_SPEED_RED = 0.1;
+    OVERTIME_SPEED_RED = 0.05;
     TIMES_1_SPEED_RED = 0.33;
     TIMES_2_SPEED_RED = 0.5;
     TIMES_3_SPEED_RED = 0.66;
@@ -362,13 +367,14 @@ function SwitchToElevatorRed() {
 
 function SwitchToElevatorBlu() {
     ::BLOCK_BLU <- true;
+    ::BLU_AT_BOTTOM <- true;
     AdvanceBlu(1.0);
 
     ::BLU_ELV <- MM_GetEntByName("ssplr_blu_lift_finale1_train");
     ::BLU_PUSHZONE <- MM_GetEntByName("ssplr_blu_lift_finale1_pushzone");
     EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
     ROLLBACK_SPEED_BLU = -0.5;
-    OVERTIME_SPEED_BLU = 0.1;
+    OVERTIME_SPEED_BLU = 0.05;
     TIMES_1_SPEED_BLU = 0.33;
     TIMES_2_SPEED_BLU = 0.5;
     TIMES_3_SPEED_BLU = 0.66;
@@ -381,6 +387,32 @@ function SwitchToElevatorBlu() {
     EntFireByHandle(Gamerules(), "RunScriptCode", "UpdateBluCart(CASE_BLU)", 1.05, null, null);
 
     UpdateHUD();
+}
+
+function CheckBottomRedThink() {
+    local oldValue = RED_AT_BOTTOM;
+    local newValue = RED_ELV && NetProps.GetPropFloat(RED_WATCHER, "m_flTotalProgress") < LIFT_BOTTOM_THRESHOLD;
+
+    if (oldValue != newValue) {
+        RED_AT_BOTTOM <- newValue;
+        UpdateRedCart(CASE_RED);
+        UpdateBluCart(CASE_BLU);
+    }
+
+    return -1;
+}
+
+function CheckBottomBluThink() {
+    local oldValue = BLU_AT_BOTTOM;
+    local newValue = BLU_ELV && NetProps.GetPropFloat(BLU_WATCHER, "m_flTotalProgress") < LIFT_BOTTOM_THRESHOLD;
+
+    if (oldValue != newValue) {
+        BLU_AT_BOTTOM <- newValue;
+        UpdateBluCart(CASE_BLU);
+        UpdateRedCart(CASE_RED);
+    }
+
+    return -1;
 }
 
 __CollectGameEventCallbacks(this);
