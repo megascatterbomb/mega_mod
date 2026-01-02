@@ -157,9 +157,6 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "ssplr_blu_train", "AddOutput", "manualdecelspeed 999", 0.3, -1)
     EntityOutputs.AddOutput(ssplr_blu_lift_finale1_relay_embark, "OnTrigger", "!self", "RunScriptCode", "SwitchToElevatorBlu()", 0, 1)
 
-    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_3reverse"), "OnTrigger", "!self", "RunScriptCode", "if (!BLOCK_RED) ::RED_AT_BOTTOM <- true; UpdateBluCart(CASE_BLU)", 0, -1)
-    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_3reverse"), "OnTrigger", "!self", "RunScriptCode", "if (!BLOCK_BLU) ::BLU_AT_BOTTOM <- true; UpdateRedCart(CASE_RED)", 0, -1)
-
     // Enable counterboost HUD logic
     foreach(entName in [
         "status_off"
@@ -342,7 +339,6 @@ function UpdateBluCart(caseNumber) {
 // New speeds assume counter-boost is in effect (if not, use 50% of given value)
 function SwitchToElevatorRed() {
     ::BLOCK_RED <- true;
-    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", RED_TRAIN.GetName(), "Stop", "", 0, 1)
     AdvanceRed(1.0);
 
     ::RED_ELV <- MM_GetEntByName("ssplr_red_lift_finale1_train");
@@ -354,14 +350,18 @@ function SwitchToElevatorRed() {
     TIMES_2_SPEED_RED = 0.5;
     TIMES_3_SPEED_RED = 0.66;
 
-    EntFireByHandle(Gamerules(), "RunScriptCode", "StopRed(); ::BLOCK_RED <- false; UpdateRedCart(0)", 1.0, null, null);
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", RED_TRAIN.GetName(), "Stop", "", 0, 1);
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", RED_ELV.GetName(), "Stop", "", 0, 1);
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", "!self", "RunScriptCode", "UpdateRedCart(CASE_RED)", 0.05, 1);
+
+    EntFireByHandle(Gamerules(), "RunScriptCode", "StopRed(); ::BLOCK_RED <- false", 1.0, null, null);
+    EntFireByHandle(Gamerules(), "RunScriptCode", "UpdateRedCart(CASE_RED)", 1.05, null, null);
 
     UpdateHUD();
 }
 
 function SwitchToElevatorBlu() {
     ::BLOCK_BLU <- true;
-    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", BLU_TRAIN.GetName(), "Stop", "", 0, 1)
     AdvanceBlu(1.0);
 
     ::BLU_ELV <- MM_GetEntByName("ssplr_blu_lift_finale1_train");
@@ -373,7 +373,12 @@ function SwitchToElevatorBlu() {
     TIMES_2_SPEED_BLU = 0.5;
     TIMES_3_SPEED_BLU = 0.66;
 
-    EntFireByHandle(Gamerules(), "RunScriptCode", "StopBlu(); ::BLOCK_BLU <- false; UpdateBluCart(0)", 1.0, null, null);
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", BLU_TRAIN.GetName(), "Stop", "", 0, 1)
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", BLU_ELV.GetName(), "Stop", "", 0, 1)
+    EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", "!self", "RunScriptCode", "UpdateBluCart(CASE_BLU)", 0.05, 1);
+
+    EntFireByHandle(Gamerules(), "RunScriptCode", "StopBlu(); ::BLOCK_BLU <- false", 1.0, null, null);
+    EntFireByHandle(Gamerules(), "RunScriptCode", "UpdateBluCart(CASE_BLU)", 1.05, null, null);
 
     UpdateHUD();
 }
