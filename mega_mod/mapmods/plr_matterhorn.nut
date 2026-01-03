@@ -511,8 +511,8 @@ function CheckBottomRedThink() {
     if (newValue != null && oldValue != newValue) {
         ::RED_AT_BOTTOM <- newValue;
         //printl("RED_AT_BOTTOM: " + newValue);
-        UpdateRedCart(CASE_RED);
-        UpdateBluCart(CASE_BLU);
+        EntFireByHandle(Gamerules(), "RunScriptCode", "::UpdateRedCart(CASE_RED)", 0.1, null, null);
+        EntFireByHandle(Gamerules(), "RunScriptCode", "::UpdateBluCart(CASE_BLU)", 0.1, null, null);
     }
     return -1;
 }
@@ -528,8 +528,8 @@ function CheckBottomBluThink() {
     if (newValue != null && oldValue != newValue) {
         ::BLU_AT_BOTTOM <- newValue;
         //printl("BLU_AT_BOTTOM: " + newValue);
-        UpdateBluCart(CASE_BLU);
-        UpdateRedCart(CASE_RED);
+        EntFireByHandle(Gamerules(), "RunScriptCode", "::UpdateBluCart(CASE_BLU)", 0.1, null, null);
+        EntFireByHandle(Gamerules(), "RunScriptCode", "::UpdateRedCart(CASE_RED)", 0.1, null, null);
     }
     return -1;
 }
