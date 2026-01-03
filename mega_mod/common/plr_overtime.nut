@@ -1,15 +1,7 @@
-::MM_PLR_TIME_UPPER_LIMIT <- 600;
-::MM_PLR_TIME_LOWER_LIMIT <- 90;
-
-// Defines minimum multiplier applied to cart speed for the dynamic speed system.
-::MM_PLR_MINIMUM_SPEED_RATIO <- 0.35;
-// Defines distances between the carts as a fraction of track length for the dynamic speed system.
-::MM_PLR_MINIMUM_DELTA_RATIO <- 0.25;
-::MM_PLR_MAXIMUM_DELTA_RATIO <- 0.65;
-
 // REQUIRED GLOBAL VARIABLES
 // This file should be included at the very start of the map-specific file.
-// Every global variable MUST be set by the map-specific file in OnGameEvent_teamplay_round_start() after a call to InitGlobalVars()
+// InitGlobalVars() MUST be called in OnGameEvent_teamplay_round_start() before any other code.
+// Global variables which differ from these defaults or are set to null must be defined in OnGameEvent_teamplay_round_start().
 
 function InitGlobalVars() {
 
@@ -66,10 +58,12 @@ function InitGlobalVars() {
     ::RED_LAST_UPDATE <- Time();
     ::BLU_LAST_UPDATE <- Time();
 
+    ::ROLLBACK_SPEED_RED <- -1.0;
     ::TIMES_1_SPEED_RED <- 0.55;
     ::TIMES_2_SPEED_RED <- 0.77;
     ::TIMES_3_SPEED_RED <- 1.0;
 
+    ::ROLLBACK_SPEED_BLU <- -1.0;
     ::TIMES_1_SPEED_BLU <- 0.55;
     ::TIMES_2_SPEED_BLU <- 0.77;
     ::TIMES_3_SPEED_BLU <- 1.0;
@@ -79,6 +73,15 @@ function InitGlobalVars() {
 
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
+
+    ::MM_PLR_TIME_UPPER_LIMIT <- 1800;
+    ::MM_PLR_TIME_LOWER_LIMIT <- 180;
+
+    // Defines minimum multiplier applied to cart speed for the dynamic speed system.
+    ::MM_PLR_MINIMUM_SPEED_RATIO <- 0.35;
+    // Defines distances between the carts as a fraction of track length for the dynamic speed system.
+    ::MM_PLR_MINIMUM_DELTA_RATIO <- 0.25;
+    ::MM_PLR_MAXIMUM_DELTA_RATIO <- 0.65;
 
     local gamerules = Gamerules();
     local tcpMaster = Entities.FindByClassname(null, "team_control_point_master");
@@ -251,7 +254,7 @@ function TriggerRollbackRed() {
         EntFireByHandle(spark, "StartSpark", "", 0, null, null);
     }
     if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
+    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_RED, 0, null, null);
 
     ::RED_LAST_UPDATE <- Time();
 }
@@ -288,7 +291,7 @@ function TriggerRollbackBlu() {
         EntFireByHandle(spark, "StartSpark", "", 0, null, null);
     }
     if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "-1", 0, null, null);
+    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_BLU, 0, null, null);
 
     ::BLU_LAST_UPDATE <- Time();
 }
@@ -418,6 +421,7 @@ function CartThink(team) {
 
 // These functions set the crossing value, then block the cart from being updated
 // if it's the first cart to reach that crossing.
+// TODO: This logic can't handle rotationally symmetric maps with crossings that the carts reach in different orders. Thankfully none exist yet.
 function SetRedCrossing(crossing) {
     ::CROSSING_RED <- crossing;
     // If we exited a crossing.

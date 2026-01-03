@@ -135,7 +135,7 @@ function TriggerRollbackRed() {
     TriggerRollbackRedBase();
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "-1", 0, null, null);
+        EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_RED, 0, null, null);
     }
 }
 
@@ -164,7 +164,7 @@ function TriggerRollbackBlu() {
     TriggerRollbackBluBase();
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedForwardModifier", "0.25", 0, null, null);
-        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "-1", 0, null, null);
+        EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_BLU, 0, null, null);
     }
 }
 
