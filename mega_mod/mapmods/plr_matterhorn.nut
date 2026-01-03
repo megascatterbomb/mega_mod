@@ -36,7 +36,7 @@ function OnGameEvent_teamplay_round_start(params) {
     ::BLU_LIFT_FLASHINGLIGHTS <- MM_GetEntArrayByName("ssplr_blu_lift_finale1_lights");
 
     ::ELEVATOR_OVERTIME_SPEED <- 0.1;
-    ::LIFT_BOTTOM_THRESHOLD <- 0.677;
+    ::LIFT_BOTTOM_THRESHOLD <- 0.676;
     ::LIFT_BOTTOM_HYSTERESIS <- 0.001;
 
     ::RED_WHEEL <- MM_GetEntByName("wheel_red")
@@ -340,7 +340,7 @@ function UpdateHUD() {
     MM_GetEntByName(toTrigger).AcceptInput("Trigger", "", null, null);
 }
 
-function UpdateRedCart(caseNumber) {
+function UpdateRedCart(caseNumber, nestedCall = false) {
     ::CASE_RED = caseNumber;
 
     if(BLOCK_RED) return;
@@ -358,6 +358,8 @@ function UpdateRedCart(caseNumber) {
         StopRed();
     }
 
+    if (nestedCall) return;
+
     if(CASE_RED == 0) {
         if(CASE_BLU == 0 && OVERTIME_ACTIVE) {
             AdvanceRed(OVERTIME_SPEED_RED);
@@ -372,10 +374,21 @@ function UpdateRedCart(caseNumber) {
         UpdateBluCart(0);
     }
 
+    // need to force update other cart to account for various elevator states
+    if (RED_ELV && BLU_ELV && !OVERTIME_ACTIVE) {
+        if (CASE_RED == 0 && CASE_BLU == 0) { // HOLD
+            StopBlu();
+        } else if (CASE_RED != 0 && CASE_BLU == 0) { // Rollback other cart
+            TriggerRollbackBlu();
+        } else { // Counterboost/stop counterboosting other cart
+            UpdateBluCart(CASE_BLU, true);
+        }
+    }
+
     UpdateHUD();
 }
 
-function UpdateBluCart(caseNumber) {
+function UpdateBluCart(caseNumber, nestedCall = false) {
     ::CASE_BLU = caseNumber;
 
     if(BLOCK_BLU) return;
@@ -393,6 +406,8 @@ function UpdateBluCart(caseNumber) {
         StopBlu();
     }
 
+    if (nestedCall) return;
+
     if(CASE_BLU == 0) {
         if(CASE_RED == 0 && OVERTIME_ACTIVE) {
             AdvanceBlu(OVERTIME_SPEED_BLU);
@@ -405,6 +420,17 @@ function UpdateBluCart(caseNumber) {
         }
     } else if ((RED_ELV || OVERTIME_ACTIVE) && CASE_RED == 0) {
         UpdateRedCart(0);
+    }
+
+    // need to force update other cart to account for various elevator states
+    if (RED_ELV && BLU_ELV && !OVERTIME_ACTIVE) {
+        if (CASE_BLU == 0 && CASE_RED == 0) { // HOLD
+            StopRed();
+        } else if (CASE_BLU != 0 && CASE_RED == 0) { // Rollback other cart
+            TriggerRollbackRed();
+        } else { // Counterboost/stop counterboosting other cart
+            UpdateRedCart(CASE_RED, true);
+        }
     }
 
     UpdateHUD();

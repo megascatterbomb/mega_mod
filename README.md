@@ -124,7 +124,7 @@ Currently supported maps: `plr_bananabay`, `plr_cutter`, `plr_hacksaw`, `plr_hac
 
 Stage 1 and 2 of Nightfall feature an overtime. This mod copies that logic into other maps using nothing but VScript, with some additional QoL features.
 
-After 30 minutes (or less if mp_timelimit is lower), the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain. Multistage maps will also always play to the final stage, even if mp_timelimit has expired.
+After 30 minutes (or less if mp_timelimit is lower, down to 3 minutes minimum), the map enters overtime. If neither cart is being pushed, they will both slowly inch forward. Pushing either cart will result in the other cart stopping (potentially rolling backwards). The mod basically replaces all vanilla PLR logic, as trying to utiize existing rollback/rollforward zones, hightower elevators, crossings, map logic, etc is a pain. Multistage maps will also always play to the final stage, even if mp_timelimit has expired.
 
 ### Dynamic cart speed
 
@@ -144,6 +144,9 @@ To reduce the likelihood of steamrolls, the leading cart's speed is reduced base
   - There's two improperly sized clip brushes on stage 3 next to the crossing. This mod spawns a couple of signs that take up the extra space covered by the clip brush, which also provide direction to players.
   - The path_track nodes at the top of the final ramp also use the wrong output; this mod corrects the outputs. Carts will roll slower down the final ramp as a result.
   - The round timer overhaul fixes a bug where setup time is stuck on during Stage 3, affecting Engineer building upgrades.
+- Matterhorn:
+  - Carts on the final elevators are not affected by the dynamic speed system.
+  - Counterboost works as normal during overtime, however instead of "holding" when neither cart is being pushed, the carts instead advance slowly towards the top of the lifts.
 
 ## Special Delivery
 
