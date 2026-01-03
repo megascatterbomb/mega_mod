@@ -39,6 +39,9 @@ function OnGameEvent_teamplay_round_start(params) {
     ::LIFT_BOTTOM_THRESHOLD <- 0.677;
     ::LIFT_BOTTOM_HYSTERESIS <- 0.001;
 
+    ::RED_WHEEL <- MM_GetEntByName("wheel_red")
+    ::BLU_WHEEL <- MM_GetEntByName("wheel_blu")
+
     // Rollback zones
     AddRollbackZone("ssplr_red_path_lift_finale1_4", null, "ssplr_red_path_lift_finale1_1", "Red");
     AddRollbackZone("ssplr_blu_path_lift_finale1_4", null, "ssplr_blu_path_lift_finale1_1", "Blu");
@@ -249,6 +252,7 @@ function AdvanceRed(speed, dynamic = true) {
     if (RED_ELV) {
         ::RED_AT_BOTTOM = false;
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
+        EntFireByHandle(RED_WHEEL, "SetSpeed", "" + speed, 0, null, null);
         foreach(light in RED_LIFT_FLASHINGLIGHTS) {
             EntFireByHandle(light, "Start", "", 0, null, null);
         }
@@ -261,6 +265,7 @@ function StopRed() {
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
         local currentSpeed = NetProps.GetPropFloat(RED_ELV, "m_flSpeed");
         if (currentSpeed == 0) EntFireByHandle(RED_ELV, "Stop", "", 0, null, null);
+        EntFireByHandle(RED_WHEEL, "Stop", "", 0, null, null);
         foreach(light in RED_LIFT_FLASHINGLIGHTS) {
             EntFireByHandle(light, "Stop", "", 0, null, null);
         }
@@ -271,6 +276,7 @@ function TriggerRollbackRed() {
     TriggerRollbackRedBase();
     if(RED_ELV) {
         EntFireByHandle(RED_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_RED, 0, null, null);
+        EntFireByHandle(RED_WHEEL, "SetSpeed", "" + ROLLBACK_SPEED_RED, 0, null, null);
         foreach(light in RED_LIFT_FLASHINGLIGHTS) {
             EntFireByHandle(light, "Stop", "", 0, null, null);
         }
@@ -283,6 +289,7 @@ function AdvanceBlu(speed, dynamic = true) {
     if (BLU_ELV) {
         ::BLU_AT_BOTTOM = false;
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + speed, 0, null, null);
+        EntFireByHandle(BLU_WHEEL, "SetSpeed", "" + speed, 0, null, null);
         foreach(light in BLU_LIFT_FLASHINGLIGHTS) {
             EntFireByHandle(light, "Start", "", 0, null, null);
         }
@@ -295,6 +302,7 @@ function StopBlu() {
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "0.0", 0, null, null);
         local currentSpeed = NetProps.GetPropFloat(BLU_ELV, "m_flSpeed");
         if (currentSpeed == 0) EntFireByHandle(BLU_ELV, "Stop", "", 0, null, null);
+        EntFireByHandle(BLU_WHEEL, "Stop", "", 0, null, null);
         foreach(light in BLU_LIFT_FLASHINGLIGHTS) {
             EntFireByHandle(light, "Stop", "", 0, null, null);
         }
@@ -305,6 +313,7 @@ function TriggerRollbackBlu() {
     TriggerRollbackBluBase();
     if(BLU_ELV) {
         EntFireByHandle(BLU_ELV, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_BLU, 0, null, null);
+        EntFireByHandle(BLU_WHEEL, "SetSpeed", "" + ROLLBACK_SPEED_BLU, 0, null, null);
         foreach(light in BLU_LIFT_FLASHINGLIGHTS) {
             EntFireByHandle(light, "Stop", "", 0, null, null);
         }
