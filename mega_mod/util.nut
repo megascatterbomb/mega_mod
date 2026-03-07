@@ -85,16 +85,29 @@ function Gamerules() {
     TC = "tc",
     MVM = "mvm",
     MP = "mannpower",
+    HTF = "htf"
     TOW = "tow",
     VSH = "vsh",
-    ZI = "zi"
-    VIP = "vip"
+    ZI = "zi",
+
+    // TF2 Classified
+    TD = "td",
+    DOM = "dom",
+    VIP = "vip",
+    VIPR = "vipr",
+    ARENA_4TEAM = "4arena",
+    CTF_4TEAM = "4ctf"
+    DOM_4TEAM = "4dom",
+    KOTH_4TEAM = "4koth",
+    PLR_4TEAM = "4plr"
 }
 
 function MM_GetGamemode() {
     local mapName = GetMapName();
     local overrides = {
-        "ctf_haarp": MM_Gamemodes.AD_MS
+        "ctf_haarp": MM_Gamemodes.AD_MS,
+        "ctf_4fort_final": MM_Gamemodes.CTF_4TEAM,
+        "ctf_4bine_v2": MM_Gamemodes.CTF_4TEAM
     };
 
     if(mapName in overrides) {
@@ -108,43 +121,20 @@ function MM_GetGamemode() {
     local mapPrefix = mapName.slice(0, mapName.find("_"));
 
     switch (mapPrefix) {
-        case "arena":
-            return MM_Gamemodes.ARENA;
         case "cp":
             return MM_Gamemode_CheckCPGamemode();
-        case "cppl":
-            return MM_Gamemodes.CPPL;
         case "ctf":
             return MM_Gamemode_CheckForMannpower();
-        case "koth":
-            return MM_Gamemodes.KOTH;
-        case "2koth":
-            return MM_Gamemodes.TWOKOTH;
         case "pl":
             return MM_Gamemode_CheckIfMultiStage() ? MM_Gamemodes.PL_MS : MM_Gamemodes.PL;
         case "plr":
             return MM_Gamemode_CheckIfMultiStage() ? MM_Gamemodes.PLR_MS : MM_Gamemodes.PLR;
-        case "pass":
-            return MM_Gamemodes.PASS;
-        case "sd":
-            return MM_Gamemodes.SD;
-        case "rd":
-            return MM_Gamemodes.RD;
-        case "pd":
-            return MM_Gamemodes.PD;
-        case "tc":
-            return MM_Gamemodes.TC;
-        case "mvm":
-            return MM_Gamemodes.MVM;
-        case "tow":
-            return MM_Gamemodes.TOW;
-        case "vsh":
-            return MM_Gamemodes.VSH;
-        case "zi":
-            return MM_Gamemodes.ZI;
-        case "vip":
-            return MM_Gamemodes.VIP;
-    }
+        default:
+            foreach (name, value in MM_Gamemodes) {
+                if (value == mapPrefix)
+                    return value;
+            }
+        }
 
     return MM_Gamemodes.UNKNOWN;
 }
