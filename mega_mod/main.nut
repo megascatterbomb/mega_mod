@@ -58,6 +58,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     "jakemod"
     "gamemode_cfg"
     "neutral_point_stalemate"
+    "mp_timelimit_enforcement"
     "mvm_max_defenders"
     "mvm_scaling"
     "mvm_tank_messages"

@@ -59,6 +59,38 @@ function MM_GetCapAreaByPoint(cp) {
 	return null;
 }
 
+// TODO: how to account for TF2C's bullshit?
+function MM_GetTimelimitRemaining() { // Seconds
+    local gamerules = Gamerules();
+    local mp_timelimit = Convars.GetInt("mp_timelimit");
+
+    if (mp_timelimit != null && mp_timelimit > 0) {
+        local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
+        return remainingTime;
+    }
+    return null;
+}
+
+function MM_IsTimelimitExpired() {
+    local remainingTime = MM_GetTimelimitRemaining();
+    return remainingTime == null ? false : remainingTime <= 0;
+}
+
+function MM_CallOnTimelimitExpired(func) {
+    local f = UniqueString("MP_TIMELIMIT_EXPIREFUNC");
+    local g = UniqueString("MP_TIMELIMIT_EXPIREGATE");
+    local root = getroottable();
+    root[f] <- function() {
+        ClientPrint(null, 3, "THINKING " + root[g]);
+        if (root[g]) return 2147483647; // INT_MAX
+        if (!MM_IsTimelimitExpired()) return 1;
+        root[g] <- true;
+        func();
+    };
+    root[g] <- false;
+    MM_CreateDummyThink(f);
+}
+
 function Gamerules() {
     return Entities.FindByClassname(null, "tf_gamerules");
 }

@@ -52,10 +52,18 @@ function MM_LoadConfig() {
 	foreach (mod in MM_ALL_MAP_MODS) {
 		mapMods.rawset(mod, true);
 	};
-	local configString = FileToString(MM_CONFIG_PATH)
+	local configString = FileToString(MM_CONFIG_PATH);
 
 	// Load existing config
 	if (!configString) configString = "";
+
+	// Remove \r characters (Windows compatibility)
+	local parts = split(configString, "\r");
+	local configString = "";
+
+	foreach (i, part in parts) {
+		configString += part;
+	}
 
 	local lines = split(configString, "\n")
 	local settings = null;
