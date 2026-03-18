@@ -19,10 +19,34 @@ ApplyMod <- function () {
         if(IsInWaitingForPlayers()) return;
         printl("MEGAMOD: Loading mp_timelimit enforcement mod...");
 
+        // Cut off all inputs to team_round_timer from these entities.
         MM_CallOnTimelimitExpired(function() {
-            ClientPrint(null, 3, "HELLO WORLD :)");
-        })
-    }.bindenv(this);
+            local outputsToRemove = {
+                "OnCapTeam1": "team_control_point"
+                "OnCapTeam2": "team_control_point"
+                "OnCapTeam1": "trigger_capture_area"
+                "OnCapTeam2": "trigger_capture_area"
+                "OnTrigger": "logic_relay"
+            };
+            foreach (outputName, className in outputsToRemove) {
+            	for (local ent = null; ent = Entities.FindByClassname(ent, className);) {
+            		local outputs = [];
+            		local outputCount = EntityOutputs.GetNumElements(ent, outputName);
+            		for (local i = outputCount - 1; i >= 0; i--) {
+            			local table = {}
+            			EntityOutputs.GetOutputTable(ent, outputName, table, i);
+            			outputs.append(table)
+            		}
+                    foreach (output in outputs) {
+                        if (output.target == "team_round_timer" || output.target == "timer_round") {
+                            EntityOutputs.RemoveOutput(ent, outputName, output.target, output.input, output.parameter);
+                        }
+                    }
+                }
+            }
+            ClientPrint(null, 3, "\x07FCD303Map timelimit has expired, no more time will be added!");
+        }
+    )}.bindenv(this);
 
     local scope = this;
     scope.ClearGameEventCallbacks <- ::ClearGameEventCallbacks

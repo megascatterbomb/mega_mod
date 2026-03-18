@@ -81,7 +81,6 @@ function MM_CallOnTimelimitExpired(func) {
     local g = UniqueString("MP_TIMELIMIT_EXPIREGATE");
     local root = getroottable();
     root[f] <- function() {
-        ClientPrint(null, 3, "THINKING " + root[g]);
         if (root[g]) return 2147483647; // INT_MAX
         if (!MM_IsTimelimitExpired()) return 1;
         root[g] <- true;
