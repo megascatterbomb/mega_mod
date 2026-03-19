@@ -44,6 +44,11 @@ ApplyMod <- function () {
                     }
                 }
             }
+
+            // In TF2C, TD targets "tcdom_timer" when adding time to the clock
+            local timer = MM_GetEntByName("tcdom_timer");
+            if (timer) timer.AcceptInput("AddOutput", "targetname tcdom_timer_locked", null, null);
+
             ClientPrint(null, 3, "\x07FCD303Map timelimit has expired, no more time will be added!");
         }
     )}.bindenv(this);
