@@ -40,14 +40,15 @@ ApplyMod <- function () {
             			outputs.append(table)
             		}
                     foreach (output in outputs) {
-                        if (output.target == "team_round_timer" || output.target == "timer_round") {
+                        local target = MM_GetEntByName(output.target);
+                        if (output.target == "team_round_timer" || (target != null && target.GetClassname() == "team_round_timer")) {
                             EntityOutputs.RemoveOutput(ent, outputName, output.target, output.input, output.parameter);
                         }
                     }
                 }
             }
 
-            // In TF2C, TD targets "tcdom_timer" when adding time to the clock
+            // In TF2C, TD's vscript targets "tcdom_timer" when adding time to the clock
             local timer = MM_GetEntByName("tcdom_timer");
             if (timer) timer.AcceptInput("AddOutput", "targetname tcdom_timer_locked", null, null);
 
