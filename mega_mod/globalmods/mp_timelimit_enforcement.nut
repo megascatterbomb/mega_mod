@@ -4,7 +4,9 @@ function ShouldApply() {
 		MM_Gamemodes.TD,
 		MM_Gamemodes.VIPR
     ];
-    return gamemodes.find(MM_GetGamemode()) != null;
+    return gamemodes.find(MM_GetGamemode()) != null &&
+    // Don't load this if 5CP anti stalemate is enabled.
+    !(MM_GetGamemode() == MM_Gamemodes.CP && MM_ModIsEnabled("5cp_anti_stalemate"));
 }
 
 function LoadAlongsideMapMods() {

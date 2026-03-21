@@ -51,7 +51,7 @@ function RewireTimer(team, forceTimer) {
 	EntFireByHandle(targetCounter, input, "1", 0, null, null);
 }
 
-::MM_NEUTRAL_POINT_STALEMATE_THINK <- function () {
+::MM_NEUTRAL_POINT_STALEMATE_FUNC <- function () {
 
 	local redPoints = [];
 	local bluPoints = [];
@@ -60,7 +60,6 @@ function RewireTimer(team, forceTimer) {
 	for (local cp = null; cp = Entities.FindByClassname(cp, "team_control_point");) {
 		local owner = cp.GetTeam();
 
-		// Point may be locked if there's a halloween boss active, let the bossfight play out then stalemate.
 		switch (owner) {
 			case 0:
 				neutralPoints.append(cp);
@@ -72,21 +71,6 @@ function RewireTimer(team, forceTimer) {
 				bluPoints.append(cp);
 				break;
 		}
-	}
-
-	local gamerules = Gamerules();
-	local mp_timelimit = Convars.GetInt("mp_timelimit");
-
-	if (mp_timelimit != null && mp_timelimit > 0 && !MM_NEUTRAL_POINT_STALEMATE_TRIGGERED) {
-
-		local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
-		if(remainingTime < 0) {
-			::MM_NEUTRAL_POINT_STALEMATE_TRIGGERED <- true;
-		} else {
-			return 1;
-		}
-	} else {
-		return 1;
 	}
 
 	if (neutralPoints.len() == 2) { // Stalemate round
@@ -157,8 +141,7 @@ function OnGameEvent_teamplay_round_start(params)
 
     EntFireByHandle(Gamerules(), "SetStalemateOnTimelimit", "0", 5, null, null);
 
-
-    MM_CreateDummyThink("MM_NEUTRAL_POINT_STALEMATE_THINK");
+    MM_CallOnTimelimitExpired(MM_NEUTRAL_POINT_STALEMATE_FUNC);
 }
 
 __CollectGameEventCallbacks(this)

@@ -29,20 +29,13 @@
     }
 
     if (neutralPointPresentAndUnlocked && !MM_NEUTRAL_POINT_CAPPED) {
-        local gamerules = Gamerules();
-        local mp_timelimit = Convars.GetInt("mp_timelimit");
-
-        if (mp_timelimit != null && mp_timelimit > 0 && !MM_NEUTRAL_POINT_STALEMATE_TRIGGERED) {
-
-            local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
-            if(remainingTime < 0) {
-                ::MM_NEUTRAL_POINT_STALEMATE_TRIGGERED <- true;
-                local stalemate = SpawnEntityFromTable("game_round_win", {
-                    force_map_reset = true // prevents crashes
-                    TeamNum = 0
-                });
-                EntFireByHandle(stalemate, "RoundWin", "", 0, null, null);
-            }
+        if (MM_IsTimelimitExpired() && !MM_NEUTRAL_POINT_STALEMATE_TRIGGERED) {
+            ::MM_NEUTRAL_POINT_STALEMATE_TRIGGERED <- true;
+            local stalemate = SpawnEntityFromTable("game_round_win", {
+                force_map_reset = true // prevents crashes
+                TeamNum = 0
+            });
+            EntFireByHandle(stalemate, "RoundWin", "", 0, null, null);
         }
     } else if (!neutralPointPresent) {
         MM_NEUTRAL_POINT_CAPPED <- true;

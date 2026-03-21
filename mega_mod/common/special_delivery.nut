@@ -16,8 +16,6 @@
 
     EntFireByHandle(gamerules, "SetStalemateOnTimelimit", "0", 0, null, null);
 
-    local mp_timelimit = Convars.GetInt("mp_timelimit");
-
     local time = MM_SD_TIME_UPPER_LIMIT;
 
     local oldTimer = Entities.FindByClassname(null, "team_round_timer");
@@ -26,14 +24,8 @@
     }
 
     // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
-    if (mp_timelimit != null && mp_timelimit > 0) {
-        local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
-
-        if(remainingTime < time) {
-            time = ceil(remainingTime / 30) * 30;
-        }
-    }
-
+    local timeRemaining = MM_GetTimelimitRemaining()
+    if (timeRemaining != null) time = ceil(timeRemaining / 30) * 30;
     if (time > MM_SD_TIME_UPPER_LIMIT) time = MM_SD_TIME_UPPER_LIMIT;
     if (time < MM_SD_TIME_LOWER_LIMIT) time = MM_SD_TIME_LOWER_LIMIT;
 

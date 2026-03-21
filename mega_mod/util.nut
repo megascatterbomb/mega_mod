@@ -60,7 +60,7 @@ function MM_GetCapAreaByPoint(cp) {
 }
 
 // TODO: how to account for TF2C's bullshit?
-function MM_GetTimelimitRemaining() { // Seconds
+function MM_GetTimelimitRemaining() { // Seconds, null if unset
     local gamerules = Gamerules();
     local mp_timelimit = Convars.GetInt("mp_timelimit");
 

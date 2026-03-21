@@ -13,7 +13,7 @@ ApplyMod <- function () {
 
     this.OnGameEvent_teamplay_round_start <- function (event) {
         if(IsInWaitingForPlayers()) return;
-        printl("MEGAMOD: Loading 5cp mod...");
+        printl("MEGAMOD: Loading 5cp anti stalemate mod...");
         MM_5CP_Activate();
     }.bindenv(this);
 

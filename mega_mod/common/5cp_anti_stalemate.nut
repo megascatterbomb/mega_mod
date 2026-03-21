@@ -13,29 +13,26 @@ function MM_5CP_Activate() {
 
 // Kill old timer, swap in a KOTH one.
 function Setup5CPKothTimer() {
-    local oldTimer = Entities.FindByClassname(null, "team_round_timer");
-    if (NetProps.GetPropInt(oldTimer, "m_nSetupTimeLength") > 0 && !MM_5CP_HAS_SETUP) {
-        ::MM_5CP_HAS_SETUP <- true;
-        HandleSetup();
-        return;
-    }
-    local time = NetProps.GetPropInt(oldTimer, "m_nTimerInitialLength");
-    oldTimer.Kill();
-
     local gamerules = Gamerules();
-    local mp_timelimit = Convars.GetInt("mp_timelimit");
+    local oldTimer = Entities.FindByClassname(null, "team_round_timer");
 
     local MM_5CP_TIME_UPPER_LIMIT = 600;
     local MM_5CP_TIME_LOWER_LIMIT = 300;
 
-    // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
-    if (mp_timelimit != null && mp_timelimit > 0) {
-        local remainingTime = (mp_timelimit * 60) - (Time() - NetProps.GetPropFloat(gamerules, "m_flMapResetTime"));
+    local time = MM_5CP_TIME_UPPER_LIMIT;
 
-        if(remainingTime < time) {
-            time = ceil(remainingTime / 30) * 30;
-        }
+    if (oldTimer && NetProps.GetPropInt(oldTimer, "m_nSetupTimeLength") > 0 && !MM_5CP_HAS_SETUP) {
+    	::MM_5CP_HAS_SETUP <- true;
+    	HandleSetup();
+    	return;
+    } else if (oldTimer) {
+        time = NetProps.GetPropInt(oldTimer, "m_nTimerInitialLength");
+        oldTimer.Kill();
     }
+
+    // If mp_timelimit is close, adjust the round timer to prevent excessive maptime.
+    local timeRemaining = MM_GetTimelimitRemaining();
+    if (timeRemaining != null) time = ceil(timeRemaining / 30) * 30;
     if (time > MM_5CP_TIME_UPPER_LIMIT) time = MM_5CP_TIME_UPPER_LIMIT;
     if (time < MM_5CP_TIME_LOWER_LIMIT) time = MM_5CP_TIME_LOWER_LIMIT;
 
