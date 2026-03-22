@@ -98,6 +98,7 @@ function Gamerules() {
 ::MM_Gamemodes <- {
     UNKNOWN = null,
     ARENA = "arena",
+    ARENA_VSCRIPT = "arena_vscript",
     AD = "cp_ad" ,
     AD_MS = "cp_ad_ms",
     CTF =  "ctf",
@@ -152,6 +153,8 @@ function MM_GetGamemode() {
     local mapPrefix = mapName.slice(0, mapName.find("_"));
 
     switch (mapPrefix) {
+        case "arena":
+            return MM_Gamemode_CheckArenaGamemode();
         case "cp":
             return MM_Gamemode_CheckCPGamemode();
         case "ctf":
@@ -168,6 +171,13 @@ function MM_GetGamemode() {
         }
 
     return MM_Gamemodes.UNKNOWN;
+}
+
+function MM_Gamemode_CheckArenaGamemode() {
+    local arena_logic = Entities.FindByClassname(null, "tf_logic_arena");
+    if (arena_logic) return MM_Gamemodes.ARENA;
+
+    return MM_Gamemodes.ARENA_VSCRIPT;
 }
 
 function MM_Gamemode_CheckCPGamemode() {

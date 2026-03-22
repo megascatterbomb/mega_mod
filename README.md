@@ -42,6 +42,45 @@ By default, TF2 offers `server.cfg` for general configuration, plus map specific
 
 This mod offers gamemode-specific config execution. Unfortunately, this requires `sv_allow_point_servercommand` to be added to your `vscript_convar_allowlist.txt`. This mod will only enable server commands when it needs to, reducing the risk of any potentially malicious maps. However, there is still a vulnerability to malicious VScript, so be warned!
 
+This table shows the naming conventions for the variables and configs, as well as the conditions checked to determine each gamemode. All conditions must pass for the cfg to be executed, and only one cfg will ever be executed. Map specific cfgs are re-executed after the gamemode cfg to allow map-specific configuration.
+
+| Gamemode Name               | Gamemode Variable              | Config File                  | Detection Method                                                                 |
+|-----------------------------|--------------------------------|------------------------------|----------------------------------------------------------------------------------|
+| Arena                       | MM_Gamemodes.ARENA             | gamemode_arena.cfg           | Prefix `arena_`<br>`tf_logic_arena` present                                      |
+| Arena (VScript)             | MM_Gamemodes.ARENA_VSCRIPT     | gamemode_arena_vscript.cfg   | Prefix `arena_`<br>`tf_logic_arena` absent                                       |
+| Attack/Defend               | MM_Gamemodes.AD                | gamemode_cp_ad.cfg           | Prefix `cp_`<br>Not 5CP<br>Less than 2 `team_control_point_round` entities       |
+| Attack/Defend (Multi-stage) | MM_Gamemodes.AD_MS             | gamemode_cp_ad_ms.cfg        | Prefix `cp_`<br>Not 5CP<br>Multiple `team_control_point_round` entities          |
+| Capture the Flag            | MM_Gamemodes.CTF               | gamemode_ctf.cfg             | Prefix `ctf_`<br>No `tf_logic_mannpower`                                         |
+| Control Points (5CP)        | MM_Gamemodes.CP                | gamemode_5cp.cfg             | Prefix `cp_`<br>≥1 neutral point<br>Equal RED/BLU points                         |
+| Attack/Defend & Payload     | MM_Gamemodes.CPPL              | gamemode_cppl.cfg            | Prefix `cppl_`                                                                   |
+| King of the Hill            | MM_Gamemodes.KOTH              | gamemode_koth.cfg            | Prefix `koth_`                                                                   |
+| King of the Hill (2 points) | MM_Gamemodes.TWOKOTH           | gamemode_2koth.cfg           | Prefix `2koth_`                                                                  |
+| Payload                     | MM_Gamemodes.PL                | gamemode_pl.cfg              | Prefix `pl_`<br>Less than 2 `team_control_point_round` entities                  |
+| Payload (Multi-stage)       | MM_Gamemodes.PL_MS             | gamemode_pl_ms.cfg           | Prefix `pl_`<br>Multiple `team_control_point_round` entities                     |
+| Payload Race                | MM_Gamemodes.PLR               | gamemode_plr.cfg             | Prefix `plr_`<br>Less than 2 `team_control_point_round` entities                 |
+| Payload Race (Multi-stage)  | MM_Gamemodes.PLR_MS            | gamemode_plr_ms.cfg          | Prefix `plr_`<br>Multiple `team_control_point_round` entities                    |
+| PASS Time                   | MM_Gamemodes.PASS              | gamemode_pass.cfg            | Prefix `pass_`                                                                   |
+| Special Delivery            | MM_Gamemodes.SD                | gamemode_sd.cfg              | Prefix `sd_`                                                                     |
+| Robot Destruction           | MM_Gamemodes.RD                | gamemode_rd.cfg              | Prefix `rd_`                                                                     |
+| Player Destruction          | MM_Gamemodes.PD                | gamemode_pd.cfg              | Prefix `pd_`                                                                     |
+| Territorial Control         | MM_Gamemodes.TC                | gamemode_tc.cfg              | Prefix `tc_`                                                                     |
+| Mann vs Machine             | MM_Gamemodes.MVM               | gamemode_mvm.cfg             | Prefix `mvm_`                                                                    |
+| Mannpower                   | MM_Gamemodes.MP                | gamemode_mannpower.cfg       | Prefix `ctf_`<br>`tf_logic_mannpower` present                                    |
+| Hold the Flag               | MM_Gamemodes.HTF               | gamemode_htf.cfg             | Prefix `htf_`                                                                    |
+| Tug of War                  | MM_Gamemodes.TOW               | gamemode_tow.cfg             | Prefix `tow_`                                                                    |
+| Versus Saxton Hale          | MM_Gamemodes.VSH               | gamemode_vsh.cfg             | Prefix `vsh_`                                                                    |
+| Zombie Infection            | MM_Gamemodes.ZI                | gamemode_zi.cfg              | Prefix `zi_`                                                                     |
+| Tower Defense               | MM_Gamemodes.TD                | gamemode_td.cfg              | Prefix `td_`                                                                     |
+| Domination                  | MM_Gamemodes.DOM               | gamemode_dom.cfg             | Prefix `dom_`                                                                    |
+| VIP                         | MM_Gamemodes.VIP               | gamemode_vip.cfg             | Prefix `vip_`                                                                    |
+| VIP Race                    | MM_Gamemodes.VIPR              | gamemode_vipr.cfg            | Prefix `vipr_`                                                                   |
+| Arena (4 Team)              | MM_Gamemodes.ARENA_4TEAM       | gamemode_4arena.cfg          | Prefix `4arena_`                                                                 |
+| Capture the Flag (4 Team)   | MM_Gamemodes.CTF_4TEAM         | gamemode_4ctf.cfg            | Prefix `4ctf_`                                                                   |
+| Domination (4 Team)         | MM_Gamemodes.DOM_4TEAM         | gamemode_4dom.cfg            | Prefix `4dom_`                                                                   |
+| King of the Hill (4 Team)   | MM_Gamemodes.KOTH_4TEAM        | gamemode_4koth.cfg           | Prefix `4koth_`                                                                  |
+| Payload Race (4 Team)       | MM_Gamemodes.PLR_4TEAM         | gamemode_4plr.cfg            | Prefix `4plr_`                                                                   |
+| Unknown                     | MM_Gamemodes.UNKNOWN           | N/A                          | No matching rules                                                                |
+
 ## Force Team Respawn when appropriate
 Internal name: `respawn_mod`
 
