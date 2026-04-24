@@ -64,7 +64,7 @@ ApplyMod <- function () {
     MM_MVM_LoadDefendersConfig();
 
     this.OnGameEvent_teamplay_round_start <- function (event) {
-        EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_CheckMaxDefenders()", 0, null);
+        EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_LoadDefendersConfig(); ::MM_MVM_CheckMaxDefenders()", 0, null);
     }.bindenv(this);
 
     ::MM_MVM_CheckMaxDefenders();
