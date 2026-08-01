@@ -89,9 +89,8 @@ function RewireTimer(team, forceTimer) {
 		local redTimer = MM_GetEntByName("zz_red_koth_timer");
 		local bluTimer = MM_GetEntByName("zz_blue_koth_timer");
 
-		local min = @(a, b) a < b ? a : b;
-		local redTimeRemaining = min(NetProps.GetPropFloat(redTimer, "m_flTimerEndTime") - Time(), NetProps.GetPropFloat(redTimer, "m_flTimeRemaining"));
-		local bluTimeRemaining = min(NetProps.GetPropFloat(bluTimer, "m_flTimerEndTime") - Time(), NetProps.GetPropFloat(bluTimer, "m_flTimeRemaining"));
+		local redTimeRemaining = MM_GetTimeRemaining(redTimer);
+		local bluTimeRemaining = MM_GetTimeRemaining(bluTimer);
 
 		local timerTeam = 0;
 		local pointToLock = null;

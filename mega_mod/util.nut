@@ -250,3 +250,8 @@ function MM_IncludeGlobalMod(mod, hasMapMod = null) {
         printl("MEGAMOD ERROR: Global mod '" + mod + "' errored when loading! Error:\n" + e);
     }
 }
+
+function MM_GetTimeRemaining(team_round_timer) {
+    local min = @(a, b) a < b ? a : b;
+    return min(NetProps.GetPropFloat(team_round_timer, "m_flTimerEndTime") - Time(), NetProps.GetPropFloat(team_round_timer, "m_flTimeRemaining"));
+}

@@ -95,7 +95,6 @@ function HandleSetup() {
     if (logic) logic.Kill();
 
     local oldTimer = Entities.FindByClassname(null, "team_round_timer");
-    local setupTime = NetProps.GetPropInt(oldTimer, "m_nSetupTimeLength");
     EntityOutputs.AddOutput(oldTimer, "OnSetupFinished", "!self", "RunScriptCode", "Setup5CPKothTimer()", 0, -1);
 }
 
