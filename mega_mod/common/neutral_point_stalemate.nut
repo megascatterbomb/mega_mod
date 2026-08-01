@@ -36,6 +36,7 @@
                 TeamNum = 0
             });
             EntFireByHandle(stalemate, "RoundWin", "", 0, null, null);
+            ClientPrint(null, 3, "\x07FCD303MAP TIMELIMIT: Stalemated round as a point hasn't been captured yet.");
         }
     } else if (!neutralPointPresent) {
         MM_NEUTRAL_POINT_CAPPED <- true;

@@ -10,6 +10,10 @@ function LockPoint(cp) {
 	cp.AcceptInput("SetOwner", "0", null, null);
 }
 
+function GetTeamString(timerTeam) {
+	return timerTeam == 2 ? "RED" : "BLU";
+}
+
 function RewireTimer(team, forceTimer) {
 	// SetMaxValueNoFire does not exist in TF2, so we have to recreate the counters.
 	MM_GetEntByName("math_counter_red").Kill();
@@ -79,12 +83,20 @@ function RewireTimer(team, forceTimer) {
 			TeamNum = 0
 		});
 		EntFireByHandle(stalemate, "RoundWin", "", 0, null, null);
+		ClientPrint(null, 3, "\x07FCD303MAP TIMELIMIT: Stalemated round as both points are neutral.");
 	} else if (neutralPoints.len() == 1) { // Lock neutral point, play regular koth on remaining point.
-		local neutralPoint = neutralPoints[0];
+		local pointToLock = neutralPoints[0];
 		local timerTeam = redPoints.len() == 1 ? 2 : 3;
 
-		LockPoint(neutralPoint);
+		LockPoint(pointToLock);
 		RewireTimer(timerTeam, true);
+
+		local teamString = GetTeamString(timerTeam);
+
+		ClientPrint(null, 3, "\x07FCD303MAP TIMELIMIT: Locked point " + 
+			(pointToLock.GetName() == "catpurepoint_a" ? "A" : "B") + " to force round end: " +
+			teamString + " is the only team with a point, so we locked the other one!"
+		);
 	} else if (redPoints.len() == bluPoints.len()) { // Lock point for team with more time remaining
 		local redTimer = MM_GetEntByName("zz_red_koth_timer");
 		local bluTimer = MM_GetEntByName("zz_blue_koth_timer");
@@ -94,6 +106,8 @@ function RewireTimer(team, forceTimer) {
 
 		local timerTeam = 0;
 		local pointToLock = null;
+		local equalTime = false;
+
 		if (redTimeRemaining > bluTimeRemaining) {
 			timerTeam = 3;
 			pointToLock = redPoints[0];
@@ -104,9 +118,24 @@ function RewireTimer(team, forceTimer) {
 			// Equal time remaining (e.g. if neither team ever started their clocks)
 			timerTeam = 5 - MM_LATEST_CAPTURE_TEAM; // choose whoever captured first.
 			pointToLock = timerTeam == 2 ? bluPoints[0] : redPoints[0];
+			equalTime = true;
 		}
 		LockPoint(pointToLock);
 		RewireTimer(timerTeam, true);
+
+		local teamString = GetTeamString(timerTeam);
+
+		if (equalTime) {
+			ClientPrint(null, 3, "\x07FCD303MAP TIMELIMIT: Locked point " + 
+				(pointToLock.GetName() == "catpurepoint_a" ? "A" : "B") + " to force round end: " +
+				"Both teams have the same time remaining, but " + teamString + " captured their point earlier!"
+			);
+		} else {
+			ClientPrint(null, 3, "\x07FCD303MAP TIMELIMIT: Locked point " + 
+				(pointToLock.GetName() == "catpurepoint_a" ? "A" : "B") + " to force round end: " +
+				teamString + " has less time on their clock, so they keep their point!"
+			);
+		}
 	} else { // One team controls both points, lock a random point.
 		local timerTeam = redPoints.len() == 2 ? 2 : 3;
 		local points = redPoints.len() == 2 ? redPoints : bluPoints;
@@ -115,6 +144,13 @@ function RewireTimer(team, forceTimer) {
 
 		LockPoint(pointToLock);
 		RewireTimer(timerTeam, false);
+
+		local teamString = GetTeamString(timerTeam);
+
+		ClientPrint(null, 3, "\x07FCD303MAP TIMELIMIT: Locked point " + 
+			(pointToLock.GetName() == "catpurepoint_a" ? "A" : "B") + " to force round end: " +
+			teamString + " has both points, so a point was locked at random!"
+		);
 	}
 
 	return 1;
