@@ -1,85 +1,107 @@
-// REQUIRED GLOBAL VARIABLES
+// PLR Overtime System - Team-Agnostic Architecture
 // This file should be included at the very start of the map-specific file.
-// InitGlobalVars() MUST be called in OnGameEvent_teamplay_round_start() before any other code.
-// Global variables which differ from these defaults or are set to null must be defined in OnGameEvent_teamplay_round_start().
+// PLR_InitTeams() MUST be called in OnGameEvent_teamplay_round_start() before any other code.
+//
+// Team state is stored in PLR_TEAMS, indexed by TF2 team number (2=RED, 3=BLU, etc.)
+// For 4-team maps, register teams 4 and 5 as well.
+
+// ============================================================================
+// CORE DATA STRUCTURE
+// ============================================================================
+
+::PLR_TEAMS <- {}  // team_num => state table
+::PLR_UPDATE_DEPTH <- 0
+::PLR_NEXT_CROSSING_ID <- 1
+const PLR_MAX_UPDATE_DEPTH = 8  // N teams + safety margin
+
+function PLR_RegisterTeam(team, config) {
+    local rollbackSpeed = -1.0;
+    local speed1 = 0.55;
+    local speed2 = 0.77;
+    local speed3 = 1.0;
+    local overtimeSpeed = 0.22;
+
+    if (config) {
+        if ("rollbackSpeed" in config) rollbackSpeed = config.rollbackSpeed;
+        if ("speed1" in config) speed1 = config.speed1;
+        if ("speed2" in config) speed2 = config.speed2;
+        if ("speed3" in config) speed3 = config.speed3;
+        if ("overtimeSpeed" in config) overtimeSpeed = config.overtimeSpeed;
+    }
+
+    PLR_TEAMS[team] <- {
+        cartsparks = null,
+        flashinglight = null,
+        pushzone = null,
+        logiccase = null,
+        train = null,
+        watcher = null,
+        rollstate = 0,
+        pushstate = 0,
+        blocked = false,
+        crossing = 0,
+        lastUpdate = Time(),
+        rollbackSpeed = rollbackSpeed,
+        speed1 = speed1,
+        speed2 = speed2,
+        speed3 = speed3,
+        overtimeSpeed = overtimeSpeed,
+        custom = {}
+    };
+}
+
+function PLR_GetTeam(team) {
+    if (!(team in PLR_TEAMS)) return null;
+    return PLR_TEAMS[team];
+}
+
+function PLR_GetTeamCount() {
+    local count = 0;
+    foreach (team, state in PLR_TEAMS) count++;
+    return count;
+}
+
+function PLR_ForEachTeam(callback) {
+    foreach (team, state in PLR_TEAMS) {
+        callback(team, state);
+    }
+}
+
+function PLR_CountPushingEnemies(team) {
+    local count = 0;
+    foreach (other, state in PLR_TEAMS) {
+        if (other != team && state.pushstate >= 1) count++;
+    }
+    return count;
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
 
 function InitGlobalVars() {
+    PLR_InitStandardTeams();
+    PLR_InitTeams();
+}
 
-    // team_round_timer
+function PLR_InitStandardTeams() {
+    ::PLR_TEAMS <- {};
+    PLR_RegisterTeam(2, {});  // RED
+    PLR_RegisterTeam(3, {});  // BLU
+}
+
+// For 4-team maps, call this after PLR_InitStandardTeams():
+// PLR_RegisterTeam(4, {});  // GREEN
+// PLR_RegisterTeam(5, {});  // YELLOW
+
+function PLR_InitTeams() {
     ::PLR_TIMER <- null;
     ::PLR_TIMER_NAME <- null;
-
-    // Array of all env_spark handles for each cart.
-    ::RED_CARTSPARKS_ARRAY <- null;
-    ::BLU_CARTSPARKS_ARRAY <- null;
-
-    // info_particle_system for the cart's light
-    ::RED_FLASHINGLIGHT <- null;
-    ::BLU_FLASHINGLIGHT <- null;
-
-    // trigger_capture_area for the cart
-    ::RED_PUSHZONE <- null;
-    ::BLU_PUSHZONE <- null;
-
-    // logic_case which accepts OnNumCappersChanged2 inputs
-    ::RED_LOGICCASE <- null;
-    ::BLU_LOGICCASE <- null;
-
-    // 0 if on flat ground, -1 if rolling back, 1 if rolling forward
-    ::RED_ROLLSTATE <- 0;
-    ::BLU_ROLLSTATE <- 0;
-
-    // team_train_watcher for each team
-    ::RED_WATCHER <- null;
-    ::BLU_WATCHER <- null;
-
-    // func_tracktrain for the cart itself
-    ::RED_TRAIN <- null;
-    ::BLU_TRAIN <- null;
-
-    // Number of players on the cart, as decided by the logic_case (does not correspond to case numbers within the logic_case)
-    // -1 means cart is blocked, anything >= 0 means the number of cappers.
-    ::CASE_RED <- 0
-    ::CASE_BLU <- 0
-
-    // Is the cart being controlled by something else? (e.g. is it being guided through a crossing?)
-    ::BLOCK_RED <- false;
-    ::BLOCK_BLU <- false;
-
-    // Which crossing is the cart currently at?
-    // Crossings should be numbered by the order they're encountered for the BLU cart, starting at 1.
-    // 0 means the cart hasn't encountered a crossing.
-    // >0 means the cart has reached/is going through a crossing.
-    // <0 means the cart has completely passed through said crossing. It will keep this value until another crossing is reached.
-    ::CROSSING_RED <- 0;
-    ::CROSSING_BLU <- 0;
-
-    // When was the cart's speed last updated?
-    ::RED_LAST_UPDATE <- Time();
-    ::BLU_LAST_UPDATE <- Time();
-
-    ::ROLLBACK_SPEED_RED <- -1.0;
-    ::TIMES_1_SPEED_RED <- 0.55;
-    ::TIMES_2_SPEED_RED <- 0.77;
-    ::TIMES_3_SPEED_RED <- 1.0;
-
-    ::ROLLBACK_SPEED_BLU <- -1.0;
-    ::TIMES_1_SPEED_BLU <- 0.55;
-    ::TIMES_2_SPEED_BLU <- 0.77;
-    ::TIMES_3_SPEED_BLU <- 1.0;
-
-    ::OVERTIME_SPEED_RED <- 0.22;
-    ::OVERTIME_SPEED_BLU <- 0.22;
-
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
-
     ::MM_PLR_TIME_UPPER_LIMIT <- 1800;
     ::MM_PLR_TIME_LOWER_LIMIT <- 180;
-
-    // Defines minimum multiplier applied to cart speed for the dynamic speed system.
     ::MM_PLR_MINIMUM_SPEED_RATIO <- 0.35;
-    // Defines distances between the carts as a fraction of track length for the dynamic speed system.
     ::MM_PLR_MINIMUM_DELTA_RATIO <- 0.25;
     ::MM_PLR_MAXIMUM_DELTA_RATIO <- 0.65;
 
@@ -91,35 +113,207 @@ function InitGlobalVars() {
 
 InitGlobalVars();
 
-function OnGameEvent_teamplay_round_win(params) {
-    if (params.team == 2) { // Red team
-        WinRed();
-    } else if (params.team == 3) { // Blu team
-        WinBlu();
-    } else { // Stalemate. Can happen in halloween or if mp_timelimit is reached
-        ForceStopCarts();
+// ============================================================================
+// TEAM-AGNOSTIC CORE FUNCTIONS
+// ============================================================================
+
+function PLR_Advance(team, baseSpeed, dynamic = true) {
+    local t = PLR_GetTeam(team);
+    if (dynamic) baseSpeed = PLR_CalculateDynamicSpeed(baseSpeed, team);
+
+    foreach (spark in t.cartsparks) {
+        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
     }
+    if (t.flashinglight) EntFireByHandle(t.flashinglight, "Start", "", 0, null, null);
+    EntFireByHandle(t.train, "SetSpeedDirAccel", "" + baseSpeed, 0, null, null);
+
+    t.lastUpdate = Time();
 }
 
-function GetRoundTimeString(setup = 0) {
-    return "" + GetRoundTime(setup);
+function PLR_Stop(team) {
+    local t = PLR_GetTeam(team);
+
+    foreach (spark in t.cartsparks) {
+        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
+    }
+    if (t.flashinglight) EntFireByHandle(t.flashinglight, "Stop", "", 0, null, null);
+    EntFireByHandle(t.train, "SetSpeedDirAccel", "0.0", 0, null, null);
+
+    local currentSpeed = NetProps.GetPropFloat(t.train, "m_flSpeed");
+    if (currentSpeed == 0) EntFireByHandle(t.train, "Stop", "", 0, null, null);
+
+    t.lastUpdate = Time();
 }
 
-function GetRoundTime(setup = 0) {
-    local time = MM_PLR_TIME_UPPER_LIMIT;
-    local timeRemaining = MM_GetTimelimitRemaining()
-    if (timeRemaining != null) time = ceil(timeRemaining / 30) * 30;
+function PLR_TriggerRollback(team, multiplier = 1.0) {
+    local t = PLR_GetTeam(team);
 
-    if (time > MM_PLR_TIME_UPPER_LIMIT) time = MM_PLR_TIME_UPPER_LIMIT;
-    if (time < MM_PLR_TIME_LOWER_LIMIT) time = MM_PLR_TIME_LOWER_LIMIT;
+    foreach (spark in t.cartsparks) {
+        EntFireByHandle(spark, "StartSpark", "", 0, null, null);
+    }
+    if (t.flashinglight) EntFireByHandle(t.flashinglight, "Stop", "", 0, null, null);
+    EntFireByHandle(t.train, "SetSpeedDirAccel", "" + (t.rollbackSpeed * multiplier), 0, null, null);
 
-    return time;
+    t.lastUpdate = Time();
 }
 
-// We use a logic case to capture the value obtained from OnNumCappersChanged2
-// name: targetname of logic_case
-// team: "Red" or "Blu"
-function CreateLogicCase(name, team) {
+// ============================================================================
+// UPDATE CART - MAIN STATE MACHINE
+// ============================================================================
+
+function PLR_UpdateCart(team, pushstate) {
+    if (++PLR_UPDATE_DEPTH > PLR_MAX_UPDATE_DEPTH) {
+        --PLR_UPDATE_DEPTH;
+        return;  // Safety abort - prevent infinite loops
+    }
+
+    local t = PLR_GetTeam(team);
+    local previousPushstate = t.pushstate;
+    t.pushstate = pushstate;
+    local N = PLR_GetTeamCount();
+
+    // Early exit if blocked
+    if (t.blocked) {
+        --PLR_UPDATE_DEPTH;
+        return;
+    }
+
+    // Phase 1: Pusher count
+    if (pushstate == -1) {
+        PLR_Stop(team);
+        --PLR_UPDATE_DEPTH;
+        return;
+    }
+
+    if (pushstate == 1) {
+        PLR_Advance(team, t.speed1);
+    } else if (pushstate == 2) {
+        PLR_Advance(team, t.speed2);
+    } else if (pushstate >= 3) {
+        PLR_Advance(team, t.speed3);
+    }
+
+    // Phase 2: Zero pushers
+    if (pushstate == 0) {
+        if (OVERTIME_ACTIVE) {
+            local k = PLR_CountPushingEnemies(team);
+
+            // Calculate pressure-based multipliers
+            local crawlMult = 0;
+            if (k >= N - 1) {
+                crawlMult = 0;  // Special case: full stop
+            } else {
+                crawlMult = 1.0 / (k + 1);
+            }
+
+            if (t.rollstate == -1 && !(OVERTIME_ACTIVE && ROLLBACK_DISABLED)) {
+                // On uphill - decide between crawl and rollback based on pressure
+                if (k >= N - 1) {
+                    // All enemies pushing - full rollback
+                    PLR_TriggerRollback(team, 1.0);
+                } else if (k > 0) {
+                    // Some enemies pushing - rollback at reduced speed
+                    local rollbackMult = 1.0 / (N - k);
+                    PLR_TriggerRollback(team, rollbackMult);
+                } else {
+                    // No enemies pushing - crawl
+                    PLR_Advance(team, t.overtimeSpeed * crawlMult);
+                }
+            } else {
+                // Flat ground or rollback disabled
+                if (crawlMult > 0) {
+                    PLR_Advance(team, t.overtimeSpeed * crawlMult);
+                } else {
+                    PLR_Stop(team);
+                }
+            }
+        } else if (t.rollstate == -1 && !ROLLBACK_DISABLED) {
+            PLR_TriggerRollback(team, 1.0);
+        } else {
+            PLR_Stop(team);
+        }
+    }
+
+    // Phase 3: Overtime cascade
+    if (OVERTIME_ACTIVE && pushstate >= 1) {
+        // I just started pushing - reevaluate idle teams
+        PLR_ForEachTeam(function(other, otherState) {
+            if (other != team && otherState.pushstate == 0) {
+                PLR_UpdateCart(other, 0);
+            }
+        });
+    } else if (OVERTIME_ACTIVE && pushstate == 0 && previousPushstate >= 1) {
+        // I just stopped pushing - check if all are now idle
+        local allIdle = true;
+        foreach (other, otherState in PLR_TEAMS) {
+            if (other != team && otherState.pushstate >= 1) {
+                allIdle = false;
+                break;
+            }
+        }
+        if (allIdle) {
+            // Everyone idle during overtime - all crawl at full speed
+            PLR_ForEachTeam(function(t2, s) {
+                if (!s.blocked) {
+                    PLR_Advance(t2, s.overtimeSpeed);
+                }
+            });
+        }
+    }
+
+    --PLR_UPDATE_DEPTH;
+}
+
+// ============================================================================
+// DYNAMIC SPEED CALCULATION
+// ============================================================================
+
+function PLR_CalculateDynamicSpeed(baseSpeed, teamNum) {
+    local t = PLR_GetTeam(teamNum);
+    local myProgress = NetProps.GetPropFloat(t.watcher, "m_flTotalProgress");
+
+    // For 2-team: compare against the other team
+    if (PLR_GetTeamCount() == 2) {
+        local otherTeam = teamNum == 2 ? 3 : 2;
+        local otherState = PLR_GetTeam(otherTeam);
+        local otherProgress = NetProps.GetPropFloat(otherState.watcher, "m_flTotalProgress");
+
+        // If this cart is behind, don't slow down
+        if (teamNum == 3 && myProgress < otherProgress) return baseSpeed;
+        if (teamNum == 2 && myProgress > otherProgress) return baseSpeed;
+
+        local distance = fabs(myProgress - otherProgress);
+
+        if (distance < MM_PLR_MINIMUM_DELTA_RATIO) return baseSpeed;
+        else if (distance > MM_PLR_MAXIMUM_DELTA_RATIO) return baseSpeed * MM_PLR_MINIMUM_SPEED_RATIO;
+
+        local scaledDistance = (distance - MM_PLR_MINIMUM_DELTA_RATIO) / (MM_PLR_MAXIMUM_DELTA_RATIO - MM_PLR_MINIMUM_DELTA_RATIO);
+        local speedRatio = 1 - scaledDistance * (1 - MM_PLR_MINIMUM_SPEED_RATIO);
+        return baseSpeed * speedRatio;
+    }
+
+    // For 4-team: compare against the closest competitor
+    local closestDistance = 1.0;
+    foreach (other, otherState in PLR_TEAMS) {
+        if (other == teamNum) continue;
+        local otherProgress = NetProps.GetPropFloat(otherState.watcher, "m_flTotalProgress");
+        local distance = fabs(myProgress - otherProgress);
+        if (distance < closestDistance) closestDistance = distance;
+    }
+
+    if (closestDistance < MM_PLR_MINIMUM_DELTA_RATIO) return baseSpeed;
+    else if (closestDistance > MM_PLR_MAXIMUM_DELTA_RATIO) return baseSpeed * MM_PLR_MINIMUM_SPEED_RATIO;
+
+    local scaledDistance = (closestDistance - MM_PLR_MINIMUM_DELTA_RATIO) / (MM_PLR_MAXIMUM_DELTA_RATIO - MM_PLR_MINIMUM_DELTA_RATIO);
+    local speedRatio = 1 - scaledDistance * (1 - MM_PLR_MINIMUM_SPEED_RATIO);
+    return baseSpeed * speedRatio;
+}
+
+// ============================================================================
+// SETUP HELPERS
+// ============================================================================
+
+function PLR_CreateLogicCase(team, name) {
     local logicCase = SpawnEntityFromTable("logic_case", {
         targetname = name,
         Case01 = "-1",
@@ -127,350 +321,236 @@ function CreateLogicCase(name, team) {
         Case03 = "1",
         Case04 = "2"
     });
-    AddCaptureOutputsToLogicCase(logicCase, team);
+    PLR_AddCaptureOutputsToLogicCase(team, logicCase);
     return logicCase;
 }
 
-// entity: handle of logic_case
-// team: "Red" or "Blu"
-function AddCaptureOutputsToLogicCase(entity, team) {
-    EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode", "Update" + team + "Cart(-1)", 0, -1); // Blocked
-    EntityOutputs.AddOutput(entity, "OnCase02", "!self", "RunScriptCode", "Update" + team + "Cart(0)", 0, -1); // 0 cap
-    EntityOutputs.AddOutput(entity, "OnCase03", "!self", "RunScriptCode", "Update" + team + "Cart(1)", 0, -1); // 1 cap
-    EntityOutputs.AddOutput(entity, "OnCase04", "!self", "RunScriptCode", "Update" + team + "Cart(2)", 0, -1); // 2 cap
-    EntityOutputs.AddOutput(entity, "OnDefault", "!self", "RunScriptCode", "Update" + team + "Cart(3)", 0, -1); // 3+ cap
+function PLR_AddCaptureOutputsToLogicCase(team, entity) {
+    EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode",
+        "PLR_UpdateCart(" + team + ", -1)", 0, -1);
+    EntityOutputs.AddOutput(entity, "OnCase02", "!self", "RunScriptCode",
+        "PLR_UpdateCart(" + team + ", 0)", 0, -1);
+    EntityOutputs.AddOutput(entity, "OnCase03", "!self", "RunScriptCode",
+        "PLR_UpdateCart(" + team + ", 1)", 0, -1);
+    EntityOutputs.AddOutput(entity, "OnCase04", "!self", "RunScriptCode",
+        "PLR_UpdateCart(" + team + ", 2)", 0, -1);
+    EntityOutputs.AddOutput(entity, "OnDefault", "!self", "RunScriptCode",
+        "PLR_UpdateCart(" + team + ", 3)", 0, -1);
 }
 
-function StartOvertime() {
-    ::OVERTIME_ACTIVE <- true;
+function PLR_AddRollbackZone(team, startPath, endPath, disablePath) {
+    local t = PLR_GetTeam(team);
+    local sparksName = t.cartsparks[0].GetName();
 
-    if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
-
-    UpdateRedCart(CASE_RED);
-    UpdateBluCart(CASE_BLU);
-}
-
-// These functions determine the cart behaviour depending on number of pushing players.
-
-function UpdateRedCart(caseNumber) {
-    ::CASE_RED = caseNumber;
-
-    if(BLOCK_RED) return;
-
-    if(CASE_RED == 1) {
-        AdvanceRed(TIMES_1_SPEED_RED);
-    } else if(CASE_RED == 2) {
-        AdvanceRed(TIMES_2_SPEED_RED);
-    } else if(CASE_RED >= 3) {
-        AdvanceRed(TIMES_3_SPEED_RED);
-    } else if (CASE_RED == -1) {
-        StopRed();
+    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", sparksName,
+        "StopSpark", "", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", disablePath,
+        "DisablePath", "", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self",
+        "RunScriptCode", "PLR_RollbackStart(" + team + ")", 0, -1);
+    if (endPath) {
+        EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self",
+            "RunScriptCode", "PLR_RollbackEnd(" + team + ")", 0, -1);
     }
+}
 
-    if(CASE_RED == 0) {
-        if(CASE_BLU == 0 && OVERTIME_ACTIVE) {
-            AdvanceRed(OVERTIME_SPEED_RED);
-            if(!BLOCK_BLU) AdvanceBlu(OVERTIME_SPEED_BLU);
-        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && RED_ROLLSTATE == -1) {
-            TriggerRollbackRed();
-        } else {
-            StopRed();
+function PLR_AddRollforwardZone(team, startPath, endPath, disablePath) {
+    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self",
+        "RunScriptCode", "PLR_RollforwardStart(" + team + ")", 0, -1);
+    if (endPath) {
+        EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self",
+            "RunScriptCode", "PLR_RollforwardEnd(" + team + ")", 0, -1);
+        EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", disablePath,
+            "DisablePath", "", 0, -1);
+    }
+}
+
+// AddCrossing: Register one or more teams on a shared crossing.
+// teams: Array of [startPath, endPath, team] triplets.
+// The crossing ID is auto-generated.
+// Example: AddCrossing([["red_start", "red_end", 2], ["blu_start", "blu_end", 3]])
+function AddCrossing(teams) {
+    local crossingID = PLR_NEXT_CROSSING_ID++;
+    if (teams.len() < 2) {
+        throw "AddCrossing requires at least 2 teams";
+    }
+    local registeredTeams = {};
+    for (local i = 0; i < teams.len(); i++) {
+        local group = teams[i];
+        if (group.len() != 3) {
+            throw "AddCrossing team group must have exactly 3 elements: [startPath, endPath, team]";
         }
-    } else if (OVERTIME_ACTIVE && CASE_BLU == 0) {
-        UpdateBluCart(0);
-    }
-}
-
-function UpdateBluCart(caseNumber) {
-    ::CASE_BLU = caseNumber;
-
-    if(BLOCK_BLU) return;
-
-    if(CASE_BLU == 1) {
-        AdvanceBlu(TIMES_1_SPEED_BLU);
-    } else if(CASE_BLU == 2) {
-        AdvanceBlu(TIMES_2_SPEED_BLU);
-    } else if(CASE_BLU >= 3) {
-        AdvanceBlu(TIMES_3_SPEED_BLU);
-    } else if (CASE_BLU == -1) {
-        StopBlu();
-    }
-
-    if(CASE_BLU == 0) {
-        if(CASE_RED == 0 && OVERTIME_ACTIVE) {
-            AdvanceBlu(OVERTIME_SPEED_BLU);
-            if(!BLOCK_RED) AdvanceRed(OVERTIME_SPEED_RED);
-        } else if (!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && BLU_ROLLSTATE == -1) {
-            TriggerRollbackBlu();
-        } else {
-            StopBlu();
+        local startPath = group[0];
+        local endPath = group[1];
+        local team = group[2];
+        if (team in registeredTeams) {
+            throw "AddCrossing: Team " + team + " registered twice on crossing " + crossingID;
         }
-    } else if (OVERTIME_ACTIVE && CASE_RED == 0) {
-        UpdateRedCart(0);
+        registeredTeams[team] = true;
+        EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self",
+            "RunScriptCode", "PLR_SetCrossing(" + team + ", " + crossingID + ")", 0, -1);
+        EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self",
+            "RunScriptCode", "PLR_SetCrossing(" + team + ", 0)", 0, -1);
     }
 }
 
-// Called by other code to directly control the cart.
 
-function AdvanceRed(speed, dynamic = true) {
-
-    if (dynamic) speed = CalculateDynamicSpeed(speed, 2);
-
-    foreach(spark in RED_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
-    }
-    if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Start", "", 0, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
-
-    ::RED_LAST_UPDATE <- Time();
-}
-
-function StopRed() {
-    foreach(spark in RED_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
-    }
-    if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
-
-    // Stop sound if cart is completely stopped.
-    local currentSpeed = NetProps.GetPropFloat(RED_TRAIN, "m_flSpeed");
-    if (currentSpeed == 0) EntFireByHandle(RED_TRAIN, "Stop", "", 0, null, null);
-
-    ::RED_LAST_UPDATE <- Time();
-}
-
-function TriggerRollbackRed() {
-    foreach(spark in RED_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StartSpark", "", 0, null, null);
-    }
-    if(RED_FLASHINGLIGHT) EntFireByHandle(RED_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(RED_TRAIN, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_RED, 0, null, null);
-
-    ::RED_LAST_UPDATE <- Time();
-}
-
-function AdvanceBlu(speed, dynamic = true) {
-
-    if (dynamic) speed = CalculateDynamicSpeed(speed, 3);
-
-    foreach(spark in BLU_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
-    }
-    if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Start", "", 0, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + speed, 0, null, null);
-
-    ::BLU_LAST_UPDATE <- Time();
-}
-
-function StopBlu() {
-    foreach(spark in BLU_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StopSpark", "", 0, null, null);
-    }
-    if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "0.0", 0, null, null);
-
-    // Stop sound if cart is completely stopped.
-    local currentSpeed = NetProps.GetPropFloat(BLU_TRAIN, "m_flSpeed");
-    if (currentSpeed == 0) EntFireByHandle(BLU_TRAIN, "Stop", "", 0, null, null);
-
-    ::BLU_LAST_UPDATE <- Time();
-}
-
-function TriggerRollbackBlu() {
-    foreach(spark in BLU_CARTSPARKS_ARRAY) {
-        EntFireByHandle(spark, "StartSpark", "", 0, null, null);
-    }
-    if(BLU_FLASHINGLIGHT) EntFireByHandle(BLU_FLASHINGLIGHT, "Stop", "", 0, null, null);
-    EntFireByHandle(BLU_TRAIN, "SetSpeedDirAccel", "" + ROLLBACK_SPEED_BLU, 0, null, null);
-
-    ::BLU_LAST_UPDATE <- Time();
-}
-
-// Called by path_track as the cart enters and exits rollback/rollforward zones
-
-function RollbackStartRed() {
-    ::RED_ROLLSTATE <- -1;
-}
-
-function RollbackEndRed() {
-    ::RED_ROLLSTATE <- 0;
-}
-
-function RollforwardStartRed() {
-    ::RED_ROLLSTATE <- 1;
-    RED_PUSHZONE.AcceptInput("Disable", "", null, null);
-    BlockRedCart(true);
-    AdvanceRed(1, false);
-}
-
-function RollforwardEndRed() {
-    ::RED_ROLLSTATE <- 0;
-    BlockRedCart(false);
-    RED_PUSHZONE.AcceptInput("Enable", "", null, null);
-}
-
-function RollbackStartBlu() {
-    ::BLU_ROLLSTATE <- -1;
-}
-
-function RollbackEndBlu() {
-    ::BLU_ROLLSTATE <- 0;
-}
-
-function RollforwardStartBlu() {
-    ::BLU_ROLLSTATE <- 1;
-    BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
-    BlockBluCart(true);
-    AdvanceBlu(1, false);
-}
-
-function RollforwardEndBlu() {
-    ::BLU_ROLLSTATE <- 0;
-    BlockBluCart(false);
-    BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
-}
-
-// This is for situations where the game takes control of the cart, like onboarding the cart to the Hightower elevators.
-// Don't use these functions to handle crossings; use SetRedCrossing/SetBluCrossing instead.
-
-function BlockRedCart(blocked) {
-    ::BLOCK_RED <- blocked;
-    UpdateRedCart(CASE_RED);
-    UpdateBluCart(CASE_BLU);
-}
-
-function BlockBluCart(blocked) {
-    ::BLOCK_BLU <- blocked;
-    UpdateBluCart(CASE_BLU);
-    UpdateRedCart(CASE_RED);
-}
-
-// This function is called by the AdvanceRed/AdvanceBlu functions to determine the speed of the cart.
-// Dynamic speed forces the leading cart to slow down if it's too far ahead of the other team's cart.
-
-function CalculateDynamicSpeed(baseSpeed, teamNum) {
-    // Get the positions of the carts (they are ratios between 0.0 and 1.0)
-    local redPos = NetProps.GetPropFloat(RED_WATCHER, "m_flTotalProgress");
-    local bluPos = NetProps.GetPropFloat(BLU_WATCHER, "m_flTotalProgress");
-
-    // If this cart is behind, don't do anything.
-    if (redPos > bluPos && teamNum == 3) return baseSpeed;
-    if (bluPos > redPos && teamNum == 2) return baseSpeed;
-
-    local distance = fabs(redPos - bluPos);
-
-    if (distance < MM_PLR_MINIMUM_DELTA_RATIO) return baseSpeed;
-    else if (distance > MM_PLR_MAXIMUM_DELTA_RATIO) return baseSpeed * MM_PLR_MINIMUM_SPEED_RATIO;
-
-    local scaledDistance = (distance - MM_PLR_MINIMUM_DELTA_RATIO) / (MM_PLR_MAXIMUM_DELTA_RATIO - MM_PLR_MINIMUM_DELTA_RATIO);
-
-    // Calculate the speed ratio based on the distance between the carts.
-    local speedRatio = 1 - scaledDistance * (1 - MM_PLR_MINIMUM_SPEED_RATIO);
-    return baseSpeed * speedRatio;
-}
-
-// This function creates a think for the cart entity which periodically updates the cart speed.
-// team: "Red" or "Blu"
-function CreateCartAutoUpdater(cart, team)
-{
-    if (team != 2 && team != 3) return;
-
-    local thinkName = team == 2 ? "CartThinkRed" : "CartThinkBlu";
-
+function PLR_CreateCartAutoUpdater(team, cart) {
+    local thinkName = "PLR_CartThink_" + team;
+    local capturedTeam = team;
+    local root = getroottable();
+    root[thinkName] <- function() { return PLR_CartThink(capturedTeam); };
     AddThinkToEnt(cart, thinkName);
 }
 
-function CartThinkRed() {
-    return CartThink(2);
-}
+// ============================================================================
+// CROSSING LOGIC
+// ============================================================================
 
-function CartThinkBlu() {
-    return CartThink(3);
-}
+function PLR_SetCrossing(team, crossingID) {
+    local t = PLR_GetTeam(team);
 
-function CartThink(team) {
-    local updateInterval = 2.5;
-    local cart = team == 2 ? RED_TRAIN : BLU_TRAIN;
-    local lastUpdate = team == 2 ? RED_LAST_UPDATE : BLU_LAST_UPDATE;
-    local rollstate = team == 2 ? RED_ROLLSTATE : BLU_ROLLSTATE;
-    if (Time() - lastUpdate > updateInterval && rollstate == 0) {
-        // Update the cart's state (and therefore speed).
-        lastUpdate = Time();
-        if (team == 2) {
-            UpdateRedCart(CASE_RED);
-            ::RED_LAST_UPDATE <- lastUpdate;
+    if (crossingID == 0) {
+        // Exited a crossing - unblock this team
+        t.crossing = 0;
+        t.pushzone.AcceptInput("Enable", "", null, null);
+        PLR_BlockCart(team, false);
+
+        // Wake up any other team waiting on the same crossing
+        PLR_ForEachTeam(function(other, otherState) {
+            if (other != team && otherState.crossing == t._waitingCrossing) {
+                // The crossing is now free - let the waiting team proceed slowly
+                otherState._waitingCrossing = 0;
+                otherState.pushzone.AcceptInput("Enable", "", null, null);
+                PLR_BlockCart(other, false);
+                EntFireByHandle(otherState.train, "RunScriptCode",
+                    "PLR_Advance(" + other + ", " + otherState.speed1 + ", false)", 0.5, null, null);
+            }
+        });
+    } else {
+        // Entering a crossing
+        local conflict = false;
+        local waitingTeam = null;
+
+        // Check if any other team is already in this crossing
+        PLR_ForEachTeam(function(other, otherState) {
+            if (other != team && otherState.crossing == crossingID) {
+                conflict = true;
+                waitingTeam = other;
+            }
+        });
+
+        if (conflict) {
+            // Another team is in this crossing - stop and wait
+            t.crossing = crossingID;
+            t._waitingCrossing <- crossingID;
+            t.pushzone.AcceptInput("Disable", "", null, null);
+            PLR_BlockCart(team, true);
+            PLR_Stop(team);
         } else {
-            UpdateBluCart(CASE_BLU);
-            ::BLU_LAST_UPDATE <- lastUpdate;
+            // Crossing is clear - enter it
+            t.crossing = crossingID;
         }
     }
-    local timeUntilNextCheck = updateInterval - (Time() - lastUpdate);
+}
+
+// ============================================================================
+// ROLLBACK/ROLLFORWARD
+// ============================================================================
+
+function PLR_RollbackStart(team) {
+    PLR_TEAMS[team].rollstate = -1;
+}
+
+function PLR_RollbackEnd(team) {
+    PLR_TEAMS[team].rollstate = 0;
+}
+
+function PLR_RollforwardStart(team) {
+    local t = PLR_TEAMS[team];
+    t.rollstate = 1;
+    t.pushzone.AcceptInput("Disable", "", null, null);
+    PLR_BlockCart(team, true);
+    PLR_Advance(team, 1, false);
+}
+
+function PLR_RollforwardEnd(team) {
+    local t = PLR_TEAMS[team];
+    t.rollstate = 0;
+    PLR_BlockCart(team, false);
+    t.pushzone.AcceptInput("Enable", "", null, null);
+}
+
+// ============================================================================
+// BLOCKING
+// ============================================================================
+
+function PLR_BlockCart(team, blocked) {
+    PLR_TEAMS[team].blocked = blocked;
+    PLR_ForEachTeam(function(other, state) {
+        if (other != team) PLR_UpdateCart(other, state.pushstate);
+    });
+    PLR_UpdateCart(team, PLR_TEAMS[team].pushstate);
+}
+
+// ============================================================================
+// CART THINK
+// ============================================================================
+
+function PLR_CartThink(team) {
+    local t = PLR_GetTeam(team);
+    local updateInterval = 2.5;
+    if (Time() - t.lastUpdate > updateInterval && t.rollstate == 0) {
+        t.lastUpdate = Time();
+        PLR_UpdateCart(team, t.pushstate);
+    }
+    local timeUntilNextCheck = updateInterval - (Time() - t.lastUpdate);
     if (timeUntilNextCheck < 0.5) timeUntilNextCheck = 0.5;
     return timeUntilNextCheck;
 }
 
-// These functions set the crossing value, then block the cart from being updated
-// if it's the first cart to reach that crossing.
-// TODO: This logic can't handle rotationally symmetric maps with crossings that the carts reach in different orders. Thankfully none exist yet.
-function SetRedCrossing(crossing) {
-    ::CROSSING_RED <- crossing;
-    // If we exited a crossing.
-    if(CROSSING_RED <= 0) {
-        RED_PUSHZONE.AcceptInput("Enable", "", null, null);
-        BlockRedCart(false);
-        // If the other cart is waiting at the crossing we just exited.
-        if(CROSSING_RED == -CROSSING_BLU) {
-            BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
-            BlockBluCart(false);
-        }
-    // If we entered a crossing and the other cart is going through the same crossing.
-    } else if (CROSSING_RED == CROSSING_BLU) {
-        RED_PUSHZONE.AcceptInput("Disable", "", null, null);
-        BlockRedCart(true);
-        StopRed();
-    // If we entered a crossing and the other cart hasn't reached this crossing yet.
-    } else if (CROSSING_RED > abs(CROSSING_BLU)) {
-        RED_PUSHZONE.AcceptInput("Disable", "", null, null);
-        BlockRedCart(true);
-        EntFireByHandle(RED_TRAIN, "RunScriptCode", "AdvanceRed(TIMES_1_SPEED_RED)", 0.5, null, null);
-    }
-    // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
+// ============================================================================
+// ROUND MANAGEMENT
+// ============================================================================
+
+function StartOvertime() {
+    ::OVERTIME_ACTIVE <- true;
+    if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
+    PLR_ForEachTeam(function(team, state) {
+        PLR_UpdateCart(team, state.pushstate);
+    });
 }
 
-function SetBluCrossing(crossing) {
-    ::CROSSING_BLU <- crossing;
-    // If we exited a crossing.
-    if(CROSSING_BLU <= 0) {
-        BLU_PUSHZONE.AcceptInput("Enable", "", null, null);
-        BlockBluCart(false);
-        // If the other cart is waiting at the crossing we just exited.
-        if(CROSSING_BLU == -CROSSING_RED) {
-            RED_PUSHZONE.AcceptInput("Enable", "", null, null);
-            BlockRedCart(false);
-        }
-    // If we entered a crossing and the other cart is going through the same crossing.
-    } else if (CROSSING_BLU == CROSSING_RED) {
-        BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
-        BlockBluCart(true);
-        StopBlu();
-    // If we entered a crossing and the other cart hasn't reached this crossing yet.
-    } else if (CROSSING_BLU > abs(CROSSING_RED)) {
-        BLU_PUSHZONE.AcceptInput("Disable", "", null, null);
-        BlockBluCart(true);
-        EntFireByHandle(BLU_TRAIN, "RunScriptCode", "AdvanceBlu(TIMES_1_SPEED_BLU)", 0.5, null, null);
-    }
-    // Do nothing if we entered a crossing and the other cart has already passed through the crossing.
+function ForceStopCarts() {
+    if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
+    ::OVERTIME_ACTIVE <- false;
+    ::ROLLBACK_DISABLED <- false;
+    PLR_ForEachTeam(function(team, state) {
+        state.blocked = true;
+        PLR_Stop(team);
+    });
 }
 
-// Permanently disables overtime rollback.
-// Used to prevent map breaking in some way e.g. on the hightower lifts.
-// Has no effect if overtime is not active.
+function ResetCartStates() {
+    ::OVERTIME_ACTIVE <- false;
+    ::ROLLBACK_DISABLED <- false;
+    local now = Time();
+    PLR_ForEachTeam(function(team, state) {
+        state.rollstate = 0;
+        state.blocked = false;
+        state.lastUpdate = now;
+    });
+    PLR_ForEachTeam(function(team, state) {
+        PLR_UpdateCart(team, 0);
+    });
+}
+
 function DisableOvertimeRollback() {
-    if(ROLLBACK_DISABLED) return;
+    if (ROLLBACK_DISABLED) return;
     ::ROLLBACK_DISABLED <- true;
-    if(!OVERTIME_ACTIVE) return;
+    if (!OVERTIME_ACTIVE) return;
     AnnounceRollbackDisabled();
-    if(PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
+    if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
 }
 
 function AnnounceRollbackDisabled() {
@@ -484,74 +564,72 @@ function AnnounceRollbackDisabled() {
     EntFireByHandle(text_tf, "Kill", "", 7, self, self);
 }
 
-// The following functions are helpers to convert PLR maps from using team_train_watcher
-// to handling all cart movement with VScript.
+// ============================================================================
+// TIMER HELPERS
+// ============================================================================
 
-// startPath: The first path_track with "Part of an uphill path" checked.
-// endPath: The last path_track with "Part of an uphill path" checked. Use null for the end of the track if it should roll back after reaching it (e.g. banana bay)
-// disablePath: The path_track immediately before startPath that will be disabled when the cart enters the rollback zone.
-// team: "Red" or "Blu"
-function AddRollbackZone(startPath, endPath, disablePath, team) {
-    local cartSparksName = (team == "Red" ? RED_CARTSPARKS_ARRAY : BLU_CARTSPARKS_ARRAY)[0].GetName();
-    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", cartSparksName, "StopSpark", "", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", disablePath, "DisablePath", "", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self", "RunScriptCode", "RollbackStart" + team + "()", 0, -1);
-    if(endPath) EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollbackEnd" + team + "()", 0, -1);
+function GetRoundTimeString(setup = 0) {
+    return "" + GetRoundTime(setup);
 }
 
-// startPath: The first path_track with "Part of a downhill path" checked.
-// endPath: The last path_track with "Part of a downhill path" checked.
-// disablePath: The path_track immediately before endPath that will be disabled when the cart leaves the rollforward zone.
-// team: "Red" or "Blu"
-function AddRollforwardZone(startPath, endPath, disablePath, team) {
-    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self", "RunScriptCode", "RollforwardStart" + team + "()", 0, -1);
-    if(endPath) EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self", "RunScriptCode", "RollforwardEnd" + team + "()", 0, -1);
-    if(endPath) EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", disablePath, "DisablePath", "", 0, -1);
+function GetRoundTime(setup = 0) {
+    local time = MM_PLR_TIME_UPPER_LIMIT;
+    local timeRemaining = MM_GetTimelimitRemaining();
+    if (timeRemaining != null) time = ceil(timeRemaining / 30) * 30;
+    if (time > MM_PLR_TIME_UPPER_LIMIT) time = MM_PLR_TIME_UPPER_LIMIT;
+    if (time < MM_PLR_TIME_LOWER_LIMIT) time = MM_PLR_TIME_LOWER_LIMIT;
+    return time;
 }
 
-function AddCrossing(startPathRed, endPathRed, startPathBlu, endPathBlu, index) {
-    EntityOutputs.AddOutput(MM_GetEntByName(startPathRed), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(" + index + ")", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(endPathRed), "OnPass", "!self", "RunScriptCode", "SetRedCrossing(" + -index + ")", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(startPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + index + ")", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(endPathBlu), "OnPass", "!self", "RunScriptCode", "SetBluCrossing(" + -index + ")", 0, -1);
+// ============================================================================
+// ROUND WIN
+// ============================================================================
+
+function OnGameEvent_teamplay_round_win(params) {
+    if (params.team == 2) {
+        WinRed();
+    } else if (params.team == 3) {
+        WinBlu();
+    } else {
+        ForceStopCarts();
+    }
 }
 
-// Used to stop the carts at the end of a round.
-// Typically only needed for multistage maps or maps with special endings (e.g. Helltower).
-function ForceStopCarts() {
-    if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
-
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
-
-    ::BLOCK_RED <- true;
-    ::BLOCK_BLU <- true;
-
-    StopRed();
-    StopBlu();
-}
-
-// Called whenever the cart states need to be reset (usually for multistage maps).
-function ResetCartStates() {
-    ::RED_ROLLSTATE <- 0;
-    ::BLU_ROLLSTATE <- 0;
-    ::BLOCK_RED <- false;
-    ::BLOCK_BLU <- false;
-    ::OVERTIME_ACTIVE <- false;
-    ::ROLLBACK_DISABLED <- false;
-
-    ::RED_LAST_UPDATE <- Time();
-    ::BLU_LAST_UPDATE <- Time();
-
-    UpdateRedCart(0);
-    UpdateBluCart(0);
-}
-
-// Called whenever a team wins the round (includes all stages in multistage maps).
 function WinRed() {
     ForceStopCarts();
 }
 
 function WinBlu() {
     ForceStopCarts();
+}
+
+// ============================================================================
+// LEGACY ALIASES (for entity output strings that use old function names)
+// These use the team string "Red"/"Blu" to determine team number.
+// Map mods should migrate to PLR_* versions.
+// ============================================================================
+
+function CreateLogicCase(name, team) {
+    local t = team == "Red" ? 2 : 3;
+    return PLR_CreateLogicCase(t, name);
+}
+
+function AddCaptureOutputsToLogicCase(entity, team) {
+    local t = team == "Red" ? 2 : 3;
+    PLR_AddCaptureOutputsToLogicCase(t, entity);
+}
+
+function AddRollbackZone(startPath, endPath, disablePath, team) {
+    local t = team == "Red" ? 2 : 3;
+    PLR_AddRollbackZone(t, startPath, endPath, disablePath);
+}
+
+function AddRollforwardZone(startPath, endPath, disablePath, team) {
+    local t = team == "Red" ? 2 : 3;
+    PLR_AddRollforwardZone(t, startPath, endPath, disablePath);
+}
+
+
+function CreateCartAutoUpdater(cart, team) {
+    PLR_CreateCartAutoUpdater(team, cart);
 }

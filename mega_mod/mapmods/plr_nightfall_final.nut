@@ -12,48 +12,45 @@ function OnGameEvent_teamplay_round_start(params) {
     ::PLR_TIMER_NAME <- "plr_timer";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
-    ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_red_cartsparks");
-    ::BLU_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("plr_blu_cartsparks");
+    PLR_TEAMS[2].cartsparks = MM_GetEntArrayByName("plr_red_cartsparks");
+    PLR_TEAMS[3].cartsparks = MM_GetEntArrayByName("plr_blu_cartsparks");
 
-    ::RED_FLASHINGLIGHT <- MM_GetEntByName("plr_red_flashinglight");
-    ::BLU_FLASHINGLIGHT <- MM_GetEntByName("plr_blu_flashinglight");
+    PLR_TEAMS[2].flashinglight = MM_GetEntByName("plr_red_flashinglight");
+    PLR_TEAMS[3].flashinglight = MM_GetEntByName("plr_blu_flashinglight");
 
-    ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone");
-    ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone");
+    PLR_TEAMS[2].pushzone = MM_GetEntByName("plr_red_pushzone");
+    PLR_TEAMS[3].pushzone = MM_GetEntByName("plr_blu_pushzone");
 
-    ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
-    ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
+    PLR_TEAMS[2].train = MM_GetEntByName("plr_red_train");
+    PLR_TEAMS[3].train = MM_GetEntByName("plr_blu_train");
 
-    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherA");
-    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherA");
+    PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcherA");
+    PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcherA");
 
     MM_GetEntByName("plr_red_overtime").Kill();
     MM_GetEntByName("plr_blu_overtime").Kill();
     MM_GetEntByName("plr_overtime_template").Kill();
 
-    ::RED_LOGICCASE <- CreateLogicCase("red_train_case", "Red");
-    ::BLU_LOGICCASE <- CreateLogicCase("blue_train_case", "Blu");
+    PLR_TEAMS[2].logiccase = PLR_CreateLogicCase(2, "red_train_case");
+    PLR_TEAMS[3].logiccase = PLR_CreateLogicCase(3, "blue_train_case");
 
-    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "red_train_case", "InValue", "", 0, -1);
-    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "blue_train_case", "InValue", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[2].pushzone, "OnNumCappersChanged2", "red_train_case", "InValue", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "blue_train_case", "InValue", "", 0, -1);
 
     // Rollback logic replacement
 
-    // MM_GetEntByName("plr_red_rollback").Kill();
-    // MM_GetEntByName("plr_blu_rollback").Kill();
+    PLR_AddRollbackZone(2, "plr_red_pathA_hillA2", "plr_red_pathA_hillA4", "plr_red_pathA_hillA1");
+    PLR_AddRollbackZone(3, "plr_blu_pathA_hillA2", "plr_blu_pathA_hillA4", "plr_blu_pathA_hillA1");
 
-    AddRollbackZone("plr_red_pathA_hillA2", "plr_red_pathA_hillA4", "plr_red_pathA_hillA1", "Red");
-    AddRollbackZone("plr_blu_pathA_hillA2", "plr_blu_pathA_hillA4", "plr_blu_pathA_hillA1", "Blu");
+    PLR_AddRollbackZone(2, "plr_red_pathB_hillA2", "plr_red_pathB_hillA5", "plr_red_pathB_hillA1");
+    PLR_AddRollbackZone(2, "plr_red_pathB_hillB2", "plr_red_pathB_hillB4", "plr_red_pathB_hillB1");
+    PLR_AddRollbackZone(3, "plr_blu_pathB_hillA2", "plr_blu_pathB_hillA5", "plr_blu_pathB_hillA1");
+    PLR_AddRollbackZone(3, "plr_blu_pathB_hillB2", "plr_blu_pathB_hillB4", "plr_blu_pathB_hillB1");
 
-    AddRollbackZone("plr_red_pathB_hillA2", "plr_red_pathB_hillA5", "plr_red_pathB_hillA1", "Red");
-    AddRollbackZone("plr_red_pathB_hillB2", "plr_red_pathB_hillB4", "plr_red_pathB_hillB1", "Red");
-    AddRollbackZone("plr_blu_pathB_hillA2", "plr_blu_pathB_hillA5", "plr_blu_pathB_hillA1", "Blu");
-    AddRollbackZone("plr_blu_pathB_hillB2", "plr_blu_pathB_hillB4", "plr_blu_pathB_hillB1", "Blu");
-
-    AddRollbackZone("plr_red_pathC_hillA2", "plr_red_pathC_hillA6", "plr_red_pathC_hillA1", "Red");
-    AddRollbackZone("plr_red_pathC_hillB2", "plr_red_pathC_hillB6", "plr_red_pathC_hillB1", "Red");
-    AddRollbackZone("plr_blu_pathC_hillA2", "plr_blu_pathC_hillA6", "plr_blu_pathC_hillA1", "Blu");
-    AddRollbackZone("plr_blu_pathC_hillB2", "plr_blu_pathC_hillB6", "plr_blu_pathC_hillB1", "Blu")
+    PLR_AddRollbackZone(2, "plr_red_pathC_hillA2", "plr_red_pathC_hillA6", "plr_red_pathC_hillA1");
+    PLR_AddRollbackZone(2, "plr_red_pathC_hillB2", "plr_red_pathC_hillB6", "plr_red_pathC_hillB1");
+    PLR_AddRollbackZone(3, "plr_blu_pathC_hillA2", "plr_blu_pathC_hillA6", "plr_blu_pathC_hillA1");
+    PLR_AddRollbackZone(3, "plr_blu_pathC_hillB2", "plr_blu_pathC_hillB6", "plr_blu_pathC_hillB1");
 
     // Crossing logic replacement (yes they used "crossover2" twice)
     foreach(entName in [
@@ -73,9 +70,18 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).Kill();
     }
 
-    AddCrossing("plr_red_pathA15", "plr_red_pathA16", "plr_blu_pathA15", "plr_blu_pathA16", 1);
-    AddCrossing("plr_red_pathB_crossover2_start", "plr_red_pathB_crossover2_end", "plr_blu_pathB_crossover2_start", "plr_blu_pathB_crossover2_end", 2);
-    AddCrossing("plr_red_crossover3_start", "plr_red_pathC_29", "plr_blu_crossover3_start", "plr_blu_pathC_29", 3);
+    AddCrossing([
+        ["plr_red_pathA15", "plr_red_pathA16", 2],
+        ["plr_blu_pathA15", "plr_blu_pathA16", 3]
+    ]);
+    AddCrossing([
+        ["plr_red_pathB_crossover2_start", "plr_red_pathB_crossover2_end", 2],
+        ["plr_blu_pathB_crossover2_start", "plr_blu_pathB_crossover2_end", 3]
+    ]);
+    AddCrossing([
+        ["plr_red_crossover3_start", "plr_red_pathC_29", 2],
+        ["plr_blu_crossover3_start", "plr_blu_pathC_29", 3]
+    ]);
 
     // Fix invisible walls on stage 3 by putting a prop there
     // Flag removal needed to stop sentries trying to shoot through the thin prop (thanks ficool2!)
@@ -144,12 +150,12 @@ function OnGameEvent_teamplay_round_start(params) {
     NetProps.SetPropBool(MM_GetEntByName("plr_red_watcherC"), "m_bHandleTrainMovement", false);
     NetProps.SetPropBool(MM_GetEntByName("plr_blu_watcherC"), "m_bHandleTrainMovement", false);
 
-    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "plr_red_watcherA", "SetNumTrainCappers", "", 0, -1);
-    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "plr_blu_watcherA", "SetNumTrainCappers", "", 0, -1);
-    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "plr_red_watcherB", "SetNumTrainCappers", "", 0, -1);
-    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "plr_blu_watcherB", "SetNumTrainCappers", "", 0, -1);
-    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "plr_red_watcherC", "SetNumTrainCappers", "", 0, -1);
-    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "plr_blu_watcherC", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[2].pushzone, "OnNumCappersChanged2", "plr_red_watcherA", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "plr_blu_watcherA", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[2].pushzone, "OnNumCappersChanged2", "plr_red_watcherB", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "plr_blu_watcherB", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[2].pushzone, "OnNumCappersChanged2", "plr_red_watcherC", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "plr_blu_watcherC", "SetNumTrainCappers", "", 0, -1);
 
     // Prevent both win outputs being fired for cart warps.
 
@@ -168,8 +174,8 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(MM_GetEntByName("plr_round_C"), "OnStart", "!self", "RunScriptCode", "OnRound3Start()", 0, -1);
 
     // Add thinks to carts
-    CreateCartAutoUpdater(RED_TRAIN, 2);
-    CreateCartAutoUpdater(BLU_TRAIN, 3);
+    PLR_CreateCartAutoUpdater(2, PLR_TEAMS[2].train);
+    PLR_CreateCartAutoUpdater(3, PLR_TEAMS[3].train);
 }
 
 function OnRound2Start() {
@@ -179,8 +185,8 @@ function OnRound2Start() {
     ::PLR_TIMER_NAME <- "plr_timer_b";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
-    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherB");
-    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherB");
+    PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcherB");
+    PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcherB");
 
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(45), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
@@ -188,11 +194,11 @@ function OnRound2Start() {
 
     // Handle cart warp
     if(ROUND_WIN_COUNTER == 2) {
-        RED_TRAIN.AcceptInput("TeleportToPathTrack", "plr_red_pathB_start1", null, null);
-        BLU_TRAIN.AcceptInput("TeleportToPathTrack", "plr_blu_pathB_start0", null, null);
+        PLR_TEAMS[2].train.AcceptInput("TeleportToPathTrack", "plr_red_pathB_start1", null, null);
+        PLR_TEAMS[3].train.AcceptInput("TeleportToPathTrack", "plr_blu_pathB_start0", null, null);
     } else if (ROUND_WIN_COUNTER == 3) {
-        RED_TRAIN.AcceptInput("TeleportToPathTrack", "plr_red_pathB_start0", null, null);
-        BLU_TRAIN.AcceptInput("TeleportToPathTrack", "plr_blu_pathB_start1", null, null);
+        PLR_TEAMS[2].train.AcceptInput("TeleportToPathTrack", "plr_red_pathB_start0", null, null);
+        PLR_TEAMS[3].train.AcceptInput("TeleportToPathTrack", "plr_blu_pathB_start1", null, null);
     }
 
     ResetCartStates();
@@ -205,8 +211,8 @@ function OnRound3Start() {
     ::PLR_TIMER_NAME <- "plr_timer_c";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
-    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcherC");
-    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcherC");
+    PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcherC");
+    PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcherC");
 
     EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
@@ -218,16 +224,16 @@ function OnRound3Start() {
     ResetCartStates();
 }
 
-::WinRedBase <- WinRed;
-::WinBluBase <- WinBlu;
+::WinRed_Base <- WinRed;
+::WinBlu_Base <- WinBlu;
 
 function WinRed() {
-    WinRed();
+    WinRed_Base();
     ::ROUND_WIN_COUNTER <- ROUND_WIN_COUNTER + 2;
 }
 
 function WinBlu() {
-    WinBluBase();
+    WinBlu_Base();
     ::ROUND_WIN_COUNTER <- ROUND_WIN_COUNTER + 3;
 }
 
