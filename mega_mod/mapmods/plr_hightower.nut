@@ -51,7 +51,7 @@ function OnGameEvent_teamplay_round_start(params) {
     MM_GetEntByName("plr_blu_crossover1_branch").Kill();
     MM_GetEntByName("plr_blu_crossover1_relay").Kill();
 
-    AddCrossing([
+    PLR_AddCrossing([
         ["plr_red_crossover1_start", "plr_red_crossover1_end", 2],
         ["plr_blu_crossover1_start", "plr_blu_crossover1_end", 3]
     ]);
@@ -67,17 +67,17 @@ function OnGameEvent_teamplay_round_start(params) {
 
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
 
     // Add thinks to carts
     PLR_CreateCartAutoUpdater(2, PLR_TEAMS[2].train);
     PLR_CreateCartAutoUpdater(3, PLR_TEAMS[3].train);
 }
 
-::StartOvertimeBase <- StartOvertime;
+::PLR_StartOvertimeBase <- PLR_StartOvertime;
 
-function StartOvertime() {
+function PLR_StartOvertime() {
     local redRollbackRelay = MM_GetEntByName("plr_red_rollback_relay");
     local bluRollbackRelay = MM_GetEntByName("plr_blu_rollback_relay");
 
@@ -85,7 +85,7 @@ function StartOvertime() {
     EntFireByHandle(redRollbackRelay, "Disable", "", 0, null, null);
     EntFireByHandle(bluRollbackRelay, "Disable", "", 0, null, null);
 
-    StartOvertimeBase();
+    PLR_StartOvertimeBase();
 }
 
 // Override PLR_Advance/PLR_Stop/PLR_TriggerRollback to also control elevator
@@ -147,7 +147,7 @@ function SwitchToElevator(team) {
         EntityOutputs.AddOutput(t.pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
     }
 
-    DisableOvertimeRollback();
+    PLR_DisableOvertimeRollback();
 
     EntFireByHandle(t.custom.elv, "SetSpeedForwardModifier", "0.25", 0, null, null);
 

@@ -13,8 +13,8 @@ function OnGameEvent_teamplay_round_start(params) {
 
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
 
     EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_pathC_start3"), "OnPass", "!self", "RunScriptCode", "MM_HighTowerEvent_DelayedStart()", 0, -1);
 }
@@ -61,7 +61,7 @@ function MM_HighTowerEvent_DelayedStart() {
     MM_GetEntByName("plr_blu_crossover1_branch").Kill();
     MM_GetEntByName("plr_blu_crossover1_relay").Kill();
 
-    AddCrossing([
+    PLR_AddCrossing([
         ["plr_red_crossover1_start", "plr_red_crossover1_end", 2],
         ["plr_blu_crossover1_start", "plr_blu_crossover1_end", 3]
     ]);
@@ -75,17 +75,17 @@ function MM_HighTowerEvent_DelayedStart() {
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_red_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevator(2)", 0.95, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("clamp_blu_positioncart_relay_end"), "OnTrigger", "!self", "RunScriptCode", "SwitchToElevator(3)", 0.95, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "PLR_ForceStopCarts()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "PLR_ForceStopCarts()", 0, -1);
 
     // Add thinks to carts
     PLR_CreateCartAutoUpdater(2, PLR_TEAMS[2].train);
     PLR_CreateCartAutoUpdater(3, PLR_TEAMS[3].train);
 }
 
-::StartOvertimeBase <- StartOvertime;
+::PLR_StartOvertimeBase <- PLR_StartOvertime;
 
-function StartOvertime() {
+function PLR_StartOvertime() {
     local redRollbackRelay = MM_GetEntByName("plr_red_rollback_relay");
     local bluRollbackRelay = MM_GetEntByName("plr_blu_rollback_relay");
 
@@ -95,9 +95,9 @@ function StartOvertime() {
 
     // The only rollback zones are on the elevator, which force disable rollback anyway.
     // Might as well disable rollback right now.
-    DisableOvertimeRollback();
+    PLR_DisableOvertimeRollback();
 
-    StartOvertimeBase();
+    PLR_StartOvertimeBase();
 }
 
 // Override PLR_Advance/PLR_Stop/PLR_TriggerRollback to also control elevator
@@ -156,7 +156,7 @@ function SwitchToElevator(team) {
         EntityOutputs.AddOutput(t.pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
     }
 
-    DisableOvertimeRollback();
+    PLR_DisableOvertimeRollback();
 
     EntFireByHandle(t.custom.elv, "SetSpeedForwardModifier", "0.25", 0, null, null);
 

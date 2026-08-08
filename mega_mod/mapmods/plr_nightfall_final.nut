@@ -70,15 +70,15 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).Kill();
     }
 
-    AddCrossing([
+    PLR_AddCrossing([
         ["plr_red_pathA15", "plr_red_pathA16", 2],
         ["plr_blu_pathA15", "plr_blu_pathA16", 3]
     ]);
-    AddCrossing([
+    PLR_AddCrossing([
         ["plr_red_pathB_crossover2_start", "plr_red_pathB_crossover2_end", 2],
         ["plr_blu_pathB_crossover2_start", "plr_blu_pathB_crossover2_end", 3]
     ]);
-    AddCrossing([
+    PLR_AddCrossing([
         ["plr_red_crossover3_start", "plr_red_pathC_29", 2],
         ["plr_blu_crossover3_start", "plr_blu_pathC_29", 3]
     ]);
@@ -115,8 +115,8 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(MM_GetEntByName("plr_blu_pathC_slopeA2"), "OnPass", "plr_blu_train", "SetSpeedForwardModifier", "0.5", 0, -1);
 
     // Timer logic
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(45), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(45), 0, -1);
 
     SpawnEntityFromTable("team_round_timer", {
         setup_length = 45,
@@ -125,7 +125,7 @@ function OnGameEvent_teamplay_round_start(params) {
         timer_length = 600,
         StartDisabled = 1,
         show_in_hud = 0,
-        "OnFinished#1" : "!self,RunScriptCode,StartOvertime(),0,1",
+        "OnFinished#1" : "!self,RunScriptCode,PLR_StartOvertime(),0,1",
         "OnSetupFinished#1" : "plr_red_pushzone,Enable,,0,1",
         "OnSetupFinished#2" : "plr_blu_pushzone,Enable,,0,1",
         "OnSetupFinished#3" : "plr_siren,PlaySound,,0,1",
@@ -139,7 +139,7 @@ function OnGameEvent_teamplay_round_start(params) {
         timer_length = 600,
         StartDisabled = 1,
         show_in_hud = 0,
-        "OnFinished#1" : "!self,RunScriptCode,StartOvertime(),0,1"
+        "OnFinished#1" : "!self,RunScriptCode,PLR_StartOvertime(),0,1"
     });
 
     // team_train_watcher is no longer in charge.
@@ -188,7 +188,7 @@ function OnRound2Start() {
     PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcherB");
     PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcherB");
 
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(45), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(45), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
 
@@ -201,7 +201,7 @@ function OnRound2Start() {
         PLR_TEAMS[3].train.AcceptInput("TeleportToPathTrack", "plr_blu_pathB_start1", null, null);
     }
 
-    ResetCartStates();
+    PLR_ResetCartStates();
 }
 
 function OnRound3Start() {
@@ -214,27 +214,28 @@ function OnRound3Start() {
     PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcherC");
     PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcherC");
 
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(), 0, -1);
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
 
     // Handle cart warp
     MM_GetEntByName("plr_stageC_start_case").AcceptInput("InValue", "" + ROUND_WIN_COUNTER, null, null);
 
-    ResetCartStates();
+    PLR_ResetCartStates();
 }
 
-::WinRed_Base <- WinRed;
-::WinBlu_Base <- WinBlu;
+::PLR_TeamWin_Base <- PLR_TeamWin;
 
-function WinRed() {
-    WinRed_Base();
-    ::ROUND_WIN_COUNTER <- ROUND_WIN_COUNTER + 2;
-}
+function PLR_TeamWin(team) {
+    PLR_TeamWin_Base(team);
 
-function WinBlu() {
-    WinBlu_Base();
-    ::ROUND_WIN_COUNTER <- ROUND_WIN_COUNTER + 3;
+    // There is a logic case which handles the advantage the winning team has on later stages.
+    // A round counter increments by 2 when RED wins a stage and 3 when BLU wins a stage.
+    // After stage 1, the count is either 2 or 3, which determines cart starting positions for stage 2.
+    // After stage 2, the count is either 4 (RED+RED), 5 (RED+BLU), or 6 (BLU+BLU), which determines cart starting positions for stage 3.
+    if (team >= 2) {
+        ::ROUND_WIN_COUNTER <- ROUND_WIN_COUNTER + team;
+    }
 }
 
 __CollectGameEventCallbacks(this);

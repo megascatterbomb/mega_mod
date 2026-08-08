@@ -72,15 +72,15 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).Kill();
     }
 
-    AddCrossing([
+    PLR_AddCrossing([
         ["ssplr_red_crossover1_start", "ssplr_red_crossover1_end", 2],
         ["ssplr_blu_crossover1_start", "ssplr_blu_crossover1_end", 3]
     ]);
-    AddCrossing([
+    PLR_AddCrossing([
         ["ssplr_red_pathA_start55", "ssplr_red_pathA_start56", 2],
         ["ssplr_blu_pathA_start59", "ssplr_blu_pathA_start60", 3]
     ]);
-    AddCrossing([
+    PLR_AddCrossing([
         ["ssplr_red_pathA_start80", "ssplr_red_pathA_start81", 2],
         ["ssplr_blu_pathA_start83", "ssplr_blu_pathA_start84", 3]
     ]);
@@ -94,11 +94,11 @@ function OnGameEvent_teamplay_round_start(params) {
 
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "PLR_ForceStopCarts()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "PLR_ForceStopCarts()", 0, -1);
 
     // Add thinks to carts
     PLR_CreateCartAutoUpdater(2, PLR_TEAMS[2].train);

@@ -71,19 +71,19 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).Kill();
     }
 
-    AddCrossing([
+    PLR_AddCrossing([
         ["red_path_9", "red_path_12", 2],
         ["blue_path_9", "blue_path_12", 3]
     ]);
-    AddCrossing([
+    PLR_AddCrossing([
         ["red_path_b_8", "red_path_b_11", 2],
         ["blue_path_b_8", "blue_path_b_11", 3]
     ]);
 
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", "setup_timer_a", "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(65), 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(65), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
 
     SpawnEntityFromTable("team_round_timer", {
         setup_length = 6,
@@ -92,7 +92,7 @@ function OnGameEvent_teamplay_round_start(params) {
         timer_length = 600,
         StartDisabled = 1,
         show_in_hud = 0,
-        "OnFinished#1": "!self,RunScriptCode,StartOvertime(),0,1",
+        "OnFinished#1": "!self,RunScriptCode,PLR_StartOvertime(),0,1",
     });
 
     // Multi-stage logic
@@ -132,10 +132,10 @@ function OnRound2Start() {
     PLR_TEAMS[3].watcher = MM_GetEntByName("blue_watcher_2");
 
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", "setup_timer_b", "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(65), 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(65), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
 
-    ResetCartStates();
+    PLR_ResetCartStates();
 }
 
 function OnRound3Start() {
@@ -143,7 +143,7 @@ function OnRound3Start() {
 
     ::PLR_TIMER_NAME <- "setup_timer_c";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(), 0, -1);
 
     PLR_TEAMS[2].watcher = MM_GetEntByName("red_watcher_3");
     PLR_TEAMS[3].watcher = MM_GetEntByName("blue_watcher_3");
@@ -151,7 +151,7 @@ function OnRound3Start() {
     EntFireByHandle(PLR_TIMER, "ShowInHud", "1", 0, null, null);
     EntFireByHandle(PLR_TIMER, "Enable", "", 0.1, null, null);
 
-    ResetCartStates();
+    PLR_ResetCartStates();
 }
 
 __CollectGameEventCallbacks(this);

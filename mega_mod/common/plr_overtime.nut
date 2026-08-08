@@ -365,11 +365,11 @@ function PLR_AddRollforwardZone(team, startPath, endPath, disablePath) {
     }
 }
 
-// AddCrossing: Register one or more teams on a shared crossing.
+// PLR_AddCrossing: Register one or more teams on a shared crossing.
 // teams: Array of [startPath, endPath, team] triplets.
 // The crossing ID is auto-generated.
-// Example: AddCrossing([["red_start", "red_end", 2], ["blu_start", "blu_end", 3]])
-function AddCrossing(teams) {
+// Example: PLR_AddCrossing([["red_start", "red_end", 2], ["blu_start", "blu_end", 3]])
+function PLR_AddCrossing(teams) {
     local crossingID = PLR_NEXT_CROSSING_ID++;
     if (teams.len() < 2) {
         throw "AddCrossing requires at least 2 teams";
@@ -513,7 +513,7 @@ function PLR_CartThink(team) {
 // ROUND MANAGEMENT
 // ============================================================================
 
-function StartOvertime() {
+function PLR_StartOvertime() {
     ::OVERTIME_ACTIVE <- true;
     if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
     PLR_ForEachTeam(function(team, state) {
@@ -521,7 +521,7 @@ function StartOvertime() {
     });
 }
 
-function ForceStopCarts() {
+function PLR_ForceStopCarts() {
     if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
@@ -531,7 +531,7 @@ function ForceStopCarts() {
     });
 }
 
-function ResetCartStates() {
+function PLR_ResetCartStates() {
     ::OVERTIME_ACTIVE <- false;
     ::ROLLBACK_DISABLED <- false;
     local now = Time();
@@ -545,15 +545,15 @@ function ResetCartStates() {
     });
 }
 
-function DisableOvertimeRollback() {
+function PLR_DisableOvertimeRollback() {
     if (ROLLBACK_DISABLED) return;
     ::ROLLBACK_DISABLED <- true;
     if (!OVERTIME_ACTIVE) return;
-    AnnounceRollbackDisabled();
+    PLR_AnnounceRollbackDisabled();
     if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
 }
 
-function AnnounceRollbackDisabled() {
+function PLR_AnnounceRollbackDisabled() {
     local text_tf = SpawnEntityFromTable("game_text_tf", {
         message = "Rollback zones disabled!",
         icon = "timer_icon",
@@ -568,11 +568,11 @@ function AnnounceRollbackDisabled() {
 // TIMER HELPERS
 // ============================================================================
 
-function GetRoundTimeString(setup = 0) {
-    return "" + GetRoundTime(setup);
+function PLR_GetRoundTimeString(setup = 0) {
+    return "" + PLR_GetRoundTime(setup);
 }
 
-function GetRoundTime(setup = 0) {
+function PLR_GetRoundTime(setup = 0) {
     local time = MM_PLR_TIME_UPPER_LIMIT;
     local timeRemaining = MM_GetTimelimitRemaining();
     if (timeRemaining != null) time = ceil(timeRemaining / 30) * 30;
@@ -586,50 +586,15 @@ function GetRoundTime(setup = 0) {
 // ============================================================================
 
 function OnGameEvent_teamplay_round_win(params) {
-    if (params.team == 2) {
-        WinRed();
-    } else if (params.team == 3) {
-        WinBlu();
+    if (params.team in PLR_TEAMS) {
+        PLR_TeamWin(params.team);
     } else {
-        ForceStopCarts();
+        PLR_TeamWin(0);
     }
 }
 
-function WinRed() {
-    ForceStopCarts();
-}
-
-function WinBlu() {
-    ForceStopCarts();
-}
-
-// ============================================================================
-// LEGACY ALIASES (for entity output strings that use old function names)
-// These use the team string "Red"/"Blu" to determine team number.
-// Map mods should migrate to PLR_* versions.
-// ============================================================================
-
-function CreateLogicCase(name, team) {
-    local t = team == "Red" ? 2 : 3;
-    return PLR_CreateLogicCase(t, name);
-}
-
-function AddCaptureOutputsToLogicCase(entity, team) {
-    local t = team == "Red" ? 2 : 3;
-    PLR_AddCaptureOutputsToLogicCase(t, entity);
-}
-
-function AddRollbackZone(startPath, endPath, disablePath, team) {
-    local t = team == "Red" ? 2 : 3;
-    PLR_AddRollbackZone(t, startPath, endPath, disablePath);
-}
-
-function AddRollforwardZone(startPath, endPath, disablePath, team) {
-    local t = team == "Red" ? 2 : 3;
-    PLR_AddRollforwardZone(t, startPath, endPath, disablePath);
+function PLR_TeamWin(team) {
+    PLR_ForceStopCarts();
 }
 
 
-function CreateCartAutoUpdater(cart, team) {
-    PLR_CreateCartAutoUpdater(team, cart);
-}

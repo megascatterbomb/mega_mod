@@ -59,15 +59,15 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).Kill();
     }
 
-    AddCrossing([
+    PLR_AddCrossing([
         ["ssplr_red_pathA_12", "ssplr_red_pathA_17", 2],
         ["ssplr_blu_pathA_12", "ssplr_blu_pathA_17", 3]
     ]);
 
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
 
     // team_train_watcher is no longer in charge.
     NetProps.SetPropBool(PLR_TEAMS[2].watcher, "m_bHandleTrainMovement", false);
