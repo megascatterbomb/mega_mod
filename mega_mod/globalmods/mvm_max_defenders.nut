@@ -61,11 +61,16 @@ local configPath = "mega_mod_mvm_max_defenders.txt"
 ApplyMod <- function () {
     local root = getroottable();
 
+    local UpdateDefenders = function(event) {
+        EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_LoadDefendersConfig(); ::MM_MVM_CheckMaxDefenders()", 0, null);
+    }
+
     MM_MVM_LoadDefendersConfig();
 
-    this.OnGameEvent_teamplay_round_start <- function (event) {
-        EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_LoadDefendersConfig(); ::MM_MVM_CheckMaxDefenders()", 0, null);
-    }.bindenv(this);
+    this.OnGameEvent_teamplay_round_start <- UpdateDefenders.bindenv(this);
+    this.OnGameEvent_player_team <- UpdateDefenders.bindenv(this);
+    this.OnGameEvent_player_disconnect <- UpdateDefenders.bindenv(this);
+    this.OnGameEvent_player_spawn <- UpdateDefenders.bindenv(this);
 
     ::MM_MVM_CheckMaxDefenders();
 
