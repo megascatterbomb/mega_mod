@@ -10,6 +10,7 @@
 // ============================================================================
 
 ::PLR_TEAMS <- {}  // team_num => state table
+::PLR_CROSSINGS <- {}  // crossingID => { teams: [team,...], passed: [], queue: [team,...], disabled: false }
 ::PLR_UPDATE_DEPTH <- 0
 ::PLR_NEXT_CROSSING_ID <- 1
 const PLR_MAX_UPDATE_DEPTH = 8  // N teams + safety margin
@@ -39,7 +40,8 @@ function PLR_RegisterTeam(team, config) {
         rollstate = 0,
         pushstate = 0,
         blocked = false,
-        crossing = 0,
+        currentCrossing = 0,  // Crossing ID this team is currently in (0 = none)
+        waitingAtCrossing = false,  // Is this team waiting for another team to exit a crossing?
         lastUpdate = Time(),
         rollbackSpeed = rollbackSpeed,
         speed1 = speed1,
@@ -86,6 +88,7 @@ function InitGlobalVars() {
 
 function PLR_InitStandardTeams() {
     ::PLR_TEAMS <- {};
+    ::PLR_CROSSINGS <- {};
     PLR_RegisterTeam(2, {});  // RED
     PLR_RegisterTeam(3, {});  // BLU
 }
@@ -374,7 +377,8 @@ function PLR_AddCrossing(teams) {
     if (teams.len() < 2) {
         throw "AddCrossing requires at least 2 teams";
     }
-    local registeredTeams = {};
+    local registeredTeams = [];
+    local crossingTeams = [];
     for (local i = 0; i < teams.len(); i++) {
         local group = teams[i];
         if (group.len() != 3) {
@@ -383,15 +387,17 @@ function PLR_AddCrossing(teams) {
         local startPath = group[0];
         local endPath = group[1];
         local team = group[2];
-        if (team in registeredTeams) {
+        if (registeredTeams.find(team) != null) {
             throw "AddCrossing: Team " + team + " registered twice on crossing " + crossingID;
         }
-        registeredTeams[team] = true;
+        registeredTeams.push(team);
+        crossingTeams.push(team);
         EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self",
             "RunScriptCode", "PLR_SetCrossing(" + team + ", " + crossingID + ")", 0, -1);
         EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self",
             "RunScriptCode", "PLR_SetCrossing(" + team + ", 0)", 0, -1);
     }
+    PLR_CROSSINGS[crossingID] <- {"teams" : crossingTeams, "passed" : [], "queue" : [], "disabled" : false};
 }
 
 
@@ -411,45 +417,85 @@ function PLR_SetCrossing(team, crossingID) {
     local t = PLR_GetTeam(team);
 
     if (crossingID == 0) {
-        // Exited a crossing - unblock this team
-        t.crossing = 0;
-        t.pushzone.AcceptInput("Enable", "", null, null);
-        PLR_BlockCart(team, false);
+        // Exited a crossing
+        local exitedCrossing = t.currentCrossing;
+        if (exitedCrossing == 0) {
+            throw "PLR_SetCrossing: Team " + team + " exited crossing " + crossingID + " but currentCrossing is 0";
+        }
+        t.currentCrossing = 0;
+        t.waitingAtCrossing = false;
 
-        // Wake up any other team waiting on the same crossing
-        PLR_ForEachTeam(function(other, otherState) {
-            if (other != team && otherState.crossing == t._waitingCrossing) {
-                // The crossing is now free - let the waiting team proceed slowly
-                otherState._waitingCrossing = 0;
-                otherState.pushzone.AcceptInput("Enable", "", null, null);
-                PLR_BlockCart(other, false);
-                EntFireByHandle(otherState.train, "RunScriptCode",
-                    "PLR_Advance(" + other + ", " + otherState.speed1 + ", false)", 0.5, null, null);
-            }
-        });
+        local c = PLR_CROSSINGS[exitedCrossing];
+        if (!c) return;
+
+        // If crossing was disabled (last team), still track but skip blocking logic
+        if (!c.disabled) {
+            t.pushzone.AcceptInput("Enable", "", null, null);
+            PLR_BlockCart(team, false);
+        }
+        c.passed.push(team);
+
+        // Check how many teams haven't passed yet
+        local remaining = 0;
+        foreach(t2 in c.teams) {
+            if (c.passed.find(t2) == null) remaining++;
+        }
+
+        if (remaining <= 1) {
+            // Only one team left - disable crossing logic
+            c.disabled = true;
+            // If the last team is waiting at this crossing, unblock it
+            PLR_ForEachTeam(function(other, otherState) {
+                if (otherState.waitingAtCrossing && otherState.currentCrossing == exitedCrossing) {
+                    otherState.waitingAtCrossing = false;
+                    otherState.pushzone.AcceptInput("Enable", "", null, null);
+                    PLR_BlockCart(other, false);
+                }
+            });
+        } else if (!c.disabled && c.queue.len() > 0) {
+            // Release next team from queue (FIFO) - block input and force through
+            local nextTeam = c.queue.pop();
+            local nextT = PLR_GetTeam(nextTeam);
+            nextT.waitingAtCrossing = false;
+            // Keep pushzone disabled and cart blocked through crossing
+            PLR_BlockCart(nextTeam, true);
+            EntFireByHandle(nextT.train, "RunScriptCode",
+                "PLR_Advance(" + nextTeam + ", " + nextT.speed1 + ", false)", 0.5, null, null);
+        }
     } else {
         // Entering a crossing
-        local conflict = false;
-        local waitingTeam = null;
+        local c = PLR_CROSSINGS[crossingID];
+        if (!c) return;
 
-        // Check if any other team is already in this crossing
+        if (c.disabled) {
+            // Crossing disabled - all other teams already passed, just go through normally
+            t.currentCrossing = crossingID;
+            return;
+        }
+
+        // Check if any team is currently in this crossing
+        local conflict = false;
         PLR_ForEachTeam(function(other, otherState) {
-            if (other != team && otherState.crossing == crossingID) {
+            if (other != team && otherState.currentCrossing == crossingID) {
                 conflict = true;
-                waitingTeam = other;
             }
         });
 
         if (conflict) {
-            // Another team is in this crossing - stop and wait
-            t.crossing = crossingID;
-            t._waitingCrossing <- crossingID;
+            // Another team is in this crossing - queue and wait
+            t.currentCrossing = crossingID;
+            t.waitingAtCrossing = true;
+            c.queue.push(team);
             t.pushzone.AcceptInput("Disable", "", null, null);
             PLR_BlockCart(team, true);
             PLR_Stop(team);
         } else {
-            // Crossing is clear - enter it
-            t.crossing = crossingID;
+            // Crossing is clear - enter, block pushzone, force through at speed1
+            t.currentCrossing = crossingID;
+            t.pushzone.AcceptInput("Disable", "", null, null);
+            PLR_BlockCart(team, true);
+            EntFireByHandle(t.train, "RunScriptCode",
+                "PLR_Advance(" + team + ", " + t.speed1 + ", false)", 0.5, null, null);
         }
     }
 }

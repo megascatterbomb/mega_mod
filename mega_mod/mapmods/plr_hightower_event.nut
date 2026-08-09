@@ -33,8 +33,8 @@ function MM_HighTowerEvent_DelayedStart() {
     PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcherC");
     PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcherC");
 
-    PLR_TEAMS[2].custom.elv = null;
-    PLR_TEAMS[3].custom.elv = null;
+    PLR_TEAMS[2].custom.elv <- null;
+    PLR_TEAMS[3].custom.elv <- null;
 
     PLR_TEAMS[2].blocked = false;
     PLR_TEAMS[3].blocked = false;

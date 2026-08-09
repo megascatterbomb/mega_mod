@@ -24,10 +24,10 @@ function OnGameEvent_teamplay_round_start(params) {
     PLR_TEAMS[2].train = MM_GetEntByName("ssplr_red_train");
     PLR_TEAMS[3].train = MM_GetEntByName("ssplr_blu_train");
 
-    PLR_TEAMS[2].custom.elv = null;
-    PLR_TEAMS[3].custom.elv = null;
-    PLR_TEAMS[2].custom.atBottom = false;
-    PLR_TEAMS[3].custom.atBottom = false;
+    PLR_TEAMS[2].custom.elv <- null;
+    PLR_TEAMS[3].custom.elv <- null;
+    PLR_TEAMS[2].custom.atBottom <- false;
+    PLR_TEAMS[3].custom.atBottom <- false;
 
     PLR_TEAMS[2].watcher = MM_GetEntByName("ssplr_red_watcherA");
     PLR_TEAMS[3].watcher = MM_GetEntByName("ssplr_blu_watcherA");
@@ -35,15 +35,15 @@ function OnGameEvent_teamplay_round_start(params) {
     PLR_TEAMS[2].logiccase = PLR_CreateLogicCase(2, "mm_plr_logiccase_red");
     PLR_TEAMS[3].logiccase = PLR_CreateLogicCase(3, "mm_plr_logiccase_blu");
 
-    PLR_TEAMS[2].custom.liftLights = MM_GetEntArrayByName("ssplr_red_lift_finale1_lights");
-    PLR_TEAMS[3].custom.liftLights = MM_GetEntArrayByName("ssplr_blu_lift_finale1_lights");
+    PLR_TEAMS[2].custom.liftLights <- MM_GetEntArrayByName("ssplr_red_lift_finale1_lights");
+    PLR_TEAMS[3].custom.liftLights <- MM_GetEntArrayByName("ssplr_blu_lift_finale1_lights");
 
-    PLR_TEAMS[2].custom.wheel = MM_GetEntByName("wheel_red");
-    PLR_TEAMS[3].custom.wheel = MM_GetEntByName("wheel_blu");
+    PLR_TEAMS[2].custom.wheel <- MM_GetEntByName("wheel_red");
+    PLR_TEAMS[3].custom.wheel <- MM_GetEntByName("wheel_blu");
 
     // Elevator speed configs (used when on lift)
-    PLR_TEAMS[2].custom.liftSpeeds = {"s1" : 0.33, "s2" : 0.5, "s3" : 0.66, "ot" : 0.05, "rb" : -0.5};
-    PLR_TEAMS[3].custom.liftSpeeds = {"s1" : 0.33, "s2" : 0.5, "s3" : 0.66, "ot" : 0.05, "rb" : -0.5};
+    PLR_TEAMS[2].custom.liftSpeeds <- {"s1" : 0.33, "s2" : 0.5, "s3" : 0.66, "ot" : 0.05, "rb" : -0.5};
+    PLR_TEAMS[3].custom.liftSpeeds <- {"s1" : 0.33, "s2" : 0.5, "s3" : 0.66, "ot" : 0.05, "rb" : -0.5};
 
     // Rollback zones
     PLR_AddRollbackZone(2, "ssplr_red_path_lift_finale1_4", null, "ssplr_red_path_lift_finale1_1");

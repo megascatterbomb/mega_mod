@@ -41,11 +41,6 @@ function OnGameEvent_teamplay_round_start(params) {
     // Move the BLU team game_texts to different channel so RED and BLU can both be on screen
     EntFire("text_hack_blu*", "AddOutput", "channel 4", 0, null);
 
-    // Clean up unnecessary entities
-    for (local ent = null; ent = Entities.FindByClassname(ent, "func_rotating");) {
-        ent.Kill();
-    }
-
     // Rollzones
     PLR_AddRollbackZone(2, "ssplr_red_pathA_start64", "ssplr_red_pathA_start65", "ssplr_red_pathA_start83");
     PLR_AddRollbackZone(2, "ssplr_red_pathA_start74", "ssplr_red_pathA_start75", "ssplr_red_pathA_start73");

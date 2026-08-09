@@ -43,8 +43,8 @@ function OnGameEvent_teamplay_round_start(params) {
     PLR_AddRollbackZone(3, "minecart_bpath_80", null, "minecart_bpath_88");
 
     // Track if the cart is at the cutoff between the track and the capture zone
-    PLR_TEAMS[2].custom.atCutoff = false;
-    PLR_TEAMS[3].custom.atCutoff = false;
+    PLR_TEAMS[2].custom.atCutoff <- false;
+    PLR_TEAMS[3].custom.atCutoff <- false;
 
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_81"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[2].custom.atCutoff = false", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_82"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[2].custom.atCutoff = true", 0, -1);
@@ -57,8 +57,8 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_86"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[3].custom.atCutoff = false", 0, -1);
 
     // Track if the cart is at the very end of the track.
-    PLR_TEAMS[2].custom.atEnd = false;
-    PLR_TEAMS[3].custom.atEnd = false;
+    PLR_TEAMS[2].custom.atEnd <- false;
+    PLR_TEAMS[3].custom.atEnd <- false;
 
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_85"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[2].custom.atEnd = false; PLR_UpdateCart(2, PLR_TEAMS[2].pushstate)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_red_pathA_end"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[2].custom.atEnd = true", 0, -1);
@@ -120,8 +120,7 @@ function CheckCart(team) {
 
 // Do not move cart forward if it's already at the end of the track.
 ::PLR_Advance_Base <- PLR_Advance;
-function PLR_Advance(team, speed, dynamic) {
-    if (dynamic == null) dynamic = true;
+function PLR_Advance(team, speed, dynamic = true) {
     local t = PLR_GetTeam(team);
     if (t.custom.atEnd && speed > 0) return;
     PLR_Advance_Base(team, speed, dynamic);

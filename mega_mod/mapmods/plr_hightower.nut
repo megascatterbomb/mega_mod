@@ -20,8 +20,8 @@ function OnGameEvent_teamplay_round_start(params) {
     PLR_TEAMS[2].train = MM_GetEntByName("plr_red_train");
     PLR_TEAMS[3].train = MM_GetEntByName("plr_blu_train");
 
-    PLR_TEAMS[2].custom.elv = null;
-    PLR_TEAMS[3].custom.elv = null;
+    PLR_TEAMS[2].custom.elv <- null;
+    PLR_TEAMS[3].custom.elv <- null;
 
     PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcherC");
     PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcherC");
