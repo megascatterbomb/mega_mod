@@ -13,7 +13,7 @@
 ::PLR_CROSSINGS <- {}  // crossingID => { teams: [team,...], passed: [], queue: [team,...], disabled: false }
 ::PLR_UPDATE_DEPTH <- 0
 ::PLR_NEXT_CROSSING_ID <- 1
-const PLR_MAX_UPDATE_DEPTH = 8  // N teams + safety margin
+::PLR_MAX_UPDATE_DEPTH <- 8  // N teams + safety margin
 
 function PLR_RegisterTeam(team, config) {
     local rollbackSpeed = -1.0;
