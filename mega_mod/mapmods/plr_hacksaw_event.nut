@@ -8,40 +8,25 @@ function OnGameEvent_teamplay_round_start(params) {
     ::PLR_TIMER_NAME <- "ssplr_timer";
     ::PLR_TIMER = MM_GetEntByName(PLR_TIMER_NAME);
 
-    ::RED_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("ssplr_red_cartsparks");
-    ::BLU_CARTSPARKS_ARRAY <- MM_GetEntArrayByName("ssplr_blu_cartsparks");
+    PLR_TEAMS[2].cartsparks = MM_GetEntArrayByName("ssplr_red_cartsparks");
+    PLR_TEAMS[3].cartsparks = MM_GetEntArrayByName("ssplr_blu_cartsparks");
 
-    ::RED_PUSHZONE <- MM_GetEntByName("plr_red_pushzone");
-    ::BLU_PUSHZONE <- MM_GetEntByName("plr_blu_pushzone");
+    PLR_TEAMS[2].pushzone = MM_GetEntByName("plr_red_pushzone");
+    PLR_TEAMS[3].pushzone = MM_GetEntByName("plr_blu_pushzone");
 
-    ::RED_TRAIN <- MM_GetEntByName("plr_red_train");
-    ::BLU_TRAIN <- MM_GetEntByName("plr_blu_train");
+    PLR_TEAMS[2].train = MM_GetEntByName("plr_red_train");
+    PLR_TEAMS[3].train = MM_GetEntByName("plr_blu_train");
 
-    ::RED_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_red", "Red");
-    ::BLU_LOGICCASE <- CreateLogicCase("mm_plr_logiccase_blu", "Blu");
+    PLR_TEAMS[2].logiccase = PLR_CreateLogicCase(2, "mm_plr_logiccase_red");
+    PLR_TEAMS[3].logiccase = PLR_CreateLogicCase(3, "mm_plr_logiccase_blu");
 
-    ::RED_WATCHER <- MM_GetEntByName("plr_red_watcher");
-    ::BLU_WATCHER <- MM_GetEntByName("plr_blu_watcher");
+    PLR_TEAMS[2].watcher = MM_GetEntByName("plr_red_watcher");
+    PLR_TEAMS[3].watcher = MM_GetEntByName("plr_blu_watcher");
 
-    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
-    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
-
-    // Some rollback zones are improperly marked. This removes the uphill spawnflag from the offending path_track entities
-    // TODO: Find a way to update team_train_watcher entities to reflect these changes
-    // foreach(entName in [
-    //     "ssplr_red_pathA_start83",
-    //     "ssplr_red_pathA_start73",
-    //     "ssplr_red_pathA_start79",
-    //     "ssplr_blu_pathA_start87",
-    //     "ssplr_blu_pathA_start77",
-    //     "ssplr_blu_pathA_start89"
-    // ]) {
-    //     EntFireByHandle(MM_GetEntByName(entName), "AddOutput", "spawnflags 0", 0, null, null);
-    // }
+    EntityOutputs.AddOutput(PLR_TEAMS[2].pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_red", "InValue", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
 
     // Prevent SetSpeedForwardModifier for final ramp from triggering more than once
-    // This fixes a weird bug where the cart humps the second-to-last path_track during rollback.
-
     EntityOutputs.RemoveOutput(MM_GetEntByName("ssplr_red_pathA_start84"), "OnPass", "plr_red_train", "SetSpeedForwardModifier", "0.04");
     EntityOutputs.RemoveOutput(MM_GetEntByName("ssplr_red_pathA_start82"), "OnPass", "plr_red_train", "SetSpeedForwardModifier", "0.04");
     EntityOutputs.RemoveOutput(MM_GetEntByName("ssplr_blu_pathA_start86"), "OnPass", "plr_blu_train", "SetSpeedForwardModifier", "0.04");
@@ -56,23 +41,15 @@ function OnGameEvent_teamplay_round_start(params) {
     // Move the BLU team game_texts to different channel so RED and BLU can both be on screen
     EntFire("text_hack_blu*", "AddOutput", "channel 4", 0, null);
 
-    // Clean up unnecessary entities
-    for (local ent = null; ent = Entities.FindByClassname(ent, "func_rotating");) {
-        ent.Kill();
-    }
-
-    // Rollzones RED
-    AddRollbackZone("ssplr_red_pathA_start64", "ssplr_red_pathA_start65", "ssplr_red_pathA_start83", "Red");
-    AddRollbackZone("ssplr_red_pathA_start74", "ssplr_red_pathA_start75", "ssplr_red_pathA_start73", "Red");
-    AddRollbackZone("ssplr_red_pathA_start82", "red_path_15", "ssplr_red_pathA_start81", "Red");
-
-    // Rollzones BLU
-    AddRollbackZone("ssplr_blu_pathA_start68", "ssplr_blu_pathA_start69", "ssplr_blu_pathA_start87", "Blu");
-    AddRollbackZone("ssplr_blu_pathA_start78", "ssplr_blu_pathA_start79", "ssplr_blu_pathA_start77", "Blu");
-    AddRollbackZone("ssplr_blu_pathA_start85", "blu_path_15", "ssplr_blu_pathA_start84", "Blu");
+    // Rollzones
+    PLR_AddRollbackZone(2, "ssplr_red_pathA_start64", "ssplr_red_pathA_start65", "ssplr_red_pathA_start83");
+    PLR_AddRollbackZone(2, "ssplr_red_pathA_start74", "ssplr_red_pathA_start75", "ssplr_red_pathA_start73");
+    PLR_AddRollbackZone(2, "ssplr_red_pathA_start82", "red_path_15", "ssplr_red_pathA_start81");
+    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start68", "ssplr_blu_pathA_start69", "ssplr_blu_pathA_start87");
+    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start78", "ssplr_blu_pathA_start79", "ssplr_blu_pathA_start77");
+    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start85", "blu_path_15", "ssplr_blu_pathA_start84");
 
     // Crossing logic replacement
-
     foreach(entName in [
         "ssplr_red_crossover1_branch"
         "ssplr_red_crossover1_relay"
@@ -90,28 +67,37 @@ function OnGameEvent_teamplay_round_start(params) {
         MM_GetEntByName(entName).Kill();
     }
 
-    AddCrossing("ssplr_red_crossover1_start", "ssplr_red_crossover1_end", "ssplr_blu_crossover1_start", "ssplr_blu_crossover1_end", 1);
-    AddCrossing("ssplr_red_pathA_start55", "ssplr_red_pathA_start56", "ssplr_blu_pathA_start59", "ssplr_blu_pathA_start60", 2);
-    AddCrossing("ssplr_red_pathA_start80", "ssplr_red_pathA_start81", "ssplr_blu_pathA_start83", "ssplr_blu_pathA_start84", 3);
+    PLR_AddCrossing([
+        ["ssplr_red_crossover1_start", "ssplr_red_crossover1_end", 2],
+        ["ssplr_blu_crossover1_start", "ssplr_blu_crossover1_end", 3]
+    ]);
+    PLR_AddCrossing([
+        ["ssplr_red_pathA_start55", "ssplr_red_pathA_start56", 2],
+        ["ssplr_blu_pathA_start59", "ssplr_blu_pathA_start60", 3]
+    ]);
+    PLR_AddCrossing([
+        ["ssplr_red_pathA_start80", "ssplr_red_pathA_start81", 2],
+        ["ssplr_blu_pathA_start83", "ssplr_blu_pathA_start84", 3]
+    ]);
 
     // team_train_watcher is no longer in charge.
-    NetProps.SetPropBool(RED_WATCHER, "m_bHandleTrainMovement", false);
-    NetProps.SetPropBool(BLU_WATCHER, "m_bHandleTrainMovement", false);
+    NetProps.SetPropBool(PLR_TEAMS[2].watcher, "m_bHandleTrainMovement", false);
+    NetProps.SetPropBool(PLR_TEAMS[3].watcher, "m_bHandleTrainMovement", false);
 
-    EntityOutputs.AddOutput(RED_PUSHZONE, "OnNumCappersChanged2", "plr_red_watcher", "SetNumTrainCappers", "", 0, -1);
-    EntityOutputs.AddOutput(BLU_PUSHZONE, "OnNumCappersChanged2", "plr_blu_watcher", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[2].pushzone, "OnNumCappersChanged2", "plr_red_watcher", "SetNumTrainCappers", "", 0, -1);
+    EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "plr_blu_watcher", "SetNumTrainCappers", "", 0, -1);
 
     // Timer logic replacement
     EntityOutputs.RemoveOutput(PLR_TIMER, "OnSetupFinished", PLR_TIMER_NAME, "Disable", "");
-    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", GetRoundTimeString(), 0, -1);
-    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "StartOvertime()", 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnSetupFinished", "!self", "SetTime", PLR_GetRoundTimeString(), 0, -1);
+    EntityOutputs.AddOutput(PLR_TIMER, "OnFinished", "!self", "RunScriptCode", "PLR_StartOvertime()", 0, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "ForceStopCarts()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_red_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "PLR_ForceStopCarts()", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("relay_blu_capture_cart"), "OnTrigger", "!self", "RunScriptCode", "PLR_ForceStopCarts()", 0, -1);
 
     // Add thinks to carts
-    CreateCartAutoUpdater(RED_TRAIN, 2);
-    CreateCartAutoUpdater(BLU_TRAIN, 3);
+    PLR_CreateCartAutoUpdater(2, PLR_TEAMS[2].train);
+    PLR_CreateCartAutoUpdater(3, PLR_TEAMS[3].train);
 }
 
 __CollectGameEventCallbacks(this);
