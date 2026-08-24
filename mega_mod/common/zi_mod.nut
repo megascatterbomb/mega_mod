@@ -4,7 +4,10 @@
 ::MM_ZI_STARTING_SURVIVORS <- 1;
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
-::MM_ZI_OVERTIME_DAMAGE_INCREASE <- 1.0/7.0;
+::MM_ZI_OVERTIME_DAMAGE_INCREASE <- 1.0/10.0;
+::MM_ZI_MAX_TIME <- 180;
+
+// TODO: set m_bGlowEnabled to false on all players when round starts.
 
 function MM_Zombie_Infection() {
     local gamerules = Gamerules();
@@ -36,7 +39,10 @@ function MM_Zombie_Infection() {
 
 function MM_ZI_OnPlayerTeam(params) {
     if (!::MM_ZI_OVERTIME || !::bGameStarted || ::MM_ZI_ROUND_FINISHED) return;
+
+    // We're in overtime.
     if ( params.team == 2 ) {
+        SetPropBool( _hNextPlayer, "m_bGlowEnabled", false );
         local player = GetPlayerFromUserID(params.userid);
         EntFireByHandle(player, "RunScriptCode", "ChangeTeamSafe(self, 3, true); self.ForceRespawn(); self.TakeDamage(1000000, 0, null)", 0, null, player)
     }
@@ -277,8 +283,8 @@ function MM_ZI_OverrideSetupFinished() {
 
             // MEGAMOD: Force round time to 2 minutes.
             local _hRoundTimer = Entities.FindByClassname( null, "team_round_timer" );
-            EntFireByHandle(_hRoundTimer, "SetTime", "120", 0, null, null);
-            EntFireByHandle(_hRoundTimer, "SetMaxTime", "120", 0, null, null);
+            EntFireByHandle(_hRoundTimer, "SetTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+            EntFireByHandle(_hRoundTimer, "SetMaxTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
 
             PlayGlobalBell( false );
 
@@ -668,7 +674,9 @@ function MM_ZI_EnableOvertime() {
 
     foreach( _hNextPlayer in GetAllPlayers() ) {
         if (_hNextPlayer.GetTeam() == 3 || GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
+            SetPropBool( _hNextPlayer, "m_bGlowEnabled", true );
             ClientPrint(_hNextPlayer, 3, "\x0738F3ABNo more respawns for you. Kill the remaining Survivors to win!\x01");
+            ClientPrint(_hNextPlayer, 3, "\x0738F3ABBeware: Survivors can now see you through walls!\x01");
         } else {
             // Disable B.A.S.E. Jumper in overtime instead of the last player.
             ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for Zombies. Kill the remaining Zombies to win!\x01");
@@ -721,6 +729,11 @@ function MM_ZI_EnableOvertime() {
                 Vector(Epsilon, Epsilon, Epsilon), _hNextPlayer.GetOrigin(),
                 damage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
             SetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle", vecPunch);
+        }
+        if (_hNextPlayer.GetTeam() == 3) {
+            SetPropBool( _hNextPlayer, "m_bGlowEnabled", true );
+        } else if (_hNextPlayer.GetTeam() == 2) {
+            SetPropBool( _hNextPlayer, "m_bGlowEnabled", false );
         }
     }
 
