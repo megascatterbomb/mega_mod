@@ -20,6 +20,10 @@ ApplyMod <- function () {
         MM_ZI_OnPlayerTeam(event);
     }.bindenv(this);
 
+    this.OnGameEvent_player_spawn <- function (event) {
+        MM_ZI_OnPlayerSpawn(event);
+    }.bindenv(this);
+
     local scope = this;
     scope.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
     ::ClearGameEventCallbacks <- function () {

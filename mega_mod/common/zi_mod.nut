@@ -8,8 +8,6 @@
 // default so we can restore it after overtime.
 ::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT <- -1.0;
 
-// TODO: set m_bGlowEnabled to false on all players when round starts.
-
 function MM_Zombie_Infection() {
     ::MM_ZI_ROUND_FINISHED <- false;
     ::MM_ZI_OVERTIME <- false;
@@ -28,10 +26,16 @@ function MM_Zombie_Infection() {
         }
     }
 
+    // Clear glow state from last round if needed.
+    foreach( _hNextPlayer in GetAllPlayers() ) {
+        SetPropBool( _hNextPlayer, "m_bGlowEnabled", false );
+    }
+
     MM_ZI_OverrideSetupFinished();
     MM_ZI_OverrideDeath();
     MM_ZI_OverrideRoundEnd();
     MM_ZI_OverrideShouldZombiesWin();
+    MM_ZI_OverrideSpyRecloak();
 
     MM_ZI_PrepareForOvertime();
 
@@ -648,6 +652,22 @@ function MM_ZI_OverrideShouldZombiesWin() {
     player.ForceRespawn();
 }
 
+// OVERRIDE: wraps CTFPlayer_AddEventToQueue to gate zombie spy cloak events in Overtime.
+function MM_ZI_OverrideSpyRecloak() {
+    local root = getroottable();
+
+    // Only wrap once
+    if (!("MM_ZI_OriginalAddEventToQueue" in root) || root.MM_ZI_OriginalAddEventToQueue == null) {
+        root.MM_ZI_OriginalAddEventToQueue <- root.CTFPlayer_AddEventToQueue;
+    }
+
+    root.CTFPlayer_AddEventToQueue <- function( _event, _delay ) {
+        if (::MM_ZI_OVERTIME && ( _event == EVENT_SPY_RECLOAK || _event == EVENT_SPY_SWAP_CLOAK ))
+            return;
+        root.MM_ZI_OriginalAddEventToQueue.call( this, _event, _delay );
+    };
+}
+
 function MM_ZI_PrepareForOvertime() {
     // As there is no situation where the ZI codebase calls a game_round_win entity
     // in the map, we can safely nuke all game_round_wins from the map.
@@ -693,6 +713,23 @@ function MM_ZI_EnableOvertime() {
         }
     }
 
+    // Clear event queue for spy cloaks to ensure consistent state.
+    foreach( _hNextPlayer in GetAllPlayers() ) {
+        if (_hNextPlayer.GetTeam() == 3 && _hNextPlayer.GetPlayerClass() == TF_CLASS_SPY) {
+            local _sc = _hNextPlayer.GetScriptScope();
+            if (_sc != null && "m_tblEventQueue" in _sc) {
+                if (_sc.m_tblEventQueue.rawin(EVENT_SPY_RECLOAK)) {
+                    _sc.m_tblEventQueue.rawdelete(EVENT_SPY_RECLOAK);
+                }
+                if (_sc.m_tblEventQueue.rawin(EVENT_SPY_SWAP_CLOAK)) {
+                    _sc.m_tblEventQueue.rawdelete(EVENT_SPY_SWAP_CLOAK);
+                }
+            }
+            _hNextPlayer.RemoveCond(TF_COND_STEALTHED);
+            _hNextPlayer.RemoveCond(TF_COND_STEALTHED_USER_BUFF);
+        }
+    }
+
     local overtime_sound = {
         team  = 255,
         sound = "Game.Overtime"
@@ -710,6 +747,18 @@ function MM_ZI_EnableOvertime() {
 
     local logic_script = Entities.FindByClassname(null, "logic_script");
     EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+}
+
+// MEGAMOD: Apply zombie glow when overtime starts
+function MM_ZI_OnPlayerSpawn(params) {
+    if (!::MM_ZI_OVERTIME || ::MM_ZI_ROUND_FINISHED) return;
+
+    local player = GetPlayerFromUserID(params.userid);
+    if (player == null) return;
+
+    if (player.GetTeam() == 3) {
+        SetPropBool( player, "m_bGlowEnabled", true );
+    }
 }
 
 ::MM_ZI_OvertimeSecondTick <- function() {
@@ -731,11 +780,6 @@ function MM_ZI_EnableOvertime() {
                 Vector(Epsilon, Epsilon, Epsilon), _hNextPlayer.GetOrigin(),
                 damage, DMG_BURN + DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_BLEEDING);
             SetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle", vecPunch);
-        }
-        if (_hNextPlayer.GetTeam() == 3) {
-            SetPropBool( _hNextPlayer, "m_bGlowEnabled", true );
-        } else if (_hNextPlayer.GetTeam() == 2) {
-            SetPropBool( _hNextPlayer, "m_bGlowEnabled", false );
         }
     }
 
@@ -794,4 +838,3 @@ function MM_ZI_OverrideRoundEnd() {
         }
     }
 }
-
