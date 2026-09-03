@@ -310,20 +310,13 @@ Gamemode has official addon support. See `vsh_addons/` folder.
 
 Internal name: `zi_mod`
 
-Zombie Infection is a promising gamemode, however the implementation leaves a lot to be desired in my opinion. Notably, the long respawn times for the Zombies result in long periods of time without any fighting. Rounds tend to drag on and on, and the variablity of round and respawn times results in an inconsistent experience.
+This mod is built on top of the Zombie Infection 2026 rewrite.
 
 - Adjusted various timings to improve the gamemode's pacing.
-  - Round time always starts at, and can never exceed, 3s minutes.
   - Time added upon survivor death is reduced by 1 second for every 5 remaining survivors (to a minimum of 2 seconds).
   - Respawn wave time is set to 5 seconds for Survivors.
   - Zombies have near-instant respawn (2 seconds, interrupts killcam).
   - Death during setup triggers instant respawn.
-- Initial Zombie selection:
-  - Zombie count formula modified (see table).  
-  - Players cannot start as Zombies in two consecutive rounds.
-- Weapon rebalances:
-  - The B.A.S.E. Jumper disables during overtime instead of disabling for the last survivor.
-  - Increased reserve ammo for the Rocket Jumper (0 -> 5) and Sticky Jumper's reserve ammo (0 -> 5).
 - Added Overtime:
   - When the timer expires, the game enters Overtime. Overtime lasts until round end and cannot be interrupted.
   - Zombies cannot respawn in Overtime, however Survivors killed in Overtime still become Zombies.
@@ -333,18 +326,8 @@ Zombie Infection is a promising gamemode, however the implementation leaves a lo
     - Zombies win by killing all the remaining Survivors (as usual).
   - Zombies experience bleed with increasing damage over time to guarantee a round end.
     - The damage halves on every survivor death.
-  - All zombies have outlines enabled during Overtime.
-  - Survivors can enter Zombie spawnrooms during Overtime.
-
-Player count to Zombie count table:
-
-| # Players ($P$) | # Zombies (Vanilla) | # Zombies (Modified) |
-|:----------------|:--------------------|:---------------------|
-| 2 - 4           | 1                   | 1                    |
-| 5 - 8           | 2                   | 2                    |
-| 9 - 12          | 3                   | 3                    |
-| 13 - 16         | 4                   | 4                    |
-| 17+ | $\lceil\frac{P}{5}\rceil$ | $\lfloor\sqrt{P-1}\rfloor$ |
+  - Zombies have outlines during Overtime.
+  - Zombie spawns are disabled during Overtime so they can't stall in spawn.
 
 # Map Specific/Miscellanious Fixes
 
