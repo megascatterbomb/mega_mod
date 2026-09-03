@@ -19,18 +19,19 @@
 		}
 
 		local scope = player.GetScriptScope()
-		if (!(player.GetFlags() & Constants.FPlayer.FL_ONGROUND) && MM_GetTickCount() <= scope.rocket_land_tick)
+		if (scope == null || !("bhop_rocket_land_tick" in scope)) continue;
+		if (!(player.GetFlags() & Constants.FPlayer.FL_ONGROUND) && MM_GetTickCount() <= scope.bhop_rocket_land_tick)
 		{
-			if (!scope.jumped)
+			if (!scope.bhop_jumped)
 			{
-				// printl(MM_GetTickCount().tostring() + " " + (scope.rocket_land_tick).tostring())
+				// printl(MM_GetTickCount().tostring() + " " + (scope.bhop_rocket_land_tick).tostring())
 				// if(NetProps.GetPropBool(player, "m_Shared.m_bJumping")){
 				// 	// bhop_combo += 1
 				// 	ClientPrint(player, 3, "Perfomed \"fake\" bhop!")
 				// }
 				// ClientPrint(player, 3, "Fixing blast jump status!")
 				FakeBlastJump(player)
-				scope.jumped = true
+				scope.bhop_jumped = true
 			}
 		}
 	}
@@ -52,15 +53,18 @@ ApplyMod <- function () {
 
 	this.OnGameEvent_player_spawn <- function(params) {
 		local player = GetPlayerFromUserID(params.userid)
+		if (player == null) return;
 		player.ValidateScriptScope()
-		player.GetScriptScope().rocket_land_tick <- 0
-		player.GetScriptScope().jumped <- false
+		player.GetScriptScope().bhop_rocket_land_tick <- 0
+		player.GetScriptScope().bhop_jumped <- false
 	}.bindenv(this);
 
 	this.OnGameEvent_rocket_jump_landed <- function(params) {
 		local player = GetPlayerFromUserID(params.userid)
-		player.GetScriptScope().rocket_land_tick = MM_GetTickCount()
-		player.GetScriptScope().jumped =  false
+		if (player == null) return;
+		player.ValidateScriptScope()
+		player.GetScriptScope().bhop_rocket_land_tick = MM_GetTickCount()
+		player.GetScriptScope().bhop_jumped =  false
 		// printl("OnGameEvent_rocket_jump_landed @ " + MM_GetTickCount())
 		// printl(player.GetVelocity())
 	}.bindenv(this);
