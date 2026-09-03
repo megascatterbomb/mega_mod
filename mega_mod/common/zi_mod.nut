@@ -36,6 +36,7 @@ function MM_Zombie_Infection() {
     MM_ZI_OverrideRoundEnd();
     MM_ZI_OverrideShouldZombiesWin();
     MM_ZI_OverrideSpyRecloak();
+    MM_ZI_OverrideSpawnPickerRefund();
 
     MM_ZI_PrepareForOvertime();
 
@@ -652,7 +653,25 @@ function MM_ZI_OverrideShouldZombiesWin() {
     player.ForceRespawn();
 }
 
-// OVERRIDE: wraps CTFPlayer_AddEventToQueue to gate zombie spy cloak events in Overtime.
+// OVERRIDE: functions.nut::CTFPlayer_RefundSpawnPickerTime
+// MEGAMOD: Prevent players from stalling indefinitely in Overtime.
+// We remove the 1 second given when switching cameras.
+function MM_ZI_OverrideSpawnPickerRefund() {
+    local root = getroottable();
+
+    // Only wrap once
+    if (!("MM_ZI_OriginalRefundSpawnPickerTime" in root) || root.MM_ZI_OriginalRefundSpawnPickerTime == null) {
+        root.MM_ZI_OriginalRefundSpawnPickerTime <- root.CTFPlayer_RefundSpawnPickerTime;
+    }
+
+    root.CTFPlayer_RefundSpawnPickerTime <- function() {
+        if (::MM_ZI_OVERTIME) return;
+        root.MM_ZI_OriginalRefundSpawnPickerTime.call( this );
+    };
+}
+
+// OVERRIDE: functions.nut::CTFPlayer_AddEventToQueue
+// MEGAMOD: Gate zombie spy cloak events in Overtime.
 function MM_ZI_OverrideSpyRecloak() {
     local root = getroottable();
 
