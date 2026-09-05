@@ -35,18 +35,10 @@ function MM_Zombie_Infection() {
     MM_ZI_OverrideDeath();
     MM_ZI_OverrideRoundEnd();
     MM_ZI_OverrideShouldZombiesWin();
-    MM_ZI_OverrideSpyRecloak();
     MM_ZI_OverrideSpawnPickerRefund();
+    MM_ZI_OverrideSpyRecloak();
 
     MM_ZI_PrepareForOvertime();
-
-    // Set the timer early at round_start, before the map's OnSetupFinished output
-    // can overwrite it with the map's default values.
-    local timer = Entities.FindByClassname(null, "team_round_timer");
-    if (timer != null) {
-        EntFireByHandle(timer, "SetTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
-        EntFireByHandle(timer, "SetMaxTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
-    }
 }
 
 function MM_ZI_OnPlayerTeam(params) {
@@ -68,6 +60,14 @@ function MM_ZI_OverrideSetupFinished() {
     scope.OnGameEvent_teamplay_setup_finished <- function ( params )
     {
         ::bGameStarted <- true;
+
+        // MEGAMOD: Set the timer early at round_start, before the map's OnSetupFinished output
+        // can overwrite it with the map's default values.
+        local timer = Entities.FindByClassname(null, "team_round_timer");
+        if (timer != null) {
+            EntFireByHandle(timer, "SetTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+            EntFireByHandle(timer, "SetMaxTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+        }
 
         BuildZombieSpawnPointArray();
 
@@ -660,14 +660,15 @@ function MM_ZI_OverrideSpawnPickerRefund() {
     local root = getroottable();
 
     // Only wrap once
-    if (!("MM_ZI_OriginalRefundSpawnPickerTime" in root) || root.MM_ZI_OriginalRefundSpawnPickerTime == null) {
-        root.MM_ZI_OriginalRefundSpawnPickerTime <- root.CTFPlayer_RefundSpawnPickerTime;
+    if (!("MM_ZI_OriginalRefundSpawnPickerTime" in root) || ::MM_ZI_OriginalRefundSpawnPickerTime == null) {
+        ::MM_ZI_OriginalRefundSpawnPickerTime <- CTFPlayer.RefundSpawnPickerTime;
     }
 
-    root.CTFPlayer_RefundSpawnPickerTime <- function() {
+    CTFPlayer.RefundSpawnPickerTime <- function() {
         if (::MM_ZI_OVERTIME) return;
-        root.MM_ZI_OriginalRefundSpawnPickerTime.call( this );
+        ::MM_ZI_OriginalRefundSpawnPickerTime.call( this );
     };
+    CTFBot.RefundSpawnPickerTime <- CTFPlayer.RefundSpawnPickerTime;
 }
 
 // OVERRIDE: functions.nut::CTFPlayer_AddEventToQueue
@@ -676,15 +677,16 @@ function MM_ZI_OverrideSpyRecloak() {
     local root = getroottable();
 
     // Only wrap once
-    if (!("MM_ZI_OriginalAddEventToQueue" in root) || root.MM_ZI_OriginalAddEventToQueue == null) {
-        root.MM_ZI_OriginalAddEventToQueue <- root.CTFPlayer_AddEventToQueue;
+    if (!("MM_ZI_OriginalAddEventToQueue" in root) || ::MM_ZI_OriginalAddEventToQueue == null) {
+        ::MM_ZI_OriginalAddEventToQueue <- CTFPlayer.AddEventToQueue;
     }
 
-    root.CTFPlayer_AddEventToQueue <- function( _event, _delay ) {
+    CTFPlayer.AddEventToQueue <- function( _event, _delay ) {
         if (::MM_ZI_OVERTIME && ( _event == EVENT_SPY_RECLOAK || _event == EVENT_SPY_SWAP_CLOAK ))
             return;
-        root.MM_ZI_OriginalAddEventToQueue.call( this, _event, _delay );
+        ::MM_ZI_OriginalAddEventToQueue.call( this, _event, _delay );
     };
+    CTFBot.AddEventToQueue <- CTFPlayer.AddEventToQueue;
 }
 
 function MM_ZI_PrepareForOvertime() {
