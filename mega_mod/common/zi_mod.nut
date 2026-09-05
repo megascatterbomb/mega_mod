@@ -4,6 +4,15 @@
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
 ::MM_ZI_OVERTIME_DAMAGE_INCREASE <- 1.0/10.0;
 ::MM_ZI_MAX_TIME <- 180;
+::MM_ZI_ADD_TIME_BASE <- 5;
+::MM_ZI_ADD_TIME_MIN <- 2;
+
+// max survivors before we start reducing time added.
+::MM_ZI_ADD_TIME_REDUCE_THRESHOLD <- 29; 
+
+// additional survivors required before dropping another second off time added.
+::MM_ZI_ADD_TIME_REDUCE_STEP <- 5; 
+
 // zi2026 leaves respawn wave times to map configuration; remember the map's
 // default so we can restore it after overtime.
 ::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT <- -1.0;
@@ -535,13 +544,16 @@ function MM_ZI_OverrideDeath() {
                 EntFireByHandle( _hRoundTimer, "auto_countdown", "0", 0, null, null );
             }
 
-            // MEGAMOD: Reduce the time added when there's a large number of survivors
-            local minTimeToAdd = 2;
-            local adjustedTimeToAdd = ADDITIONAL_SEC_PER_PLAYER - floor(remainingSurvivors / 5)
-            if (adjustedTimeToAdd < minTimeToAdd)
-                adjustedTimeToAdd = minTimeToAdd;
+            // MEGAMOD: Reduce the time added once there are more survivors than the
+            // threshold, taking away a second for every REDUCE_STEP survivors above it.
+            local timeToAdd = ::MM_ZI_ADD_TIME_BASE;
+            if (remainingSurvivors > ::MM_ZI_ADD_TIME_REDUCE_THRESHOLD) {
+                timeToAdd -= 1 + floor((remainingSurvivors - ::MM_ZI_ADD_TIME_REDUCE_THRESHOLD - 1) / ::MM_ZI_ADD_TIME_REDUCE_STEP);
+            }
+            if (timeToAdd < ::MM_ZI_ADD_TIME_MIN)
+                timeToAdd = ::MM_ZI_ADD_TIME_MIN;
 
-            EntFireByHandle(_hRoundTimer, "AddTime", ceil(adjustedTimeToAdd).tostring(), 0, null, null);
+            EntFireByHandle(_hRoundTimer, "AddTime", ceil(timeToAdd).tostring(), 0, null, null);
 
             MM_ZI_LAST_SURVIVOR_DEATH <- Time();
 
