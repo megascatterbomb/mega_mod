@@ -17,10 +17,15 @@
 // default so we can restore it after overtime.
 ::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT <- -1.0;
 
+::MM_ZI_LOGIC_SCRIPT <- null;
+::MM_ZI_LOGIC_SCRIPT_SCOPE <- null;
+
 function MM_Zombie_Infection() {
     ::MM_ZI_ROUND_FINISHED <- false;
     ::MM_ZI_OVERTIME <- false;
     ::MM_ZI_OVERTIME_DAMAGE <- 0;
+    ::MM_ZI_LOGIC_SCRIPT <- Entities.FindByClassname(null, "logic_script")
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE <- ::MM_ZI_LOGIC_SCRIPT.GetScriptScope();
 
     // zi2026 exposes the gamerules entity as the global ::GameRules.
     local gamerules = ( "GameRules" in getroottable() && getroottable().GameRules != null )
@@ -63,10 +68,8 @@ function MM_ZI_OnPlayerTeam(params) {
 
 // OVERRIDE: replacement for infection.nut::OnGameEvent_teamplay_setup_finished
 function MM_ZI_OverrideSetupFinished() {
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    local scope = logic_script.GetScriptScope();
 
-    scope.OnGameEvent_teamplay_setup_finished <- function ( params )
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE.OnGameEvent_teamplay_setup_finished <- function ( params )
     {
         ::bGameStarted <- true;
 
@@ -271,10 +274,7 @@ function MM_ZI_OverrideSetupFinished() {
 // OVERRIDE: replacement for infection.nut::OnGameEvent_player_death
 function MM_ZI_OverrideDeath() {
 
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    local scope = logic_script.GetScriptScope();
-
-    scope.OnGameEvent_player_death <- function ( params )
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE.OnGameEvent_player_death <- function ( params )
     {
         local _hPlayer      =  GetPlayerFromUserID ( params.userid );
         local _hKiller      =  GetPlayerFromUserID ( params.attacker );
@@ -778,8 +778,7 @@ function MM_ZI_EnableOvertime() {
         respawn.Kill()
     }
 
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+    EntFireByHandle(::MM_ZI_LOGIC_SCRIPT, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
 }
 
 // MEGAMOD: Apply zombie glow when overtime starts
@@ -818,8 +817,7 @@ function MM_ZI_OnPlayerSpawn(params) {
 
     ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE + MM_ZI_OVERTIME_DAMAGE_INCREASE;
 
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+    EntFireByHandle(::MM_ZI_LOGIC_SCRIPT, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
 }
 
 ::MM_ZI_ShouldSurvivorsWin <- function () {
@@ -854,10 +852,7 @@ function MM_ZI_OnPlayerSpawn(params) {
 }
 
 function MM_ZI_OverrideRoundEnd() {
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    local scope = logic_script.GetScriptScope();
-
-    scope.OnGameEvent_teamplay_round_win <- function ( params ) {
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE.OnGameEvent_teamplay_round_win <- function ( params ) {
         ::MM_ZI_ROUND_FINISHED <- true;
 
         // Restore the map's default BLU respawn wave time after overtime.
