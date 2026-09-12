@@ -313,11 +313,10 @@ Internal name: `zi_mod`
 This mod is built on top of the Zombie Infection 2026 rewrite.
 
 - Adjusted various timings to improve the gamemode's pacing.
-  - Round time always starts at, and can never exceed, 3s minutes.
+  - Round time always starts at, and can never exceed, 3 minutes.
   - Time added upon survivor death is reduced if the number of remaining survivors is very high (30 or more).
-  - Respawn wave time is set to 5 seconds for Survivors.
-  - Zombies have near-instant respawn (2 seconds, interrupts killcam).
-  - Death during setup triggers instant respawn.
+  - Respawn wave time is forced to 5 seconds for Survivors.
+  - Health packs cannot be used by Zombies to remove debuffs.
 - Added Overtime:
   - When the timer expires, the game enters Overtime. Overtime lasts until round end and cannot be interrupted.
   - Zombies cannot respawn in Overtime, however Survivors killed in Overtime still become Zombies.
@@ -328,7 +327,8 @@ This mod is built on top of the Zombie Infection 2026 rewrite.
   - Zombies experience bleed with increasing damage over time to guarantee a round end.
     - The damage halves on every survivor death.
   - Zombies have outlines during Overtime.
-  - Zombie spawns are disabled during Overtime so they can't stall in spawn.
+  - Zombie spawn protection is disabled during Overtime so they can't stall in spawn.
+  - Zombies can't add time to the auto-spawn timer during Overtime, so they can't stall that way either.
 
 # Map Specific/Miscellanious Fixes
 

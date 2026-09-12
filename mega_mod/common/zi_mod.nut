@@ -45,6 +45,18 @@ function MM_Zombie_Infection() {
         SetPropBool( _hNextPlayer, "m_bGlowEnabled", false );
     }
 
+    // MEGAMOD: make healthkits/ammopacks RED-pickup at round start.
+    // Prevents zombies from removing their debuffs on healthkits.
+    local pickupClasses = [
+        "item_healthkit_small", "item_healthkit_medium", "item_healthkit_full",
+        "item_ammopack_small", "item_ammopack_medium", "item_ammopack_large"
+    ];
+    foreach( _cls in pickupClasses ) {
+        for (local ent = null; ent = Entities.FindByClassname(ent, _cls);) {
+            SetPropInt(ent, "m_iTeamNum", 2);
+        }
+    }
+
     MM_ZI_OverrideSetupFinished();
     MM_ZI_OverrideDeath();
     MM_ZI_OverrideRoundEnd();
