@@ -7,6 +7,10 @@
 ::MM_ZI_ADD_TIME_BASE <- 5;
 ::MM_ZI_ADD_TIME_MIN <- 2;
 
+::MM_ZI_EXPLOITERS <- []; // user ids of players who change teams to try and respawn during overtime
+
+::MM_ZI_PLAYER_MANAGER <- Entities.FindByClassname(null, "tf_player_manager");
+
 // max survivors before we start reducing time added.
 ::MM_ZI_ADD_TIME_REDUCE_THRESHOLD <- 29; 
 
@@ -25,8 +29,11 @@ function MM_Zombie_Infection() {
     ::MM_ZI_OVERTIME <- false;
     ::MM_ZI_OVERTIME_DAMAGE <- 0;
     ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
+    ::MM_ZI_EXPLOITERS <- [];
     ::MM_ZI_LOGIC_SCRIPT <- Entities.FindByClassname(null, "logic_script")
     ::MM_ZI_LOGIC_SCRIPT_SCOPE <- ::MM_ZI_LOGIC_SCRIPT.GetScriptScope();
+    ::MM_ZI_PLAYER_MANAGER <- Entities.FindByClassname(null, "tf_player_manager");
+
 
     // zi2026 exposes the gamerules entity as the global ::GameRules.
     local gamerules = ( "GameRules" in getroottable() && getroottable().GameRules != null )
@@ -64,6 +71,7 @@ function MM_Zombie_Infection() {
     MM_ZI_OverrideShouldZombiesWin();
     MM_ZI_OverrideSpawnPickerRefund();
     MM_ZI_OverrideSpyRecloak();
+    MM_ZI_OverrideEnterSpawnPicker();
 
     MM_ZI_PrepareForOvertime();
 }
@@ -74,9 +82,27 @@ function MM_ZI_OnPlayerTeam(params) {
     // We're in overtime.
     if ( params.team == 2 ) {
         local player = GetPlayerFromUserID(params.userid);
-        if (player != null) SetPropBool( player, "m_bGlowEnabled", false );
-        EntFireByHandle(player, "RunScriptCode", "ChangeTeamSafe(self, 3, true); self.ForceRespawn(); self.TakeDamage(1000000, 0, null)", 0, null, player)
+        if (player == null) return;
+        ::MM_ZI_EXPLOITERS.append(params.userid);
+        SetPropBool( player, "m_bGlowEnabled", false );
+        EntFireByHandle(player, "RunScriptCode", "ChangeTeamSafe(self, 3, true); self.ForceRespawn(); SetPropBool( self, \"m_takedamage\", true ); self.TakeDamage(1000000, 0, null)", 0, null, player)
     }
+}
+
+function MM_ZI_OverrideEnterSpawnPicker() {
+    local root = getroottable();
+
+    // Only wrap once
+    if (!("MM_ZI_OriginalEnterSpawnPicker" in root) || ::MM_ZI_OriginalEnterSpawnPicker == null) {
+        ::MM_ZI_OriginalEnterSpawnPicker <- CTFPlayer.EnterSpawnPicker;
+    }
+
+    CTFPlayer.EnterSpawnPicker <- function() {
+        local userid = NetProps.GetPropIntArray(::MM_ZI_PLAYER_MANAGER, "m_iUserID", this.entindex());
+        if (::MM_ZI_OVERTIME && ::MM_ZI_EXPLOITERS.find(userid) != null) return;
+        ::MM_ZI_OriginalEnterSpawnPicker.call( this );
+    };
+    CTFBot.EnterSpawnPicker <- CTFPlayer.EnterSpawnPicker;
 }
 
 // OVERRIDE: replacement for infection.nut::OnGameEvent_teamplay_setup_finished
