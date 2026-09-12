@@ -2,7 +2,7 @@
 ::MM_ZI_LAST_SURVIVOR_DEATH <- 0;
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
-::MM_ZI_OVERTIME_DAMAGE_INCREASE <- 1.0/10.0;
+::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
 ::MM_ZI_MAX_TIME <- 180;
 ::MM_ZI_ADD_TIME_BASE <- 5;
 ::MM_ZI_ADD_TIME_MIN <- 2;
@@ -24,6 +24,7 @@ function MM_Zombie_Infection() {
     ::MM_ZI_ROUND_FINISHED <- false;
     ::MM_ZI_OVERTIME <- false;
     ::MM_ZI_OVERTIME_DAMAGE <- 0;
+    ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
     ::MM_ZI_LOGIC_SCRIPT <- Entities.FindByClassname(null, "logic_script")
     ::MM_ZI_LOGIC_SCRIPT_SCOPE <- ::MM_ZI_LOGIC_SCRIPT.GetScriptScope();
 
@@ -380,7 +381,8 @@ function MM_ZI_OverrideDeath() {
             };
 
             // the heavy is made of the same stuff he throws - burst him into rock gibs
-            if ( _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS )
+            // MEGAMOD: we add an additional guard to stop a VScript error that occasionally occurs (why does this happen?)
+            if ( _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS && "SpawnHeavyRockGibs" in getroottable() )
             {
                 SpawnHeavyRockGibs( ( _hPlayer.GetOrigin() + Vector( 0, 0, ZHEAVY_DEATH_GIB_Z_OFF ) ) );
             };
@@ -571,6 +573,7 @@ function MM_ZI_OverrideDeath() {
 
             // MEGAMOD: Halve damage on survivor death to reward Zombie activity.
             ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE / 2.0;
+            ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
         } else {
             // MEGAMOD: If game hasn't started, instantly respawn.
             if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 0.1, null, _hPlayer);
@@ -755,6 +758,7 @@ function MM_ZI_EnableOvertime() {
             ClientPrint(_hNextPlayer, 3, "\x0738F3ABBeware: Survivors can visit your spawn and see you through walls!\x01");
         } else {
             ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for Zombies. Kill all the remaining Zombies to win!\x01");
+            ClientPrint(_hNextPlayer, 3, "\x07FCD303You can enter Zombie spawns to hunt down the last few Zombies!\x01");
         }
     }
 
@@ -826,8 +830,29 @@ function MM_ZI_OnPlayerSpawn(params) {
             SetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle", vecPunch);
         }
     }
+    local addDamage = false;
+    local damageIncrementThreshold = 10;
 
-    ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE + MM_ZI_OVERTIME_DAMAGE_INCREASE;
+    if (::MM_ZI_OVERTIME_DAMAGE >= 40) {
+        damageIncrementThreshold = 1;
+    } else if (::MM_ZI_OVERTIME_DAMAGE >= 30) {
+        damageIncrementThreshold = 2;
+    } else if (::MM_ZI_OVERTIME_DAMAGE >= 20) {
+        damageIncrementThreshold = 3;
+    } else if (::MM_ZI_OVERTIME_DAMAGE >= 10) {
+        damageIncrementThreshold = 5;
+    } else {
+        damageIncrementThreshold = 10;
+    }
+
+    ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE + 1;
+
+    if (::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE >= damageIncrementThreshold) {
+        addDamage = true;
+        ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
+    }
+
+    ::MM_ZI_OVERTIME_DAMAGE <- floor(MM_ZI_OVERTIME_DAMAGE + (addDamage ? 1 : 0));
 
     EntFireByHandle(::MM_ZI_LOGIC_SCRIPT, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
 }
