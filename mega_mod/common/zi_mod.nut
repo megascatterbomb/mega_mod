@@ -1,5 +1,6 @@
 ::MM_ZI_ROUND_FINISHED <- false;
 ::MM_ZI_LAST_SURVIVOR_DEATH <- 0;
+::MM_ZI_OVERTIME_ENABLED <- false;
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
 ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
@@ -756,6 +757,22 @@ function MM_ZI_PrepareForOvertime() {
 
 function MM_ZI_EnableOvertime() {
     printl("MEGAMOD: Entering overtime...");
+
+    if (::MM_ZI_OVERTIME_ENABLED == false) {
+        // survivors just win
+        local _hGameWin = SpawnEntityFromTable( "game_round_win",
+        {
+            win_reason      = "0",
+            force_map_reset = "1",
+            TeamNum         = "2", // TF_TEAM_RED
+            switch_teams    = "0"
+        } );
+        ::bGameStarted <- false;
+        ::MM_ZI_ROUND_FINISHED <- true;
+        EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
+        return;
+    }
+
     ::MM_ZI_OVERTIME <- true;
 
     // No natural zombie respawns during overtime - the map's BLU wave time is suspended.
@@ -908,7 +925,7 @@ function MM_ZI_OnPlayerSpawn(params) {
         switch_teams    = "0"
     } );
 
-    // the zombies have won the round.
+    // the survivors have won the round.
     ::bGameStarted <- false;
     ::MM_ZI_ROUND_FINISHED <- true;
     EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
