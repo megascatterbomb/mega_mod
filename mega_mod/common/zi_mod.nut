@@ -1010,6 +1010,56 @@ function MM_ZI_OverrideRoundEnd() {
                 { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "1503.82 548.584 316.789", angles = "90 0 0", modelscale = "1.0" }
             ]
         }
+    ],
+    ["workshop/zi_doomtown_b4.ugc3793747813"] = [
+        {
+            name = "jumppad_AC",
+            origin = Vector(-1576, -588, 40.6198),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -80,
+            launchYaw = -150,
+            launchSpeed = 850.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-1610 -588 -27.3802", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_A",
+            origin = Vector(-2582.56, 1188.5, -183.38),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 175,
+            launchSpeed = 950.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-2616.56 1188.5 -251.38", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_AB1",
+            origin = Vector(-1313.01, 1732.43, -107.38),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -85,
+            launchYaw = 40,
+            launchSpeed = 800.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-1347.01 1732.43 -175.38", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_AB2",
+            origin = Vector(788.63, 2121.65, 104.62),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 180,
+            launchSpeed = 800.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "754.63 2121.65 36.6198", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        }
     ]
 }
 
@@ -1025,7 +1075,9 @@ function MM_ZI_SpawnJumppadProp(targetname, model, origin, angles, modelscale) {
         origin = origin,
         angles = angles,
         modelscale = modelscale,
-        solid = "6"
+        solid = "6",
+        disableshadows = "1",
+        disablereceiveshadows = "1"
     });
     prop.RemoveEFlags(Constants.FEntityEFlags.EFL_DONTBLOCKLOS);
     return prop;
@@ -1156,6 +1208,9 @@ function MM_ZI_MapSpecific_RoundStart() {
         case "zi_woods_v4_0_5":
             // Three spawns require jumppads to reach.
             MM_ZI_SpawnJumppads(mapName);
+        case "workshop/zi_doomtown_b4.ugc3793747813":
+            // Four spawns require jumppads to reach.
+            MM_ZI_SpawnJumppads(mapName);
     }
 }
 
@@ -1180,6 +1235,9 @@ function MM_ZI_MapSpecific_OvertimeStart() {
             local door2 = MM_GetEntByName("swr_exit_door_2");
             if (door2 != null) EntFireByHandle(door2, "Open", "", 0, null, null);
         case "zi_woods_v4_0_5":
+            // Activating Jumppads
+            MM_ZI_ActivateJumppads(mapName);
+        case "workshop/zi_doomtown_b4.ugc3793747813":
             // Activating Jumppads
             MM_ZI_ActivateJumppads(mapName);
     }
