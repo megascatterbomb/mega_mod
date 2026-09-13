@@ -1,6 +1,6 @@
 ::MM_ZI_ROUND_FINISHED <- false;
 ::MM_ZI_LAST_SURVIVOR_DEATH <- 0;
-::MM_ZI_OVERTIME_ENABLED <- false;
+::MM_ZI_OVERTIME_ENABLED <- true;
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
 ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
@@ -75,6 +75,7 @@ function MM_Zombie_Infection() {
     MM_ZI_OverrideEnterSpawnPicker();
 
     MM_ZI_PrepareForOvertime();
+    MM_ZI_MapSpecific_RoundStart();
 }
 
 function MM_ZI_OnPlayerTeam(params) {
@@ -822,6 +823,8 @@ function MM_ZI_EnableOvertime() {
         }
     }
 
+    MM_ZI_MapSpecific_OvertimeStart();
+
     local overtime_sound = {
         team  = 255,
         sound = "Game.Overtime"
@@ -944,5 +947,225 @@ function MM_ZI_OverrideRoundEnd() {
                 EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "" + ::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT, 0, null, null);
             }
         }
+    }
+}
+
+// Map specific edits
+
+// Jumppad definitions for overtime map edits.
+// Each entry describes one jumppad: a visible base prop (drain pipe), optional extra
+// props, an info_particle_system and a trigger_catapult that launch players up to
+// the elevated zombie spawn. Particles and catapults are disabled until overtime.
+::MM_ZI_JUMPPAD_DEFS <- {
+    ["zi_blazehattan_v4_0_5"] = [
+        {
+            name = "jumppad_gate2",
+            origin = "-1400 -1592 39.0283",
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 180,
+            launchSpeed = 700.0,
+            catapultOrigin = "-1400 -1592.01 40.78",
+            min = Vector(-1416, -1608, 30.7783),
+            max = Vector(-1384, -1576, 50.7783),
+            extraProps = []
+        }
+    ],
+    ["zi_woods_v4_0_5"] = [
+        {
+            name = "jumppad_cliffside",
+            origin = "-732 -4572 38.25",
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -85,
+            launchYaw = 225,
+            launchSpeed = 850.0,
+            catapultOrigin = "-732 -4572 40",
+            min = Vector(-748, -4588, 30),
+            max = Vector(-716, -4556, 50),
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-766 -4572 -29.75", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_shoreline",
+            origin = "792 -4196 38.25",
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 45,
+            launchSpeed = 800.0,
+            catapultOrigin = "792 -4196 40",
+            min = Vector(776, -4212, 30),
+            max = Vector(808, -4180, 50),
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "758 -4196 -29.75", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_mines",
+            origin = "1548.32 582.295 380.14",
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 65,
+            launchSpeed = 800.0,
+            catapultOrigin = "1548.32 582.29 381.89",
+            min = Vector(1532.32, 566.295, 371.89),
+            max = Vector(1564.32, 598.295, 391.89),
+            extraProps = []
+        }
+    ]
+}
+
+// Spawns a single jumppad base prop and removes the DONTBLOCKLOS flag so it blocks sight like normal props.
+function MM_ZI_SpawnJumppadProp(targetname, model, origin, angles, modelscale) {
+    local prop = SpawnEntityFromTable("prop_dynamic",
+    {
+        targetname = targetname,
+        model = model,
+        origin = origin,
+        angles = angles,
+        modelscale = modelscale,
+        solid = "6"
+    });
+    prop.RemoveEFlags(Constants.FEntityEFlags.EFL_DONTBLOCKLOS);
+    return prop;
+}
+
+// VScript-based jumppad launcher.
+// Dynamically spawned trigger_catapult entities never activated in-game, so the launch
+// behaviour is implemented here instead: while overtime is active, a periodic think checks
+// each player's position against every pad's bounds and applies the launch impulse.
+::MM_ZI_JUMPPADS_ACTIVE <- []; // runtime pad data: { min, max, dir, speed }
+::MM_ZI_JUMPPAD_COOLDOWN <- {}; // entindex -> last launch Time()
+
+// Spawns all jumppads for the given map. The particle system is spawned disabled;
+// MM_ZI_ActivateJumppads() enables it when overtime starts.
+function MM_ZI_SpawnJumppads(mapName) {
+    local defs = ::MM_ZI_JUMPPAD_DEFS[mapName];
+    if (defs == null) return;
+
+    ::MM_ZI_JUMPPADS_ACTIVE <- [];
+    ::MM_ZI_JUMPPAD_COOLDOWN <- {};
+
+    foreach (def in defs) {
+        // Defensive cleanup in case the previous round didn't fully reset the map.
+        MM_KillAllByName(def.name + "_base");
+        MM_KillAllByName(def.name + "_particle");
+
+        // Visible base prop(s).
+        MM_ZI_SpawnJumppadProp(def.name + "_base", "models/props_farm/drain_pipe001.mdl", def.origin, def.angles, def.modelscale);
+        foreach (extra in def.extraProps) {
+            MM_ZI_SpawnJumppadProp(def.name + extra.suffix, extra.model, extra.origin, extra.angles, extra.modelscale);
+        }
+
+        // Particle effect marking the pad. Disabled until overtime.
+        SpawnEntityFromTable("info_particle_system",
+        {
+            targetname = def.name + "_particle",
+            effect_name = "green_steam_plume",
+            origin = def.origin,
+            angles = def.angles,
+            start_active = "0"
+        });
+
+        // Register the pad's launch volume for the VScript launcher.
+        local dir = MM_ZI_AnglesToDirection(def.launchPitch, def.launchYaw);
+        ::MM_ZI_JUMPPADS_ACTIVE.append({
+            min = def.min,
+            max = def.max,
+            dir = dir,
+            speed = def.launchSpeed
+        });
+    }
+}
+
+// Mirrors Source's VectorFromAngles (Euler pitch/yaw -> forward direction vector).
+function MM_ZI_AnglesToDirection(pitch, yaw) {
+    local p = pitch * PI / 180;
+    local y = yaw * PI / 180;
+    return Vector(cos(y) * cos(p), sin(y) * cos(p), -sin(p));
+}
+
+// Periodic think: launches any player standing in a jumppad volume while overtime is active.
+::MM_ZI_JumppadThink <- function() {
+    if (::MM_ZI_OVERTIME) {
+        local now = Time();
+        foreach (player in GetAllPlayers()) {
+            if (GetPropInt(player, "m_lifeState") != 0) continue;
+
+            // Cooldown so a single entry doesn't re-launch every think.
+            local last = null;
+            if (::MM_ZI_JUMPPAD_COOLDOWN.rawin(player.entindex())) {
+                last = ::MM_ZI_JUMPPAD_COOLDOWN[player.entindex()];
+            }
+            if (last != null && now - last < 0.5) continue;
+
+            local pos = player.GetOrigin();
+            foreach (pad in ::MM_ZI_JUMPPADS_ACTIVE) {
+                if (pos.x < pad.min.x || pos.x > pad.max.x) continue;
+                if (pos.y < pad.min.y || pos.y > pad.max.y) continue;
+                if (pos.z < pad.min.z || pos.z > pad.max.z) continue;
+
+                ::MM_ZI_JUMPPAD_COOLDOWN[player.entindex()] <- now;
+                player.SetVelocity(pad.dir * pad.speed);
+                break;
+            }
+        }
+    }
+}
+
+// Enables the jumppads for the given map (called when overtime starts).
+function MM_ZI_ActivateJumppads(mapName) {
+    local defs = ::MM_ZI_JUMPPAD_DEFS[mapName];
+    if (defs == null) return;
+
+    foreach (def in defs) {
+        local particle = MM_GetEntByName(def.name + "_particle");
+        if (particle != null) EntFireByHandle(particle, "Start", "", 0, null, null);
+    }
+
+    // Start the periodic launcher think (idempotent per round).
+    MM_CreateDummyThink("MM_ZI_JumppadThink");
+}
+
+function MM_ZI_MapSpecific_RoundStart() {
+    local mapName = GetMapName();
+
+    switch (mapName) {
+        case "zi_blazehattan_v4_0_5":
+            // The spawn near gate 2 needs a jumppad to reach.
+            MM_ZI_SpawnJumppads(mapName);
+        case "zi_woods_v4_0_5":
+            // Three spawns require jumppads to reach.
+            MM_ZI_SpawnJumppads(mapName);
+    }
+}
+
+function MM_ZI_MapSpecific_OvertimeStart() {
+    local mapName = GetMapName();
+
+    switch (mapName) {
+        case "zi_blazehattan_v4_0_5":
+            // Activating Jumppads
+            MM_ZI_ActivateJumppads(mapName);
+        case "zi_devastation_v4_0_5":
+            // Kill all trigger_multiple entities (e.g. spawndoors) and force the exit doors open.
+            local triggers = [];
+            for (local trig = null; trig = Entities.FindByClassname(trig, "trigger_multiple");) {
+                triggers.push(trig);
+            }
+            foreach (trig in triggers) {
+                trig.Kill();
+            }
+            local door1 = MM_GetEntByName("swr_exit_door_1");
+            if (door1 != null) EntFireByHandle(door1, "Open", "", 0, null, null);
+            local door2 = MM_GetEntByName("swr_exit_door_2");
+            if (door2 != null) EntFireByHandle(door2, "Open", "", 0, null, null);
+        case "zi_woods_v4_0_5":
+            // Activating Jumppads
+            MM_ZI_ActivateJumppads(mapName);
     }
 }
