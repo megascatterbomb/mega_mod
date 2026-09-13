@@ -1244,9 +1244,13 @@ function MM_ZI_MapSpecific_OvertimeStart() {
 
     switch (mapName) {
         case "zi_blazehattan_v4_0_5":
+        case "zi_woods_v4_0_5":
+        case "workshop/zi_doomtown_b4.ugc3793747813":
+        case "workshop/zi_outbreak_b5a2.ugc3795225054":
             // Activating Jumppads
             MM_ZI_ActivateJumppads(mapName);
-        case "zi_devastation_v4_0_5":
+            break;
+        case "zi_devastation_final1_v4_0_5":
             // Kill all trigger_multiple entities (e.g. spawndoors) and force the exit doors open.
             local triggers = [];
             for (local trig = null; trig = Entities.FindByClassname(trig, "trigger_multiple");) {
@@ -1259,14 +1263,6 @@ function MM_ZI_MapSpecific_OvertimeStart() {
             if (door1 != null) EntFireByHandle(door1, "Open", "", 0, null, null);
             local door2 = MM_GetEntByName("swr_exit_door_2");
             if (door2 != null) EntFireByHandle(door2, "Open", "", 0, null, null);
-        case "zi_woods_v4_0_5":
-            // Activating Jumppads
-            MM_ZI_ActivateJumppads(mapName);
-        case "workshop/zi_doomtown_b4.ugc3793747813":
-            // Activating Jumppads
-            MM_ZI_ActivateJumppads(mapName);
-        case "workshop/zi_outbreak_b5a2.ugc3795225054":
-            // Activating Jumppads
-            MM_ZI_ActivateJumppads(mapName);
+            break;
     }
 }
