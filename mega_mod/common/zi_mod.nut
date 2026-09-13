@@ -960,66 +960,61 @@ function MM_ZI_OverrideRoundEnd() {
     ["zi_blazehattan_v4_0_5"] = [
         {
             name = "jumppad_gate2",
-            origin = "-1400 -1592 39.0283",
+            origin = Vector(-1400, -1592, 39.0283),
             angles = "-90 0 0",
             modelscale = "1.2",
             launchPitch = -75,
             launchYaw = 180,
             launchSpeed = 700.0,
             catapultOrigin = "-1400 -1592.01 40.78",
-            min = Vector(-1416, -1608, 30.7783),
-            max = Vector(-1384, -1576, 50.7783),
             extraProps = []
         }
     ],
     ["zi_woods_v4_0_5"] = [
         {
             name = "jumppad_cliffside",
-            origin = "-732 -4572 38.25",
+            origin = Vector(-732, -4572, 38.25),
             angles = "-90 0 0",
             modelscale = "1.2",
             launchPitch = -85,
             launchYaw = 225,
             launchSpeed = 850.0,
             catapultOrigin = "-732 -4572 40",
-            min = Vector(-748, -4588, 30),
-            max = Vector(-716, -4556, 50),
             extraProps = [
                 { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-766 -4572 -29.75", angles = "90 0 0", modelscale = "1.0" }
             ]
         },
         {
             name = "jumppad_shoreline",
-            origin = "792 -4196 38.25",
+            origin = Vector(792, -4196, 38.25),
             angles = "-90 0 0",
             modelscale = "1.2",
             launchPitch = -75,
             launchYaw = 45,
             launchSpeed = 800.0,
             catapultOrigin = "792 -4196 40",
-            min = Vector(776, -4212, 30),
-            max = Vector(808, -4180, 50),
             extraProps = [
                 { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "758 -4196 -29.75", angles = "90 0 0", modelscale = "1.0" }
             ]
         },
         {
             name = "jumppad_mines",
-            origin = "1537.82 548.584 384.789",
+            origin = Vector(1537.82, 548.584, 384.789),
             angles = "-90 0 0",
             modelscale = "1.2",
             launchPitch = -75,
             launchYaw = 67,
             launchSpeed = 800.0,
             catapultOrigin = "1537.82 548.58 386.54",
-            min = Vector(1521.82, 532.584, 376.539),
-            max = Vector(1553.82, 564.584, 396.539),
             extraProps = [
                 { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "1503.82 548.584 316.789", angles = "90 0 0", modelscale = "1.0" }
             ]
         }
     ]
 }
+
+// Launch volumes are derived from each pad's origin; all pads share this footprint.
+::MM_ZI_JUMPPAD_TRIGGER_HALF <- Vector(32, 32, 20);
 
 // Spawns a single jumppad base prop and removes the DONTBLOCKLOS flag so it blocks sight like normal props.
 function MM_ZI_SpawnJumppadProp(targetname, model, origin, angles, modelscale) {
@@ -1040,7 +1035,7 @@ function MM_ZI_SpawnJumppadProp(targetname, model, origin, angles, modelscale) {
 // Dynamically spawned trigger_catapult entities never activated in-game, so the launch
 // behaviour is implemented here instead: while overtime is active, a periodic think checks
 // each player's position against every pad's bounds and applies the launch impulse.
-::MM_ZI_JUMPPADS_ACTIVE <- []; // runtime pad data: { min, max, dir, speed }
+::MM_ZI_JUMPPADS_ACTIVE <- []; // runtime pad data: { min, max, dir, speed, sound }
 ::MM_ZI_JUMPPAD_COOLDOWN <- {}; // entindex -> last launch Time()
 
 // Spawns all jumppads for the given map. The particle system is spawned disabled;
@@ -1056,6 +1051,7 @@ function MM_ZI_SpawnJumppads(mapName) {
         // Defensive cleanup in case the previous round didn't fully reset the map.
         MM_KillAllByName(def.name + "_base");
         MM_KillAllByName(def.name + "_particle");
+        MM_KillAllByName(def.name + "_sound");
 
         // Visible base prop(s).
         MM_ZI_SpawnJumppadProp(def.name + "_base", "models/props_farm/drain_pipe001.mdl", def.origin, def.angles, def.modelscale);
@@ -1073,13 +1069,27 @@ function MM_ZI_SpawnJumppads(mapName) {
             start_active = "0"
         });
 
-        // Register the pad's launch volume for the VScript launcher.
+        // Launch sound. MM_ZI_JumppadThink fires PlaySound on use.
+        local sound = SpawnEntityFromTable("ambient_generic",
+        {
+            targetname = def.name + "_sound",
+            message = "player/pl_impact_airblast2.wav",
+            origin = def.origin,
+            radius = "512",
+            pitch = "100",
+            health = "10", // This is the key for volume, for some reason
+            spawnflags = "48"
+        });
+
+        // Register the pad's launch volume for the VScript launcher. The box is
+        // derived from the pad origin so defs only carry a single position.
         local dir = MM_ZI_AnglesToDirection(def.launchPitch, def.launchYaw);
         ::MM_ZI_JUMPPADS_ACTIVE.append({
-            min = def.min,
-            max = def.max,
+            min = def.origin - ::MM_ZI_JUMPPAD_TRIGGER_HALF,
+            max = def.origin + ::MM_ZI_JUMPPAD_TRIGGER_HALF,
             dir = dir,
-            speed = def.launchSpeed
+            speed = def.launchSpeed,
+            sound = sound
         });
     }
 }
@@ -1113,6 +1123,9 @@ function MM_ZI_AnglesToDirection(pitch, yaw) {
 
                 ::MM_ZI_JUMPPAD_COOLDOWN[player.entindex()] <- now;
                 player.SetVelocity(pad.dir * pad.speed);
+
+                // Short local airblast at the pad so nearby players hear it fire.
+                if (pad.sound != null) EntFireByHandle(pad.sound, "PlaySound", "", 0, null, null);
                 break;
             }
         }
