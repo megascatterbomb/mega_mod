@@ -1225,16 +1225,9 @@ function MM_ZI_MapSpecific_RoundStart() {
 
     switch (mapName) {
         case "zi_blazehattan_v4_0_5":
-            // The spawn near gate 2 needs a jumppad to reach.
-            MM_ZI_SpawnJumppads(mapName);
         case "zi_woods_v4_0_5":
-            // Three spawns require jumppads to reach.
-            MM_ZI_SpawnJumppads(mapName);
         case "workshop/zi_doomtown_b4.ugc3793747813":
-            // Four spawns require jumppads to reach.
-            MM_ZI_SpawnJumppads(mapName);
         case "workshop/zi_outbreak_b5a2.ugc3795225054":
-            // Two spawns require jumppads to reach.
             MM_ZI_SpawnJumppads(mapName);
     }
 }
