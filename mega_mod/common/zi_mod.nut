@@ -1060,6 +1060,28 @@ function MM_ZI_OverrideRoundEnd() {
                 { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "754.63 2121.65 36.6198", angles = "90 0 0", modelscale = "1.0" }
             ]
         }
+    ],
+    ["workshop/zi_outbreak_b5a2.ugc3795225054"] = [
+        {
+            name = "jumppad_apartment",
+            origin = Vector(-174.551, -1099.55, 263.009),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -65,
+            launchYaw = 180,
+            launchSpeed = 850.0,
+            extraProps = []
+        },
+        {
+            name = "jumppad_highrise",
+            origin = Vector(0, 1315, 7.0089),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -80,
+            launchYaw = 180,
+            launchSpeed = 1000.0,
+            extraProps = []
+        }
     ]
 }
 
@@ -1211,6 +1233,9 @@ function MM_ZI_MapSpecific_RoundStart() {
         case "workshop/zi_doomtown_b4.ugc3793747813":
             // Four spawns require jumppads to reach.
             MM_ZI_SpawnJumppads(mapName);
+        case "workshop/zi_outbreak_b5a2.ugc3795225054":
+            // Two spawns require jumppads to reach.
+            MM_ZI_SpawnJumppads(mapName);
     }
 }
 
@@ -1238,6 +1263,9 @@ function MM_ZI_MapSpecific_OvertimeStart() {
             // Activating Jumppads
             MM_ZI_ActivateJumppads(mapName);
         case "workshop/zi_doomtown_b4.ugc3793747813":
+            // Activating Jumppads
+            MM_ZI_ActivateJumppads(mapName);
+        case "workshop/zi_outbreak_b5a2.ugc3795225054":
             // Activating Jumppads
             MM_ZI_ActivateJumppads(mapName);
     }
