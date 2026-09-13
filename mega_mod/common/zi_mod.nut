@@ -1005,16 +1005,18 @@ function MM_ZI_OverrideRoundEnd() {
         },
         {
             name = "jumppad_mines",
-            origin = "1548.32 582.295 380.14",
+            origin = "1537.82 548.584 384.789",
             angles = "-90 0 0",
             modelscale = "1.2",
             launchPitch = -75,
-            launchYaw = 65,
+            launchYaw = 67,
             launchSpeed = 800.0,
-            catapultOrigin = "1548.32 582.29 381.89",
-            min = Vector(1532.32, 566.295, 371.89),
-            max = Vector(1564.32, 598.295, 391.89),
-            extraProps = []
+            catapultOrigin = "1537.82 548.58 386.54",
+            min = Vector(1521.82, 532.584, 376.539),
+            max = Vector(1553.82, 564.584, 396.539),
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "1503.82 548.584 316.789", angles = "90 0 0", modelscale = "1.0" }
+            ]
         }
     ]
 }
