@@ -4,7 +4,7 @@
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
 ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
-::MM_ZI_MAX_TIME <- 180;
+::MM_ZI_MAX_TIME <- 150;
 ::MM_ZI_ADD_TIME_BASE <- 5;
 ::MM_ZI_ADD_TIME_MIN <- 2;
 
@@ -13,7 +13,7 @@
 ::MM_ZI_PLAYER_MANAGER <- Entities.FindByClassname(null, "tf_player_manager");
 
 // max survivors before we start reducing time added.
-::MM_ZI_ADD_TIME_REDUCE_THRESHOLD <- 29; 
+::MM_ZI_ADD_TIME_REDUCE_THRESHOLD <- 19; 
 
 // additional survivors required before dropping another second off time added.
 ::MM_ZI_ADD_TIME_REDUCE_STEP <- 5; 

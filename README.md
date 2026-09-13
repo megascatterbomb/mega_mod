@@ -313,8 +313,8 @@ Internal name: `zi_mod`
 This mod is built on top of the Zombie Infection 2026 rewrite.
 
 - Adjusted various timings to improve the gamemode's pacing.
-  - Round time always starts at, and can never exceed, 3 minutes.
-  - Time added upon survivor death is reduced if the number of remaining survivors is very high (30 or more).
+  - Round time always starts at, and can never exceed, 2 minutes 30 seconds.
+  - Time added upon survivor death is reduced if the number of remaining survivors is high (20 or more).
   - Respawn wave time is forced to 5 seconds for Survivors.
   - Health packs cannot be used by Zombies to remove debuffs.
 - Added Overtime:
