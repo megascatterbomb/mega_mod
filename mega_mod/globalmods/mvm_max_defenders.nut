@@ -10,6 +10,7 @@ local configPath = "mega_mod_mvm_max_defenders.txt"
 
 ::MM_MVM_CurrentPopfile <- null;
 ::MM_MVM_DefendersConfig <- {};
+::MM_MVM_MaxDefenders <- -1;
 
 ::MM_MVM_LoadDefendersConfig <- function() {
     local configString = FileToString(configPath)
@@ -47,15 +48,19 @@ local configPath = "mega_mod_mvm_max_defenders.txt"
     if (startswith(currentPopfile, "scripts/population/")) currentPopfile = currentPopfile.slice(19);
     if (endswith(currentPopfile, ".pop")) currentPopfile = currentPopfile.slice(0, currentPopfile.len() - 4);
 
-    local maxDefenders = 6;
+    local maxDefenders = 6; // Default if no config is found.
 
     if(::MM_MVM_DefendersConfig.rawin(currentPopfile)) {
         maxDefenders = MM_MVM_DefendersConfig[currentPopfile];
     }
 
-    printl("MEGAMOD: Max defenders for " + currentPopfile + " is " + maxDefenders)
+    if (::MM_MVM_MaxDefenders == maxDefenders) return;
+
+    ::MM_MVM_MaxDefenders <- maxDefenders;
 
     Convars.SetValue("tf_mvm_defenders_team_size", maxDefenders);
+    printl("MEGAMOD: Max defenders for " + currentPopfile + " is " + maxDefenders);
+    ClientPrint(null, 3, "\x07FF3F3FThis mission (" + currentPopfile + ") supports up to " + maxDefenders + " players.");
 }
 
 ApplyMod <- function () {
