@@ -10,7 +10,6 @@ local configPath = "mega_mod_mvm_max_defenders.txt"
 
 ::MM_MVM_CurrentPopfile <- null;
 ::MM_MVM_DefendersConfig <- {};
-::MM_MVM_MaxDefenders <- -1;
 
 ::MM_MVM_LoadDefendersConfig <- function() {
     local configString = FileToString(configPath)
@@ -44,6 +43,9 @@ local configPath = "mega_mod_mvm_max_defenders.txt"
     local objectiveResource = Entities.FindByClassname(null, "tf_objective_resource");
     local currentPopfile = NetProps.GetPropString(objectiveResource, "m_iszMvMPopfileName");
 
+    if (currentPopfile == ::MM_MVM_CurrentPopfile) return;
+    ::MM_MVM_CurrentPopfile <- currentPopfile;
+
     // converts "scripts/population/mvm_decoy_advanced3.pop" to "mvm_decoy_advanced3"
     if (startswith(currentPopfile, "scripts/population/")) currentPopfile = currentPopfile.slice(19);
     if (endswith(currentPopfile, ".pop")) currentPopfile = currentPopfile.slice(0, currentPopfile.len() - 4);
@@ -54,11 +56,8 @@ local configPath = "mega_mod_mvm_max_defenders.txt"
         maxDefenders = MM_MVM_DefendersConfig[currentPopfile];
     }
 
-    if (::MM_MVM_MaxDefenders == maxDefenders) return;
-
-    ::MM_MVM_MaxDefenders <- maxDefenders;
-
     Convars.SetValue("tf_mvm_defenders_team_size", maxDefenders);
+
     printl("MEGAMOD: Max defenders for " + currentPopfile + " is " + maxDefenders);
     ClientPrint(null, 3, "\x07FF3F3FThis mission (" + currentPopfile + ") supports up to " + maxDefenders + " players.");
 }
@@ -66,16 +65,17 @@ local configPath = "mega_mod_mvm_max_defenders.txt"
 ApplyMod <- function () {
     local root = getroottable();
 
-    MM_MVM_LoadDefendersConfig();
+    //MM_MVM_LoadDefendersConfig();
 
-    this.OnGameEvent_teamplay_round_start <- function (event) {
+    this.OnGameEvent_teamplay_broadcast_audio <- function (event) {
+        if (event.sound != "Announcer.MVM_Get_To_Upgrade") return;
         EntFire("tf_gamerules", "RunScriptCode", "::MM_MVM_LoadDefendersConfig(); ::MM_MVM_CheckMaxDefenders()", 0, null);
     }.bindenv(this);
 
-    ::MM_MVM_CheckMaxDefenders();
+    //::MM_MVM_CheckMaxDefenders();
 
     local scope = this;
-    scope.ClearGameEventCallbacks <- ::ClearGameEventCallbacks
+    scope.ClearGameEventCallbacks <- ::ClearGameEventCallbacks;
     ::ClearGameEventCallbacks <- function () {
         scope.ClearGameEventCallbacks()
         ::__CollectGameEventCallbacks(scope)
