@@ -11,9 +11,7 @@
 
 ::PLR_TEAMS <- {}  // team_num => state table
 ::PLR_CROSSINGS <- {}  // crossingID => { teams: [team,...], passed: [], queue: [team,...], disabled: false }
-::PLR_UPDATE_DEPTH <- 0
 ::PLR_NEXT_CROSSING_ID <- 1
-::PLR_MAX_UPDATE_DEPTH <- 8  // N teams + safety margin
 
 function PLR_RegisterTeam(team, config) {
     local rollbackSpeed = -1.0;
@@ -161,31 +159,47 @@ function PLR_TriggerRollback(team, multiplier = 1.0) {
 }
 
 // ============================================================================
-// UPDATE CART - MAIN STATE MACHINE
+// CART EVENT / PROPAGATION / UPDATE CART
 // ============================================================================
 
-function PLR_UpdateCart(team, pushstate) {
-    if (++PLR_UPDATE_DEPTH > PLR_MAX_UPDATE_DEPTH) {
-        --PLR_UPDATE_DEPTH;
-        return;  // Safety abort - prevent infinite loops
-    }
+// Entry point for state changes from the game (e.g. someone starts pushing).
+// Updates this cart's own behaviour, then tells other carts to re-evaluate when necessary.
+// Returns whether pushstate actually changed.
+function PLR_CartEvent(team, pushstate) {
+    local changed = PLR_UpdateCart(team, pushstate);
 
+    // Only real state changes propagate, and only during overtime - one wave per change, no cycles
+    if (!changed || !OVERTIME_ACTIVE) return changed;
+
+    // Re-evaluate every idle cart - their pressure may have changed.
+    PLR_Propagate(team, function(other, s) { return s.pushstate == 0; });
+    return changed;
+}
+
+// Re-evaluate every other cart whose state meets `condition` (null = all).
+function PLR_Propagate(sourceTeam, condition = null) {
+    PLR_ForEachTeam(function(other, s) {
+        if (other != sourceTeam && (condition == null || condition(other, s))) {
+            PLR_CartEvent(other, s.pushstate);
+        }
+    });
+}
+
+// Own-cart state machine: records pushstate and applies stop/advance/rollback.
+// Returns true if pushstate actually changed.
+function PLR_UpdateCart(team, pushstate) {
     local t = PLR_GetTeam(team);
-    local previousPushstate = t.pushstate;
+    local changed = (t.pushstate != pushstate);
     t.pushstate = pushstate;
-    local N = PLR_GetTeamCount();
+    local teamCount = PLR_GetTeamCount();
 
     // Early exit if blocked
-    if (t.blocked) {
-        --PLR_UPDATE_DEPTH;
-        return;
-    }
+    if (t.blocked) return changed;
 
     // Phase 1: Pusher count
     if (pushstate == -1) {
         PLR_Stop(team);
-        --PLR_UPDATE_DEPTH;
-        return;
+        return changed;
     }
 
     if (pushstate == 1) {
@@ -199,24 +213,24 @@ function PLR_UpdateCart(team, pushstate) {
     // Phase 2: Zero pushers
     if (pushstate == 0) {
         if (OVERTIME_ACTIVE) {
-            local k = PLR_CountPushingEnemies(team);
+            local enemiesPushing = PLR_CountPushingEnemies(team);
 
             // Calculate pressure-based multipliers
             local crawlMult = 0;
-            if (k >= N - 1) {
+            if (enemiesPushing >= teamCount - 1) {
                 crawlMult = 0;  // Special case: full stop
             } else {
-                crawlMult = 1.0 / (k + 1);
+                crawlMult = 1.0 / (enemiesPushing + 1);
             }
 
             if (t.rollstate == -1 && !(OVERTIME_ACTIVE && ROLLBACK_DISABLED)) {
                 // On uphill - decide between crawl and rollback based on pressure
-                if (k >= N - 1) {
+                if (enemiesPushing >= teamCount - 1) {
                     // All enemies pushing - full rollback
                     PLR_TriggerRollback(team, 1.0);
-                } else if (k > 0) {
+                } else if (enemiesPushing > 0) {
                     // Some enemies pushing - rollback at reduced speed
-                    local rollbackMult = 1.0 / (N - k);
+                    local rollbackMult = 1.0 / (teamCount - enemiesPushing);
                     PLR_TriggerRollback(team, rollbackMult);
                 } else {
                     // No enemies pushing - crawl
@@ -237,34 +251,7 @@ function PLR_UpdateCart(team, pushstate) {
         }
     }
 
-    // Phase 3: Overtime cascade
-    if (OVERTIME_ACTIVE && pushstate >= 1) {
-        // I just started pushing - reevaluate idle teams
-        PLR_ForEachTeam(function(other, otherState) {
-            if (other != team && otherState.pushstate == 0) {
-                PLR_UpdateCart(other, 0);
-            }
-        });
-    } else if (OVERTIME_ACTIVE && pushstate == 0 && previousPushstate >= 1) {
-        // I just stopped pushing - check if all are now idle
-        local allIdle = true;
-        foreach (other, otherState in PLR_TEAMS) {
-            if (other != team && otherState.pushstate >= 1) {
-                allIdle = false;
-                break;
-            }
-        }
-        if (allIdle) {
-            // Everyone idle during overtime - all crawl at full speed
-            PLR_ForEachTeam(function(t2, s) {
-                if (!s.blocked) {
-                    PLR_Advance(t2, s.overtimeSpeed);
-                }
-            });
-        }
-    }
-
-    --PLR_UPDATE_DEPTH;
+    return changed;
 }
 
 // ============================================================================
@@ -330,15 +317,15 @@ function PLR_CreateLogicCase(team, name) {
 
 function PLR_AddCaptureOutputsToLogicCase(team, entity) {
     EntityOutputs.AddOutput(entity, "OnCase01", "!self", "RunScriptCode",
-        "PLR_UpdateCart(" + team + ", -1)", 0, -1);
+        "PLR_CartEvent(" + team + ", -1)", 0, -1);
     EntityOutputs.AddOutput(entity, "OnCase02", "!self", "RunScriptCode",
-        "PLR_UpdateCart(" + team + ", 0)", 0, -1);
+        "PLR_CartEvent(" + team + ", 0)", 0, -1);
     EntityOutputs.AddOutput(entity, "OnCase03", "!self", "RunScriptCode",
-        "PLR_UpdateCart(" + team + ", 1)", 0, -1);
+        "PLR_CartEvent(" + team + ", 1)", 0, -1);
     EntityOutputs.AddOutput(entity, "OnCase04", "!self", "RunScriptCode",
-        "PLR_UpdateCart(" + team + ", 2)", 0, -1);
+        "PLR_CartEvent(" + team + ", 2)", 0, -1);
     EntityOutputs.AddOutput(entity, "OnDefault", "!self", "RunScriptCode",
-        "PLR_UpdateCart(" + team + ", 3)", 0, -1);
+        "PLR_CartEvent(" + team + ", 3)", 0, -1);
 }
 
 function PLR_AddRollbackZone(team, startPath, endPath, disablePath) {
@@ -533,10 +520,8 @@ function PLR_RollforwardEnd(team) {
 
 function PLR_BlockCart(team, blocked) {
     PLR_TEAMS[team].blocked = blocked;
-    PLR_ForEachTeam(function(other, state) {
-        if (other != team) PLR_UpdateCart(other, state.pushstate);
-    });
-    PLR_UpdateCart(team, PLR_TEAMS[team].pushstate);
+    PLR_Propagate(team, null);  // All other carts re-evaluate under the new block state
+    PLR_UpdateCart(team, PLR_TEAMS[team].pushstate);  // Apply own state, no further cascade
 }
 
 // ============================================================================
@@ -563,7 +548,7 @@ function PLR_StartOvertime() {
     ::OVERTIME_ACTIVE <- true;
     if (PLR_TIMER && PLR_TIMER.IsValid()) PLR_TIMER.Kill();
     PLR_ForEachTeam(function(team, state) {
-        PLR_UpdateCart(team, state.pushstate);
+        PLR_CartEvent(team, state.pushstate);
     });
 }
 
@@ -587,7 +572,7 @@ function PLR_ResetCartStates() {
         state.lastUpdate = now;
     });
     PLR_ForEachTeam(function(team, state) {
-        PLR_UpdateCart(team, 0);
+        PLR_CartEvent(team, 0);
     });
 }
 

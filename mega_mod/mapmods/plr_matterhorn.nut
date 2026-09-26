@@ -275,7 +275,7 @@ function PLR_TriggerRollback(team, multiplier = 1.0) {
     }
 }
 
-// Override PLR_UpdateCart for counter-boost logic
+// Override PLR_UpdateCart for counter-boost logic (own-cart behaviour only)
 ::PLR_UpdateCart_Base <- PLR_UpdateCart;
 
 function PLR_UpdateCart(team, pushstate) {
@@ -283,19 +283,10 @@ function PLR_UpdateCart(team, pushstate) {
     local other = team == 2 ? 3 : 2;
     local otherT = PLR_TEAMS[other];
 
-    if (++PLR_UPDATE_DEPTH > PLR_MAX_UPDATE_DEPTH) {
-        --PLR_UPDATE_DEPTH;
-        return;
-    }
-
+    local changed = (t.pushstate != pushstate);
     t.pushstate = pushstate;
 
-    if(t.blocked) {
-        --PLR_UPDATE_DEPTH;
-        return;
-    }
-
-    local liftsBothOn = t.custom.elv && otherT.custom.elv;
+    if(t.blocked) return changed;
 
     // Counter-boost: if opponent is NOT pushing and NOT at bottom, speed is halved
     local isCounterBoost = !t.custom.elv || (!otherT.custom.atBottom && otherT.pushstate == 0);
@@ -303,8 +294,7 @@ function PLR_UpdateCart(team, pushstate) {
 
     if(pushstate == -1) {
         PLR_Stop(team);
-        --PLR_UPDATE_DEPTH;
-        return;
+        return changed;
     }
 
     if(pushstate == 1) {
@@ -318,7 +308,6 @@ function PLR_UpdateCart(team, pushstate) {
     if(pushstate == 0) {
         if(otherT.pushstate == 0 && OVERTIME_ACTIVE) {
             PLR_Advance(team, t.overtimeSpeed);
-            if(!otherT.blocked) PLR_Advance(other, otherT.overtimeSpeed);
         } else if(!(OVERTIME_ACTIVE && ROLLBACK_DISABLED) && t.rollstate == -1
             && !t.custom.atBottom
             && !(t.custom.elv && otherT.custom.elv && otherT.pushstate == 0)) {
@@ -326,21 +315,38 @@ function PLR_UpdateCart(team, pushstate) {
         } else {
             PLR_Stop(team);
         }
-    } else if((otherT.custom.elv || OVERTIME_ACTIVE) && otherT.pushstate == 0) {
-        PLR_UpdateCart(other, 0);
-    }
-
-    // Force update other cart for elevator coordination
-    if(liftsBothOn && !OVERTIME_ACTIVE) {
-        if(pushstate == 0 && otherT.pushstate == 0) {
-            PLR_Stop(other);
-        } else if(pushstate != 0 && otherT.pushstate == 0) {
-            PLR_TriggerRollback(other);
-        }
     }
 
     UpdateHUD();
-    --PLR_UPDATE_DEPTH;
+    return changed;
+}
+
+// Override PLR_CartEvent for cross-cart elevator coordination
+::PLR_CartEvent_Base <- PLR_CartEvent;
+
+function PLR_CartEvent(team, pushstate) {
+    local t = PLR_TEAMS[team];
+    local other = team == 2 ? 3 : 2;
+    local otherT = PLR_TEAMS[other];
+
+    local changed = PLR_CartEvent_Base(team, pushstate);
+
+    if (t.blocked) return;
+
+    // Opponent is on a lift and I just started pushing: their idle decision is invalidated.
+    // (The base handler already covers the OVERTIME_ACTIVE case.)
+    if(changed && pushstate >= 1 && !OVERTIME_ACTIVE && otherT.custom.elv) {
+        PLR_Propagate(team, function(o, s) { return o == other && s.pushstate == 0; });
+    }
+
+    // Elevator coordination: both carts on lifts, pre-overtime
+    if(pushstate != -1 && t.custom.elv && otherT.custom.elv && !OVERTIME_ACTIVE) {
+        if(pushstate == 0 && otherT.pushstate == 0) {
+            PLR_Stop(other);
+        } else if(pushstate >= 1 && otherT.pushstate == 0) {
+            PLR_TriggerRollback(other);
+        }
+    }
 }
 
 function UpdateHUD() {
@@ -385,7 +391,7 @@ function SwitchToElevator(team) {
         EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", t.train.GetName(), "Stop", "", 0, 1);
         EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", t.custom.elv.GetName(), "Stop", "", 0, 1);
         EntityOutputs.AddOutput(MM_GetEntByName("ssplr_red_path_lift_finale1_4"), "OnPass", "!self",
-            "RunScriptCode", "PLR_UpdateCart(2, PLR_TEAMS[2].pushstate)", 0.05, 1);
+            "RunScriptCode", "PLR_CartEvent(2, PLR_TEAMS[2].pushstate)", 0.05, 1);
 
         EntFireByHandle(MM_GetEntByName("ssplr_red_flashinglight"), "Stop", "", 1.0, null, null);
         foreach(spark in MM_GetEntArrayByName("ssplr_red_cartsparks")) EntFireByHandle(spark, "Stop", "", 0.1, null, null);
@@ -398,7 +404,7 @@ function SwitchToElevator(team) {
         EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", t.train.GetName(), "Stop", "", 0, 1);
         EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", t.custom.elv.GetName(), "Stop", "", 0, 1);
         EntityOutputs.AddOutput(MM_GetEntByName("ssplr_blu_path_lift_finale1_4"), "OnPass", "!self",
-            "RunScriptCode", "PLR_UpdateCart(3, PLR_TEAMS[3].pushstate)", 0.05, 1);
+            "RunScriptCode", "PLR_CartEvent(3, PLR_TEAMS[3].pushstate)", 0.05, 1);
 
         EntFireByHandle(MM_GetEntByName("ssplr_blu_flashinglight"), "Stop", "", 1.0, null, null);
         foreach(spark in MM_GetEntArrayByName("ssplr_blu_cartsparks")) EntFireByHandle(spark, "Stop", "", 0.1, null, null);
@@ -415,7 +421,7 @@ function SwitchToElevator(team) {
     t.speed3 = lifts.s3;
 
     EntFireByHandle(Gamerules(), "RunScriptCode", "PLR_Stop(" + team + "); PLR_TEAMS[" + team + "].blocked = false", 1.0, null, null);
-    EntFireByHandle(Gamerules(), "RunScriptCode", "PLR_UpdateCart(" + team + ", PLR_TEAMS[" + team + "].pushstate)", 1.05, null, null);
+    EntFireByHandle(Gamerules(), "RunScriptCode", "PLR_CartEvent(" + team + ", PLR_TEAMS[" + team + "].pushstate)", 1.05, null, null);
 
     UpdateHUD();
 }
@@ -432,8 +438,8 @@ function CheckBottomThink(team) {
 
     if(newValue != null && oldValue != newValue) {
         t.custom.atBottom = newValue;
-        EntFireByHandle(Gamerules(), "RunScriptCode", "PLR_UpdateCart(" + team + ", PLR_TEAMS[" + team + "].pushstate)", 0.1, null, null);
-        EntFireByHandle(Gamerules(), "RunScriptCode", "PLR_UpdateCart(" + other + ", PLR_TEAMS[" + other + "].pushstate)", 0.1, null, null);
+        EntFireByHandle(Gamerules(), "RunScriptCode", "PLR_CartEvent(" + team + ", PLR_TEAMS[" + team + "].pushstate)", 0.1, null, null);
+        EntFireByHandle(Gamerules(), "RunScriptCode", "PLR_CartEvent(" + other + ", PLR_TEAMS[" + other + "].pushstate)", 0.1, null, null);
     }
     return -1;
 }

@@ -60,10 +60,10 @@ function OnGameEvent_teamplay_round_start(params) {
     PLR_TEAMS[2].custom.atEnd <- false;
     PLR_TEAMS[3].custom.atEnd <- false;
 
-    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_85"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[2].custom.atEnd = false; PLR_UpdateCart(2, PLR_TEAMS[2].pushstate)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_path_85"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[2].custom.atEnd = false; PLR_CartEvent(2, PLR_TEAMS[2].pushstate)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_red_pathA_end"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[2].custom.atEnd = true", 0, -1);
 
-    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_85"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[3].custom.atEnd = false; PLR_UpdateCart(3, PLR_TEAMS[3].pushstate)", 0, -1);
+    EntityOutputs.AddOutput(MM_GetEntByName("minecart_bpath_85"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[3].custom.atEnd = false; PLR_CartEvent(3, PLR_TEAMS[3].pushstate)", 0, -1);
     EntityOutputs.AddOutput(MM_GetEntByName("minecart_blu_pathA_end"), "OnPass", "!self", "RunScriptCode", "PLR_TEAMS[3].custom.atEnd = true", 0, -1);
 
     // Check if the cart needs updating.
@@ -115,7 +115,7 @@ function CheckCart(team) {
     if (t.pushstate == 0 && !OVERTIME_ACTIVE) return;
     if (!t.custom.atCutoff) return;
 
-    PLR_UpdateCart(team, t.pushstate);
+    PLR_CartEvent(team, t.pushstate);
 }
 
 // Do not move cart forward if it's already at the end of the track.
