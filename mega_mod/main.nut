@@ -38,6 +38,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     "workshop/pass_jerma_v4.ugc3409336625"
     "workshop/pl_cactuscanyon_redux_final2.ugc2579644293"
     "workshop/plr_highertower.ugc899335714"
+    "workshop/sd_turbine_a3a.ugc2044308678"
     "workshop/tf2ware_ultimate.ugc3413262999"
     "workshop/tf2ware_ultimate_fix.ugc3413262999"
 ];
