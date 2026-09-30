@@ -606,7 +606,7 @@ function PLR_GetRoundTimeString(setup = 0) {
 function PLR_GetRoundTime(setup = 0) {
     local time = MM_PLR_TIME_UPPER_LIMIT;
     local timeRemaining = MM_GetTimelimitRemaining();
-    if (timeRemaining != null) time = ceil(timeRemaining / 30) * 30;
+    if (timeRemaining != null) time = ceil((timeRemaining - setup) / 30) * 30;
     if (time > MM_PLR_TIME_UPPER_LIMIT) time = MM_PLR_TIME_UPPER_LIMIT;
     if (time < MM_PLR_TIME_LOWER_LIMIT) time = MM_PLR_TIME_LOWER_LIMIT;
     return time;

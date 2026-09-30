@@ -19,6 +19,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     "cp_standin_final"
     "koth_lakeside_event"
     "koth_viaduct_event"
+    "4plr_sisyphus"
     "pl_bloodwater"
     "pl_breadspace"
     "pl_emerge"
