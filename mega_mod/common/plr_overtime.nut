@@ -215,14 +215,6 @@ function PLR_UpdateCart(team, pushstate) {
         if (OVERTIME_ACTIVE) {
             local enemiesPushing = PLR_CountPushingEnemies(team);
 
-            // Calculate pressure-based multipliers
-            local crawlMult = 0;
-            if (enemiesPushing >= teamCount - 1) {
-                crawlMult = 0;  // Special case: full stop
-            } else {
-                crawlMult = 1.0 / (enemiesPushing + 1);
-            }
-
             if (t.rollstate == -1 && !(OVERTIME_ACTIVE && ROLLBACK_DISABLED)) {
                 // On uphill - decide between crawl and rollback based on pressure
                 if (enemiesPushing >= teamCount - 1) {
@@ -234,14 +226,15 @@ function PLR_UpdateCart(team, pushstate) {
                     PLR_TriggerRollback(team, rollbackMult);
                 } else {
                     // No enemies pushing - crawl
-                    PLR_Advance(team, t.overtimeSpeed * crawlMult);
+                    PLR_Advance(team, t.overtimeSpeed);
                 }
             } else {
-                // Flat ground or rollback disabled
-                if (crawlMult > 0) {
-                    PLR_Advance(team, t.overtimeSpeed * crawlMult);
-                } else {
+                // Flat ground or rollback disabled:
+                // Stop if any other cart is being pushed; only crawl when all are idle.
+                if (enemiesPushing > 0) {
                     PLR_Stop(team);
+                } else {
+                    PLR_Advance(team, t.overtimeSpeed);
                 }
             }
         } else if (t.rollstate == -1 && !ROLLBACK_DISABLED) {
