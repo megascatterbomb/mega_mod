@@ -1,124 +1,128 @@
 ::MM_ZI_ROUND_FINISHED <- false;
 ::MM_ZI_LAST_SURVIVOR_DEATH <- 0;
-::MM_ZI_STARTING_PLAYERS <- 1;
-::MM_ZI_STARTING_SURVIVORS <- 1;
+::MM_ZI_OVERTIME_ENABLED <- true;
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
-::MM_ZI_OVERTIME_DAMAGE_INCREASE <- 1.0/7.0;
+::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
+::MM_ZI_MAX_TIME <- 150;
+::MM_ZI_ADD_TIME_BASE <- 5;
+::MM_ZI_ADD_TIME_MIN <- 2;
+
+::MM_ZI_EXPLOITERS <- []; // user ids of players who change teams to try and respawn during overtime
+
+::MM_ZI_PLAYER_MANAGER <- Entities.FindByClassname(null, "tf_player_manager");
+
+// max survivors before we start reducing time added.
+::MM_ZI_ADD_TIME_REDUCE_THRESHOLD <- 19; 
+
+// additional survivors required before dropping another second off time added.
+::MM_ZI_ADD_TIME_REDUCE_STEP <- 5; 
+
+// zi2026 leaves respawn wave times to map configuration; remember the map's
+// default so we can restore it after overtime.
+::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT <- -1.0;
+
+::MM_ZI_LOGIC_SCRIPT <- null;
+::MM_ZI_LOGIC_SCRIPT_SCOPE <- null;
 
 function MM_Zombie_Infection() {
-    local gamerules = Gamerules();
-    if (gamerules != null)  {
-        // Delay so our settings overwrite those set by logic_auto ents.
-        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "5", 5, null, null);
-        EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 5, null, null);
-
-        gamerules.ValidateScriptScope();
-        local gamerules_scope = gamerules.GetScriptScope();
-        if (!("zi_chosen_zombies" in gamerules_scope)) {
-            gamerules_scope["zi_chosen_zombies"] <- [];
-        }
-    }
-
     ::MM_ZI_ROUND_FINISHED <- false;
     ::MM_ZI_OVERTIME <- false;
     ::MM_ZI_OVERTIME_DAMAGE <- 0;
+    ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
+    ::MM_ZI_EXPLOITERS <- [];
+    ::MM_ZI_LOGIC_SCRIPT <- Entities.FindByClassname(null, "logic_script")
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE <- ::MM_ZI_LOGIC_SCRIPT.GetScriptScope();
+    ::MM_ZI_PLAYER_MANAGER <- Entities.FindByClassname(null, "tf_player_manager");
+
+
+    // zi2026 exposes the gamerules entity as the global ::GameRules.
+    local gamerules = ( "GameRules" in getroottable() && getroottable().GameRules != null )
+        ? getroottable().GameRules
+        : Entities.FindByClassname( null, "tf_gamerules" );
+
+    if (gamerules != null) {
+        // Capture the map's default BLU respawn wave time before we override it in overtime.
+        local blue_wave = GetPropFloat(gamerules, "m_flBlueTeamRespawnWaveTime");
+        if (blue_wave > 0.0 && blue_wave < 99999.0) {
+            ::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT <- blue_wave;
+        }
+    }
+
+    // Clear glow state from last round if needed.
+    foreach( _hNextPlayer in GetAllPlayers() ) {
+        SetPropBool( _hNextPlayer, "m_bGlowEnabled", false );
+    }
+
+    // MEGAMOD: make healthkits/ammopacks RED-pickup at round start.
+    // Prevents zombies from removing their debuffs on healthkits.
+    local pickupClasses = [
+        "item_healthkit_small", "item_healthkit_medium", "item_healthkit_full",
+        "item_ammopack_small", "item_ammopack_medium", "item_ammopack_large"
+    ];
+    foreach( _cls in pickupClasses ) {
+        for (local ent = null; ent = Entities.FindByClassname(ent, _cls);) {
+            SetPropInt(ent, "m_iTeamNum", 2);
+        }
+    }
 
     MM_ZI_OverrideSetupFinished();
     MM_ZI_OverrideDeath();
-    MM_ZI_OverrideZombieSelection();
     MM_ZI_OverrideRoundEnd();
-    MM_ZI_OverrideWeaponMods();
     MM_ZI_OverrideShouldZombiesWin();
+    MM_ZI_OverrideSpawnPickerRefund();
+    MM_ZI_OverrideSpyRecloak();
+    MM_ZI_OverrideEnterSpawnPicker();
 
     MM_ZI_PrepareForOvertime();
+    MM_ZI_MapSpecific_RoundStart();
 }
 
 function MM_ZI_OnPlayerTeam(params) {
     if (!::MM_ZI_OVERTIME || !::bGameStarted || ::MM_ZI_ROUND_FINISHED) return;
+
+    // We're in overtime.
     if ( params.team == 2 ) {
         local player = GetPlayerFromUserID(params.userid);
-        EntFireByHandle(player, "RunScriptCode", "ChangeTeamSafe(self, 3, true); self.ForceRespawn(); self.TakeDamage(1000000, 0, null)", 0, null, player)
+        if (player == null) return;
+        ::MM_ZI_EXPLOITERS.append(params.userid);
+        SetPropBool( player, "m_bGlowEnabled", false );
+        EntFireByHandle(player, "RunScriptCode", "ChangeTeamSafe(self, 3, true); self.ForceRespawn(); SetPropBool( self, \"m_takedamage\", true ); self.TakeDamage(1000000, 0, null)", 0, null, player)
     }
 }
 
-// OVERRIDE: replacement for functions.nut::GetRandomPlayers
-function MM_ZI_OverrideZombieSelection() {
-    // MEGAMOD: Zombie selection will always ignore zombies from last round if possible.
-    ::GetRandomPlayers <- function( _howMany = 1 )
-    {
-        local _playerArr = [];
-        local _lowPriorityPlayerArr = [];
+function MM_ZI_OverrideEnterSpawnPicker() {
+    local root = getroottable();
 
-        local gamerules = Gamerules();
-        local gamerules_scope = gamerules.GetScriptScope();
+    // Only wrap once
+    if (!("MM_ZI_OriginalEnterSpawnPicker" in root) || ::MM_ZI_OriginalEnterSpawnPicker == null) {
+        ::MM_ZI_OriginalEnterSpawnPicker <- CTFPlayer.EnterSpawnPicker;
+    }
 
-        // gamerules_scope["zi_chosen_zombies"].map(function(p) {
-        //     printl(p);
-        //     return true;
-        // });
-
-        // printl("# of low prio players: " + gamerules_scope["zi_chosen_zombies"].len())
-
-        foreach ( _hPlayer in GetAllPlayers() )
-        {
-            if ( _hPlayer != null /* &&  ( _hPlayer.GetFlags() & FL_FAKECLIENT ) == 0 */  ) {
-                if (gamerules_scope["zi_chosen_zombies"].find(_hPlayer.entindex()) != null) {
-                    // printl("Deprioritizing " + NetName(_hPlayer));
-                    _lowPriorityPlayerArr.append(_hPlayer);
-                } else {
-                    _playerArr.append( _hPlayer )
-                };
-            }
-        };
-
-        local availablePlayers = _playerArr.len() + _lowPriorityPlayerArr.len();
-        _howMany = ( _howMany <= availablePlayers ) ? _howMany : availablePlayers;
-
-        local _selectedPlayers = [];
-
-        for ( local i = 0; i < _howMany; i++ )
-        {
-            if (_playerArr.len() == 0) break;
-            local _randomID = RandomInt ( 0, _playerArr.len() - 1 );
-            _selectedPlayers.append     ( _playerArr[ _randomID ] );
-            _playerArr.remove           ( _randomID );
-        };
-
-        for (local i = _selectedPlayers.len(); i < _howMany; i++ ) {
-            if (_lowPriorityPlayerArr.len() == 0) break;
-            local _randomID = RandomInt ( 0, _lowPriorityPlayerArr.len() - 1 );
-            _selectedPlayers.append     ( _lowPriorityPlayerArr[ _randomID ] );
-            _playerArr.remove           ( _randomID );
-        }
-
-        gamerules_scope["zi_chosen_zombies"] <- _selectedPlayers.map(function(p) {
-            // printl(p.entindex());
-            return p.entindex();
-        });
-
-        ::MM_ZI_STARTING_PLAYERS = availablePlayers;
-        ::MM_ZI_STARTING_SURVIVORS = availablePlayers - _selectedPlayers.len();
-
-        return _selectedPlayers;
+    CTFPlayer.EnterSpawnPicker <- function() {
+        local userid = NetProps.GetPropIntArray(::MM_ZI_PLAYER_MANAGER, "m_iUserID", this.entindex());
+        if (::MM_ZI_OVERTIME && ::MM_ZI_EXPLOITERS.find(userid) != null) return;
+        ::MM_ZI_OriginalEnterSpawnPicker.call( this );
     };
+    CTFBot.EnterSpawnPicker <- CTFPlayer.EnterSpawnPicker;
 }
 
 // OVERRIDE: replacement for infection.nut::OnGameEvent_teamplay_setup_finished
 function MM_ZI_OverrideSetupFinished() {
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    local scope = logic_script.GetScriptScope();
 
-    // Some maps might set gamerules at the end of setup time. This is just a safety check.
-    local gamerules = Gamerules();
-    if (gamerules != null)  {
-        EntFireByHandle(gamerules, "SetRedTeamRespawnWaveTime", "6", 1, null, null);
-        EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 1, null, null);
-    }
-
-    scope.OnGameEvent_teamplay_setup_finished <- function ( params )
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE.OnGameEvent_teamplay_setup_finished <- function ( params )
     {
         ::bGameStarted <- true;
+
+        // MEGAMOD: Set the timer early at round_start, before the map's OnSetupFinished output
+        // can overwrite it with the map's default values.
+        local timer = Entities.FindByClassname(null, "team_round_timer");
+        if (timer != null) {
+            EntFireByHandle(timer, "SetTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+            EntFireByHandle(timer, "SetMaxTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+        }
+
+        BuildZombieSpawnPointArray();
 
         local _iPlayerCountRed    = PlayerCount( TF_TEAM_RED );
         local _numStartingZombies = -1;
@@ -146,33 +150,42 @@ function MM_ZI_OverrideSetupFinished() {
             }
             else if ( _numStartingZombies == -1 )
             {
-                if ( _iPlayerCountRed <= 4 )
-                {
-                    _numStartingZombies = 1;
-                }
-                else if ( _iPlayerCountRed <= 8 )
-                {
-                    _numStartingZombies = 2;
-                }
-                else if ( _iPlayerCountRed <= 12 )
-                {
-                    _numStartingZombies = 3;
-                }
-                else if (_iPlayerCountRed <= 16)
-                {
-                    _numStartingZombies = 4;
-                }
-                else // 17 or more players
-                {
-                    _numStartingZombies = floor(sqrt(_iPlayerCountRed - 1));
-                }
+                _numStartingZombies = GetZombieQuota( _iPlayerCountRed );
             }
 
             local _szZombieNetNames  =  "";
-            local _zombieArr         =  GetRandomPlayers( _numStartingZombies );
+
+            local _arrDeadSurvivors = [];
+
+            foreach ( _hDeadSurvivor in GetAllPlayers() )
+            {
+                if ( _hDeadSurvivor != null &&
+                     _hDeadSurvivor.GetTeam() == TF_TEAM_RED &&
+                     GetPropInt( _hDeadSurvivor, "m_lifeState" ) != ALIVE )
+                {
+                    _arrDeadSurvivors.append( _hDeadSurvivor );
+                };
+            };
+
+            local _iLivePicks = ( _numStartingZombies - _arrDeadSurvivors.len() );
+
+            if ( _iLivePicks < 0 )
+                _iLivePicks = 0;
+
+            local _zombieArr = _arrDeadSurvivors;
+
+            _zombieArr.extend( GetRandomPlayers( _iLivePicks, ::tblLastRoundZombies ) );
 
             if ( _zombieArr.len() == 0 )
                 return;
+
+            ::tblLastRoundZombies <- {};
+
+            foreach ( _hInfected in _zombieArr )
+            {
+                if ( _hInfected != null )
+                    ::tblLastRoundZombies[ GetPlayerUserID( _hInfected ) ] <- true;
+            };
 
             // ------------------------------------------ //
             // convert the picked players to zombies      //
@@ -188,43 +201,54 @@ function MM_ZI_OverrideSetupFinished() {
 
                 local _sc = _nextPlayer.GetScriptScope();
 
-                // ------------------------------------------- //
-                // make sure heavy doesn't get stuck in t-pose //
-                // ------------------------------------------- //
-
-                if ( _nextPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS )
+                // a corpse only needs the team change - the respawn takes the normal
+                // zombie route from OnGameEvent_player_spawn
+                if ( GetPropInt( _nextPlayer, "m_lifeState" ) != ALIVE )
                 {
-                    if ( _nextPlayer.GetActiveWeapon().GetClassname() == "tf_weapon_minigun" )
+                    _nextPlayer.ResetInfectionVars();
+                    ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
+                }
+                else
+                {
+                    // ------------------------------------------------------- //
+                    // make sure heavy/pyro don't get stuck in a t-pose/a-pose  //
+                    // ------------------------------------------------------- //
+                    local _hActiveWep = _nextPlayer.GetActiveWeapon();
+
+                    if ( _hActiveWep != null &&
+                         ( _hActiveWep.GetClassname() == "tf_weapon_minigun" ||
+                           _hActiveWep.GetClassname() == "tf_weapon_flamethrower" ) )
                     {
-                        SetPropInt( _nextPlayer.GetActiveWeapon(), "m_iWeaponState", 0 );
+                        SetPropInt( _hActiveWep, "m_iWeaponState", 0 );
                     };
+
+                    // remove player conditions that will cause problems
+                    // when switching to zombie
+                    _nextPlayer.ClearProblematicConds();
+
+                    // reset all gamemode specific variables
+                    _nextPlayer.ResetInfectionVars();
+
+                    ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
+
+                    // remove all of the player's existing items
+                    _nextPlayer.RemovePlayerWearables();
+
+                    // add the zombie cosmetics/skin modifications
+                    _nextPlayer.GiveZombieCosmetics();
+                    _nextPlayer.GiveZombieFXWearable();
+
+                    SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_nextPlayer) });
+
+                    // add the pending zombie flag
+                    // the actual zombie conversion is handled in the player's think script
+                    // the initial infection bit keeps the lightning fx for this wave only
+                    _sc.m_iFlags <- ( ( _sc.m_iFlags | ZBIT_PENDING_ZOMBIE | ZBIT_INITIAL_INFECTION ) );
+
+                    // don't delay zombie conversion when the player is alive.
+                    _nextPlayer.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, INSTANT );
+                    _nextPlayer.SetNextActTime ( ZOMBIE_ABILITY_CAST, 0.1 );
                 };
-
-                // remove player conditions that will cause problems
-                // when switching to zombie
-                _nextPlayer.ClearProblematicConds();
-
-                // reset all gamemode specific variables
-                _nextPlayer.ResetInfectionVars();
-
-                ChangeTeamSafe( _nextPlayer, TF_TEAM_BLUE, false );
-
-                // remove all of the player's existing items
-                _nextPlayer.RemovePlayerWearables();
-
-                // add the zombie cosmetics/skin modifications
-                _nextPlayer.GiveZombieCosmetics();
-                _nextPlayer.GiveZombieFXWearable();
-
-                SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_nextPlayer) });
-
-                // add the pending zombie flag
-                // the actual zombie conversion is handled in the player's think script
-                _sc.m_iFlags <- ( ( _sc.m_iFlags | ZBIT_PENDING_ZOMBIE ) );
-
-                // don't delay zombie conversion when the player is alive.
-                _nextPlayer.SetNextActTime ( ZOMBIE_BECOME_ZOMBIE, INSTANT );
-                _nextPlayer.SetNextActTime ( ZOMBIE_ABILITY_CAST, 0.1 );
 
                 // ------------------------------------------- //
                 // build string for chat notification          //
@@ -277,8 +301,8 @@ function MM_ZI_OverrideSetupFinished() {
 
             // MEGAMOD: Force round time to 2 minutes.
             local _hRoundTimer = Entities.FindByClassname( null, "team_round_timer" );
-            EntFireByHandle(_hRoundTimer, "SetTime", "120", 0, null, null);
-            EntFireByHandle(_hRoundTimer, "SetMaxTime", "120", 0, null, null);
+            EntFireByHandle(_hRoundTimer, "SetTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+            EntFireByHandle(_hRoundTimer, "SetMaxTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
 
             PlayGlobalBell( false );
 
@@ -291,10 +315,7 @@ function MM_ZI_OverrideSetupFinished() {
 // OVERRIDE: replacement for infection.nut::OnGameEvent_player_death
 function MM_ZI_OverrideDeath() {
 
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    local scope = logic_script.GetScriptScope();
-
-    scope.OnGameEvent_player_death <- function ( params )
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE.OnGameEvent_player_death <- function ( params )
     {
         local _hPlayer      =  GetPlayerFromUserID ( params.userid );
         local _hKiller      =  GetPlayerFromUserID ( params.attacker );
@@ -307,45 +328,97 @@ function MM_ZI_OverrideDeath() {
         local _sc                  =  _hPlayer.GetScriptScope();
         local _iClassNum           =  _hPlayer.GetPlayerClass();
         local _hPlayerTeam         =  _hPlayer.GetTeam();
-        local _bIsEngineerWithEMP  =  ( _hPlayer.GetPlayerClass() == TF_CLASS_ENGINEER && _hPlayer.CanDoAct( ZOMBIE_ABILITY_CAST ) );
 
         SetPropIntArray( _hPlayer, "m_nModelIndexOverrides", 0, 3 );
+
+        if ( _sc != null && ( "m_iFlags" in _sc ) && ( _sc.m_iFlags & ZBIT_SPEWED ) )
+            _hPlayer.RemoveSpewDebuff();
+
+        if ( _sc != null )
+            _hPlayer.SpoofZombieBuffFX( false );
+
+        // a death mid-picker/emerge leaks locked state - the exit path is otherwise
+        // only reachable from FinishSpawnEmerge, which a corpse never gets to
+        if ( _sc != null && ( "m_iFlags" in _sc ) )
+        {
+            if ( _sc.m_iFlags & ( ZBIT_IN_SPAWN_PICKER | ZBIT_EMERGING_FROM_GROUND ) )
+            {
+                _sc.m_iFlags <- ( _sc.m_iFlags & ~ZBIT_EMERGING_FROM_GROUND );
+                _hPlayer.SetNextActTime( ZOMBIE_FINISH_EMERGE, ACT_LOCKED );
+                _hPlayer.ExitSpawnPicker();
+            }
+            else if ( _sc.m_iFlags & ZBIT_HEAVY_ROCK_WINDUP )
+            {
+                _sc.m_iFlags <- ( _sc.m_iFlags & ~ZBIT_HEAVY_ROCK_WINDUP );
+                _hPlayer.DestroySpawnBody   ();
+                _hPlayer.SetSpawnBodyHidden ( false );
+                _hPlayer.SetForcedTauntCam  ( 0 );
+                _hPlayer.LockInPlace        ( false );
+            };
+        };
+
+        // crumpkin catch - on a halloween-flagged map the engine rolls 30% to turn the
+        // death ammo pack into a crit pumpkin. its AP_HALLOWEEN state isn't a netprop
+        // and can't be reverted, so swap the pack for the medium ammo it was going to be
+        if ( !( ::bGameStarted && _hPlayerTeam == TF_TEAM_BLUE ) )
+        {
+            local _iPumpkinModel = GetModelIndex( "models/props_halloween/pumpkin_loot.mdl" );
+            local _hDroppedAmmo  = null;
+
+            while ( _hDroppedAmmo = Entities.FindByClassname( _hDroppedAmmo, "tf_ammo_pack" ) )
+            {
+                if ( _hDroppedAmmo.GetOwner() != _hPlayer ||
+                     GetPropInt( _hDroppedAmmo, "m_nModelIndex" ) != _iPumpkinModel )
+                    continue;
+
+                CreateMediumAmmoPack( _hDroppedAmmo.GetOrigin() );
+                _hDroppedAmmo.Destroy();
+            };
+        };
+
+        // deaths during setup don't cost you the round start
+        if ( !::bGameStarted &&
+             GetPropInt( GameRules, "m_iRoundState" ) != GR_STATE_TEAM_WIN &&
+             !( params.death_flags & TF_DEATH_FEIGN_DEATH ) )
+            EntFireByHandle( _hPlayer, "RunScriptCode",
+                             "self.ForceRegenerateAndRespawn()", 0.1, null, null );
 
         if ( ::bGameStarted && _hPlayerTeam == TF_TEAM_BLUE ) // zombie has died
         {
 
-            if ( _iClassNum ==  TF_CLASS_MEDIC )
-            {
-                if ( _sc.m_hMedicDispenser )
-                    _sc.m_hMedicDispenser.Destroy();
-            }
+            // any class - the class may have changed since the dispenser was made
+            _hPlayer.DestroyMedicDispenser();
 
-            // zombie engie with unused emp grenade drops a small ammo kit
-            // so just use the one valve spawned for us
-            if ( !_bIsEngineerWithEMP )
+            // valve's dropped-weapon pack is always culled - we drop our own below
+            local _hDroppedAmmo = null;
+            while ( _hDroppedAmmo = Entities.FindByClassname( _hDroppedAmmo, "tf_ammo_pack" ) )
             {
-                // if the player isn't an engineer, we want to cull the kit instead
-                local _hDroppedAmmo = null;
-                while ( _hDroppedAmmo = Entities.FindByClassname( _hDroppedAmmo, "tf_ammo_pack" ) )
+                if ( _hDroppedAmmo.GetOwner() == _hPlayer )
                 {
-                    if ( _hDroppedAmmo.GetOwner() == _hPlayer )
-                    {
-                        _hDroppedAmmo.Destroy();
-                    };
+                    _hDroppedAmmo.Destroy();
                 };
             };
 
-            if ( _hPlayer.GetPlayerClass() == TF_CLASS_SNIPER )
+            // every zombie leaves a small health pack and a small ammo pack
+            CreateZombieDeathDrop( _hPlayer.GetOrigin() );
+
+            // ability is null if death lands before conversion (e.g. a killbind in the picker)
+            if ( _hPlayer.GetPlayerClass() == TF_CLASS_SNIPER && _sc.m_hZombieAbility != null )
             {
                 _sc.m_hZombieAbility.CreateSpitball( true );
+            };
+
+            // the heavy is made of the same stuff he throws - burst him into rock gibs
+            // MEGAMOD: we add an additional guard to stop a VScript error that occasionally occurs (why does this happen?)
+            if ( _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS && "SpawnHeavyRockGibs" in getroottable() )
+            {
+                SpawnHeavyRockGibs( ( _hPlayer.GetOrigin() + Vector( 0, 0, ZHEAVY_DEATH_GIB_Z_OFF ) ) );
             };
 
              if ( _hPlayer.GetPlayerClass() == TF_CLASS_PYRO )
              {
                 local _hNextPlayer = null;
                 local _hKillicon = KilliconInflictor( KILLICON_PYRO_BREATH );
-
-                CreateMediumHealthKit( _hPlayer.GetOrigin() );
 
                 if ( !::bNoPyroExplosionMod )
                 {
@@ -364,18 +437,6 @@ function MM_ZI_OverrideDeath() {
                     DispatchParticleEffect ( "fireSmokeExplosion_track", _hPlayer.GetLocalOrigin(), Vector( 0, 0, 0 ) );
                 }
 
-            }
-            else
-            {
-                if ( _hPlayer.GetPlayerClass() == TF_CLASS_HEAVYWEAPONS )
-                {
-                    CreateMediumHealthKit( _hPlayer.GetOrigin() );
-                }
-                else
-                {
-                    CreateSmallHealthKit( _hPlayer.GetOrigin() );
-                }
-
             };
 
             // ------------------------------------- //
@@ -385,22 +446,32 @@ function MM_ZI_OverrideDeath() {
             // so let's make sure it's cleared whenever a player has respawned
             _hPlayer.SetScriptOverlayMaterial ( "" );
 
-            // same thing for the HUD text channels
-            _sc.m_hHUDText.KeyValueFromString ( "message", "" );
-            _sc.m_hHUDTextAbilityName.KeyValueFromString ( "message", "" );
+            // same thing for the HUD text channels. these are only created on the first think
+            // tick after the emerge, so a death in the picker/emerge window finds them null
+            if ( _sc.m_hHUDText != null && _sc.m_hHUDText.IsValid() )
+            {
+                _sc.m_hHUDText.KeyValueFromString ( "message", "" );
+                EntFireByHandle( _sc.m_hHUDText,  "Display", "", 0.0, _hPlayer, _hPlayer );
+            };
 
-            EntFireByHandle( _sc.m_hHUDText,  "Display", "", 0.0, _hPlayer, _hPlayer );
-            EntFireByHandle( _sc.m_hHUDTextAbilityName,  "Display", "", 0.0, _hPlayer, _hPlayer );
+            if ( _sc.m_hHUDTextAbilityName != null && _sc.m_hHUDTextAbilityName.IsValid() )
+            {
+                _sc.m_hHUDTextAbilityName.KeyValueFromString ( "message", "" );
+                EntFireByHandle( _sc.m_hHUDTextAbilityName,  "Display", "", 0.0, _hPlayer, _hPlayer );
+            };
 
             // ------------------------------------- //
             // Zombie Gib Hack                       //
             // ------------------------------------- //
             // when a player has the zombie skin override, they are hard coded to never gib
             // if we remove this skin here it creates gibs for the player
-            SetPropInt ( _hPlayer, "m_iPlayerSkinOverride", 0 );
+            if ( ::bZombieGibsOn )
+            {
+                SetPropInt ( _hPlayer, "m_iPlayerSkinOverride", 0 );
 
-            // we set custom model on the player afterwards because otherwise the gibs come out red
-            _hPlayer.SetCustomModelWithClassAnimations( arrTFClassPlayerModels[ _iClassNum ] );
+                // we set custom model on the player afterwards because otherwise the gibs come out red
+                _hPlayer.SetCustomModelWithClassAnimations( arrTFClassPlayerModels[ _iClassNum ] );
+            };
 
             // ------------------------------------- //
             // Check if Need Demoman Explosion       //
@@ -422,16 +493,17 @@ function MM_ZI_OverrideDeath() {
                                           _hPlayer );
             };
 
-            // hide our fx wearable to stop the particles from generating
-            SetPropInt( _sc.m_hZombieFXWearable, "m_nRenderMode", kRenderNone );
+            // hide our fx wearable to stop the particles from generating. the handle is null
+            // whenever GiveZombieFXWearable is stubbed out, so guard it
+            if ( _sc.m_hZombieFXWearable != null && _sc.m_hZombieFXWearable.IsValid() )
+            {
+                SetPropInt( _sc.m_hZombieFXWearable, "m_nRenderMode", kRenderNone );
 
-            // _sc.m_hZombieWearable.Kill();
-            // SendGlobalGameEvent( "post_inventory_application", { userid = GetPlayerUserID(_hPlayer) });
-
-            try { _sc.m_hZombieFXWearable.Destroy() } catch ( e ) {}
+                _sc.m_hZombieFXWearable.Destroy();
+            };
 
             // MEGAMOD: Instantly respawn the zombie.
-            // BLU's respawnwavetime is set to 999999 to facilitate overtime. To make respawns not instant, change this delay.
+            // zi2026 leaves zombie respawns to map config; this override keeps instant respawns.
             if (!MM_ZI_ROUND_FINISHED && !MM_ZI_OVERTIME) {
                 DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 2, null, _hPlayer);
             } else if (!MM_ZI_ROUND_FINISHED && MM_ZI_OVERTIME) {
@@ -474,6 +546,7 @@ function MM_ZI_OverrideDeath() {
             };
 
             // evaluate win condition when a player dies
+            // MEGAMOD: our override returns the number of remaining survivors
             local remainingSurvivors = ShouldZombiesWin(_hPlayer);
 
             // make sure players can only add time once per round
@@ -513,21 +586,22 @@ function MM_ZI_OverrideDeath() {
                 EntFireByHandle( _hRoundTimer, "auto_countdown", "0", 0, null, null );
             }
 
-            if ( bIsPayload )
-                return; // don't add time to the round timer if it's a payload map
+            // MEGAMOD: Reduce the time added once there are more survivors than the
+            // threshold, taking away a second for every REDUCE_STEP survivors above it.
+            local timeToAdd = ::MM_ZI_ADD_TIME_BASE;
+            if (remainingSurvivors > ::MM_ZI_ADD_TIME_REDUCE_THRESHOLD) {
+                timeToAdd -= 1 + floor((remainingSurvivors - ::MM_ZI_ADD_TIME_REDUCE_THRESHOLD - 1) / ::MM_ZI_ADD_TIME_REDUCE_STEP);
+            }
+            if (timeToAdd < ::MM_ZI_ADD_TIME_MIN)
+                timeToAdd = ::MM_ZI_ADD_TIME_MIN;
 
-            // MEGAMOD: Reduce the time added when there's a large number of survivors
-            local minTimeToAdd = 2;
-            local adjustedTimeToAdd = ADDITIONAL_SEC_PER_PLAYER - floor(remainingSurvivors / 5)
-            if (adjustedTimeToAdd < minTimeToAdd)
-                adjustedTimeToAdd = minTimeToAdd;
-
-            EntFireByHandle(_hRoundTimer, "AddTime", ceil(adjustedTimeToAdd).tostring(), 0, null, null);
+            EntFireByHandle(_hRoundTimer, "AddTime", ceil(timeToAdd).tostring(), 0, null, null);
 
             MM_ZI_LAST_SURVIVOR_DEATH <- Time();
 
             // MEGAMOD: Halve damage on survivor death to reward Zombie activity.
             ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE / 2.0;
+            ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
         } else {
             // MEGAMOD: If game hasn't started, instantly respawn.
             if (!MM_ZI_ROUND_FINISHED) DoEntFire("!self", "RunScriptCode", "MM_ZI_ForceRespawn(self)", 0.1, null, _hPlayer);
@@ -604,12 +678,6 @@ function MM_ZI_OverrideShouldZombiesWin() {
                         // MEGAMOD: Apply Last three buffs as well as last man standing buff
                         _hNextPlayer.GetScriptScope().m_bLastThree       <- true;
 
-                        // MEGAMOD: Do not disable BASE Jumper. We'll do that in overtime instead.
-                        // if (_hNextPlayer.GetPlayerClass() == TF_CLASS_SOLDIER || _hNextPlayer.GetPlayerClass() == TF_CLASS_DEMOMAN)
-                        // {
-                        //     local _bDestroyedParachuteResult = _hNextPlayer.HasThisWeapon( 1101, true );
-                        // }
-
                         _hNextPlayer.AddCond( TF_COND_CRITBOOSTED );
                     };
                 };
@@ -640,6 +708,42 @@ function MM_ZI_OverrideShouldZombiesWin() {
     player.ForceRespawn();
 }
 
+// OVERRIDE: functions.nut::CTFPlayer_RefundSpawnPickerTime
+// MEGAMOD: Prevent players from stalling indefinitely in Overtime.
+// We remove the 1 second given when switching cameras.
+function MM_ZI_OverrideSpawnPickerRefund() {
+    local root = getroottable();
+
+    // Only wrap once
+    if (!("MM_ZI_OriginalRefundSpawnPickerTime" in root) || ::MM_ZI_OriginalRefundSpawnPickerTime == null) {
+        ::MM_ZI_OriginalRefundSpawnPickerTime <- CTFPlayer.RefundSpawnPickerTime;
+    }
+
+    CTFPlayer.RefundSpawnPickerTime <- function() {
+        if (::MM_ZI_OVERTIME) return;
+        ::MM_ZI_OriginalRefundSpawnPickerTime.call( this );
+    };
+    CTFBot.RefundSpawnPickerTime <- CTFPlayer.RefundSpawnPickerTime;
+}
+
+// OVERRIDE: functions.nut::CTFPlayer_AddEventToQueue
+// MEGAMOD: Gate zombie spy cloak events in Overtime.
+function MM_ZI_OverrideSpyRecloak() {
+    local root = getroottable();
+
+    // Only wrap once
+    if (!("MM_ZI_OriginalAddEventToQueue" in root) || ::MM_ZI_OriginalAddEventToQueue == null) {
+        ::MM_ZI_OriginalAddEventToQueue <- CTFPlayer.AddEventToQueue;
+    }
+
+    CTFPlayer.AddEventToQueue <- function( _event, _delay ) {
+        if (::MM_ZI_OVERTIME && ( _event == EVENT_SPY_RECLOAK || _event == EVENT_SPY_SWAP_CLOAK ))
+            return;
+        ::MM_ZI_OriginalAddEventToQueue.call( this, _event, _delay );
+    };
+    CTFBot.AddEventToQueue <- CTFPlayer.AddEventToQueue;
+}
+
 function MM_ZI_PrepareForOvertime() {
     // As there is no situation where the ZI codebase calls a game_round_win entity
     // in the map, we can safely nuke all game_round_wins from the map.
@@ -654,7 +758,32 @@ function MM_ZI_PrepareForOvertime() {
 
 function MM_ZI_EnableOvertime() {
     printl("MEGAMOD: Entering overtime...");
+
+    if (::MM_ZI_OVERTIME_ENABLED == false) {
+        // survivors just win
+        local _hGameWin = SpawnEntityFromTable( "game_round_win",
+        {
+            win_reason      = "0",
+            force_map_reset = "1",
+            TeamNum         = "2", // TF_TEAM_RED
+            switch_teams    = "0"
+        } );
+        ::bGameStarted <- false;
+        ::MM_ZI_ROUND_FINISHED <- true;
+        EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
+        return;
+    }
+
     ::MM_ZI_OVERTIME <- true;
+
+    // No natural zombie respawns during overtime - the map's BLU wave time is suspended.
+    local gamerules = ( "GameRules" in getroottable() && getroottable().GameRules != null )
+        ? getroottable().GameRules
+        : Entities.FindByClassname( null, "tf_gamerules" );
+    if (gamerules != null) {
+        EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "999999", 0, null, null);
+    }
+
     local timer = Entities.FindByClassname(null, "team_round_timer");
     timer.Kill();
 
@@ -668,20 +797,33 @@ function MM_ZI_EnableOvertime() {
 
     foreach( _hNextPlayer in GetAllPlayers() ) {
         if (_hNextPlayer.GetTeam() == 3 || GetPropInt(_hNextPlayer, "m_lifeState") != 0) {
-            ClientPrint(_hNextPlayer, 3, "\x0738F3ABNo more respawns for you. Kill the remaining Survivors to win!\x01");
+            SetPropBool( _hNextPlayer, "m_bGlowEnabled", true );
+            ClientPrint(_hNextPlayer, 3, "\x0738F3ABNo more respawns for you. Kill all the remaining Survivors to win!\x01");
+            ClientPrint(_hNextPlayer, 3, "\x0738F3ABBeware: Survivors can visit your spawn and see you through walls!\x01");
         } else {
-            // Disable B.A.S.E. Jumper in overtime instead of the last player.
-            ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for Zombies. Kill the remaining Zombies to win!\x01");
-            if (_hNextPlayer.GetPlayerClass() == TF_CLASS_SOLDIER || _hNextPlayer.GetPlayerClass() == TF_CLASS_DEMOMAN)
-            {
-                local _bDestroyedParachuteResult = _hNextPlayer.HasThisWeapon( 1101, true );
-                if (_bDestroyedParachuteResult)
-                {
-                    ClientPrint(_hNextPlayer, 3, "\x07FCD303Your B.A.S.E. Jumper has been disabled.\x01");
-                }
-            }
+            ClientPrint(_hNextPlayer, 3, "\x07FCD303No more respawns for Zombies. Kill all the remaining Zombies to win!\x01");
+            ClientPrint(_hNextPlayer, 3, "\x07FCD303You can enter Zombie spawns to hunt down the last few Zombies!\x01");
         }
     }
+
+    // Clear event queue for spy cloaks to ensure consistent state.
+    foreach( _hNextPlayer in GetAllPlayers() ) {
+        if (_hNextPlayer.GetTeam() == 3 && _hNextPlayer.GetPlayerClass() == TF_CLASS_SPY) {
+            local _sc = _hNextPlayer.GetScriptScope();
+            if (_sc != null && "m_tblEventQueue" in _sc) {
+                if (_sc.m_tblEventQueue.rawin(EVENT_SPY_RECLOAK)) {
+                    _sc.m_tblEventQueue.rawdelete(EVENT_SPY_RECLOAK);
+                }
+                if (_sc.m_tblEventQueue.rawin(EVENT_SPY_SWAP_CLOAK)) {
+                    _sc.m_tblEventQueue.rawdelete(EVENT_SPY_SWAP_CLOAK);
+                }
+            }
+            _hNextPlayer.RemoveCond(TF_COND_STEALTHED);
+            _hNextPlayer.RemoveCond(TF_COND_STEALTHED_USER_BUFF);
+        }
+    }
+
+    MM_ZI_MapSpecific_OvertimeStart();
 
     local overtime_sound = {
         team  = 255,
@@ -698,8 +840,19 @@ function MM_ZI_EnableOvertime() {
         respawn.Kill()
     }
 
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+    EntFireByHandle(::MM_ZI_LOGIC_SCRIPT, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+}
+
+// MEGAMOD: Apply zombie glow when overtime starts
+function MM_ZI_OnPlayerSpawn(params) {
+    if (!::MM_ZI_OVERTIME || ::MM_ZI_ROUND_FINISHED) return;
+
+    local player = GetPlayerFromUserID(params.userid);
+    if (player == null) return;
+
+    if (player.GetTeam() == 3) {
+        SetPropBool( player, "m_bGlowEnabled", true );
+    }
 }
 
 ::MM_ZI_OvertimeSecondTick <- function() {
@@ -723,11 +876,31 @@ function MM_ZI_EnableOvertime() {
             SetPropVector(_hNextPlayer, "m_Local.m_vecPunchAngle", vecPunch);
         }
     }
+    local addDamage = false;
+    local damageIncrementThreshold = 10;
 
-    ::MM_ZI_OVERTIME_DAMAGE <- MM_ZI_OVERTIME_DAMAGE + MM_ZI_OVERTIME_DAMAGE_INCREASE;
+    if (::MM_ZI_OVERTIME_DAMAGE >= 40) {
+        damageIncrementThreshold = 1;
+    } else if (::MM_ZI_OVERTIME_DAMAGE >= 30) {
+        damageIncrementThreshold = 2;
+    } else if (::MM_ZI_OVERTIME_DAMAGE >= 20) {
+        damageIncrementThreshold = 3;
+    } else if (::MM_ZI_OVERTIME_DAMAGE >= 10) {
+        damageIncrementThreshold = 5;
+    } else {
+        damageIncrementThreshold = 10;
+    }
 
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    EntFireByHandle(logic_script, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
+    ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE + 1;
+
+    if (::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE >= damageIncrementThreshold) {
+        addDamage = true;
+        ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
+    }
+
+    ::MM_ZI_OVERTIME_DAMAGE <- floor(MM_ZI_OVERTIME_DAMAGE + (addDamage ? 1 : 0));
+
+    EntFireByHandle(::MM_ZI_LOGIC_SCRIPT, "RunScriptCode", "MM_ZI_OvertimeSecondTick()", 1, null, null);
 }
 
 ::MM_ZI_ShouldSurvivorsWin <- function () {
@@ -755,91 +928,334 @@ function MM_ZI_EnableOvertime() {
         switch_teams    = "0"
     } );
 
-    // the zombies have won the round.
+    // the survivors have won the round.
     ::bGameStarted <- false;
     ::MM_ZI_ROUND_FINISHED <- true;
     EntFireByHandle ( _hGameWin, "RoundWin", "", 0, null, null );
 }
 
 function MM_ZI_OverrideRoundEnd() {
-    local logic_script = Entities.FindByClassname(null, "logic_script");
-    local scope = logic_script.GetScriptScope();
-
-    scope.OnGameEvent_teamplay_round_win <- function ( params ) {
+    ::MM_ZI_LOGIC_SCRIPT_SCOPE.OnGameEvent_teamplay_round_win <- function ( params ) {
         ::MM_ZI_ROUND_FINISHED <- true;
+
+        // Restore the map's default BLU respawn wave time after overtime.
+        if (::MM_ZI_OVERTIME && ::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT > 0.0) {
+            local gamerules = ( "GameRules" in getroottable() && getroottable().GameRules != null )
+                ? getroottable().GameRules
+                : Entities.FindByClassname( null, "tf_gamerules" );
+            if (gamerules != null) {
+                EntFireByHandle(gamerules, "SetBlueTeamRespawnWaveTime", "" + ::MM_ZI_BLUE_RESPAWN_WAVE_DEFAULT, 0, null, null);
+            }
+        }
     }
 }
 
-// OVERRIDE: functions.nut::CTFPlayer_ModifyJumperWeapons
-function MM_ZI_OverrideWeaponMods() {
-    // printl("Loading modified jumper script.");
-    CTFPlayer["ModifyJumperWeapons"] <-  function () {
-        // printl("Running modified jumper script.");
-        if ( this.GetPlayerClass() == TF_CLASS_SOLDIER )
+// Map specific edits
+
+// Jumppad definitions for overtime map edits.
+// Each entry describes one jumppad: a visible base prop (drain pipe), optional extra
+// props, an info_particle_system and a trigger_catapult that launch players up to
+// the elevated zombie spawn. Particles and catapults are disabled until overtime.
+::MM_ZI_JUMPPAD_DEFS <- {
+    ["zi_blazehattan_v4_0_5"] = [
         {
-            if ( this.HasThisWeapon( 237 ) ) // rocket jumper
-            {
-                /*local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", 1 );
-
-                _hWeapon.AddAttribute ( "maxammo primary reduced", 0.0, -1 );
-                SetPropIntArray       ( this, "m_iAmmo", 0, 1 );
-
-                _hWeapon.ReapplyProvision();
-                return;*/
-                for ( local i = 0; i < TF_WEAPON_COUNT; i++ )
-                {
-                    local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", i )
-
-                    if ( _hWeapon == null )
-                        return;
-
-                    if ( GetPropInt( _hWeapon, STRING_NETPROP_ITEMDEF ) != 237 )
-                        continue;
-
-                    // MEGAMOD: reserve ammo of 5
-                    local newMaxAmmo = 5;
-                    _hWeapon.AddAttribute ( "maxammo primary reduced", newMaxAmmo / 60.0, -1 );
-                    SetPropIntArray       ( this, "m_iAmmo", 5, 1 );
-
-                    _hWeapon.ReapplyProvision();
-                    return;
-                }
-            };
-        };
-
-        if ( this.GetPlayerClass() == TF_CLASS_DEMOMAN )
+            name = "jumppad_gate2",
+            origin = Vector(-1400, -1592, 39.0283),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 180,
+            launchSpeed = 700.0,
+            catapultOrigin = "-1400 -1592.01 40.78",
+            extraProps = []
+        }
+    ],
+    ["zi_woods_v4_0_5"] = [
         {
-            if ( this.HasThisWeapon( 265 ) ) // sticky jumper
-            {
-                /*local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", 2 );
-
-                _hWeapon.AddAttribute ( "hidden secondary max ammo penalty", 0.02, -1 );
-                SetPropIntArray       ( this, "m_iAmmo", 0, 2 );
-
-                _hWeapon.ReapplyProvision();
-                return;*/
-                for ( local i = 0; i < TF_WEAPON_COUNT; i++ )
-                {
-                    local _hWeapon = GetPropEntityArray( this, "m_hMyWeapons", i )
-
-                    if ( _hWeapon == null )
-                        return;
-
-                    if ( GetPropInt( _hWeapon, STRING_NETPROP_ITEMDEF ) != 265 )
-                        continue;
-
-                    // MEGAMOD: reserve ammo of 5
-                    local newMaxAmmo = 5;
-                    _hWeapon.AddAttribute ( "hidden secondary max ammo penalty", newMaxAmmo / 72.0, -1 );
-                    SetPropIntArray       ( this, "m_iAmmo", 5, 2 );
-
-                    _hWeapon.ReapplyProvision();
-                    return;
-                }
-            };
-        };
-    };
+            name = "jumppad_cliffside",
+            origin = Vector(-732, -4572, 38.25),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -85,
+            launchYaw = 225,
+            launchSpeed = 850.0,
+            catapultOrigin = "-732 -4572 40",
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-766 -4572 -29.75", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_shoreline",
+            origin = Vector(792, -4196, 38.25),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 45,
+            launchSpeed = 800.0,
+            catapultOrigin = "792 -4196 40",
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "758 -4196 -29.75", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_mines",
+            origin = Vector(1537.82, 548.584, 384.789),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 67,
+            launchSpeed = 800.0,
+            catapultOrigin = "1537.82 548.58 386.54",
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "1503.82 548.584 316.789", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        }
+    ],
+    ["workshop/zi_doomtown_b4.ugc3793747813"] = [
+        {
+            name = "jumppad_AC",
+            origin = Vector(-1576, -588, 40.6198),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -80,
+            launchYaw = -150,
+            launchSpeed = 850.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-1610 -588 -27.3802", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_A",
+            origin = Vector(-2582.56, 1188.5, -183.38),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 175,
+            launchSpeed = 950.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-2616.56 1188.5 -251.38", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_AB1",
+            origin = Vector(-1313.01, 1732.43, -107.38),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -85,
+            launchYaw = 40,
+            launchSpeed = 800.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "-1347.01 1732.43 -175.38", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        },
+        {
+            name = "jumppad_AB2",
+            origin = Vector(788.63, 2121.65, 104.62),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -75,
+            launchYaw = 180,
+            launchSpeed = 800.0,
+            extraProps = [
+                { suffix = "_base_pipe", model = "models/props_farm/concrete_pipe001.mdl", origin = "754.63 2121.65 36.6198", angles = "90 0 0", modelscale = "1.0" }
+            ]
+        }
+    ],
+    ["workshop/zi_outbreak_b5a2.ugc3795225054"] = [
+        {
+            name = "jumppad_apartment",
+            origin = Vector(-174.551, -1099.55, 263.009),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -65,
+            launchYaw = 180,
+            launchSpeed = 850.0,
+            extraProps = []
+        },
+        {
+            name = "jumppad_highrise",
+            origin = Vector(0, 1315, 7.0089),
+            angles = "-90 0 0",
+            modelscale = "1.2",
+            launchPitch = -80,
+            launchYaw = 180,
+            launchSpeed = 1000.0,
+            extraProps = []
+        }
+    ]
 }
 
-// We can't beat the vanilla function's execution, so we load the modified function ahead of time.
-MM_ZI_OverrideWeaponMods();
+// Launch volumes are derived from each pad's origin; all pads share this footprint.
+::MM_ZI_JUMPPAD_TRIGGER_HALF <- Vector(32, 32, 20);
+
+// Spawns a single jumppad base prop and removes the DONTBLOCKLOS flag so it blocks sight like normal props.
+function MM_ZI_SpawnJumppadProp(targetname, model, origin, angles, modelscale) {
+    local prop = SpawnEntityFromTable("prop_dynamic",
+    {
+        targetname = targetname,
+        model = model,
+        origin = origin,
+        angles = angles,
+        modelscale = modelscale,
+        solid = "6",
+        disableshadows = "1",
+        disablereceiveshadows = "1"
+    });
+    prop.RemoveEFlags(Constants.FEntityEFlags.EFL_DONTBLOCKLOS);
+    return prop;
+}
+
+// VScript-based jumppad launcher.
+// Dynamically spawned trigger_catapult entities never activated in-game, so the launch
+// behaviour is implemented here instead: while overtime is active, a periodic think checks
+// each player's position against every pad's bounds and applies the launch impulse.
+::MM_ZI_JUMPPADS_ACTIVE <- []; // runtime pad data: { min, max, dir, speed, sound }
+::MM_ZI_JUMPPAD_COOLDOWN <- {}; // entindex -> last launch Time()
+
+// Spawns all jumppads for the given map. The particle system is spawned disabled;
+// MM_ZI_ActivateJumppads() enables it when overtime starts.
+function MM_ZI_SpawnJumppads(mapName) {
+    local defs = ::MM_ZI_JUMPPAD_DEFS[mapName];
+    if (defs == null) return;
+
+    ::MM_ZI_JUMPPADS_ACTIVE <- [];
+    ::MM_ZI_JUMPPAD_COOLDOWN <- {};
+
+    foreach (def in defs) {
+        // Defensive cleanup in case the previous round didn't fully reset the map.
+        MM_KillAllByName(def.name + "_base");
+        MM_KillAllByName(def.name + "_particle");
+        MM_KillAllByName(def.name + "_sound");
+
+        // Visible base prop(s).
+        MM_ZI_SpawnJumppadProp(def.name + "_base", "models/props_farm/drain_pipe001.mdl", def.origin, def.angles, def.modelscale);
+        foreach (extra in def.extraProps) {
+            MM_ZI_SpawnJumppadProp(def.name + extra.suffix, extra.model, extra.origin, extra.angles, extra.modelscale);
+        }
+
+        // Particle effect marking the pad. Disabled until overtime.
+        SpawnEntityFromTable("info_particle_system",
+        {
+            targetname = def.name + "_particle",
+            effect_name = "green_steam_plume",
+            origin = def.origin,
+            angles = def.angles,
+            start_active = "0"
+        });
+
+        // Launch sound. MM_ZI_JumppadThink fires PlaySound on use.
+        local sound = SpawnEntityFromTable("ambient_generic",
+        {
+            targetname = def.name + "_sound",
+            message = "player/pl_impact_airblast2.wav",
+            origin = def.origin,
+            radius = "512",
+            pitch = "100",
+            health = "10", // This is the key for volume, for some reason
+            spawnflags = "48"
+        });
+
+        // Register the pad's launch volume for the VScript launcher. The box is
+        // derived from the pad origin so defs only carry a single position.
+        local dir = MM_ZI_AnglesToDirection(def.launchPitch, def.launchYaw);
+        ::MM_ZI_JUMPPADS_ACTIVE.append({
+            min = def.origin - ::MM_ZI_JUMPPAD_TRIGGER_HALF,
+            max = def.origin + ::MM_ZI_JUMPPAD_TRIGGER_HALF,
+            dir = dir,
+            speed = def.launchSpeed,
+            sound = sound
+        });
+    }
+}
+
+// Mirrors Source's VectorFromAngles (Euler pitch/yaw -> forward direction vector).
+function MM_ZI_AnglesToDirection(pitch, yaw) {
+    local p = pitch * PI / 180;
+    local y = yaw * PI / 180;
+    return Vector(cos(y) * cos(p), sin(y) * cos(p), -sin(p));
+}
+
+// Periodic think: launches any player standing in a jumppad volume while overtime is active.
+::MM_ZI_JumppadThink <- function() {
+    if (::MM_ZI_OVERTIME) {
+        local now = Time();
+        foreach (player in GetAllPlayers()) {
+            if (GetPropInt(player, "m_lifeState") != 0) continue;
+
+            // Cooldown so a single entry doesn't re-launch every think.
+            local last = null;
+            if (::MM_ZI_JUMPPAD_COOLDOWN.rawin(player.entindex())) {
+                last = ::MM_ZI_JUMPPAD_COOLDOWN[player.entindex()];
+            }
+            if (last != null && now - last < 0.5) continue;
+
+            local pos = player.GetOrigin();
+            foreach (pad in ::MM_ZI_JUMPPADS_ACTIVE) {
+                if (pos.x < pad.min.x || pos.x > pad.max.x) continue;
+                if (pos.y < pad.min.y || pos.y > pad.max.y) continue;
+                if (pos.z < pad.min.z || pos.z > pad.max.z) continue;
+
+                ::MM_ZI_JUMPPAD_COOLDOWN[player.entindex()] <- now;
+                player.SetVelocity(pad.dir * pad.speed);
+
+                // Short local airblast at the pad so nearby players hear it fire.
+                if (pad.sound != null) EntFireByHandle(pad.sound, "PlaySound", "", 0, null, null);
+                break;
+            }
+        }
+    }
+}
+
+// Enables the jumppads for the given map (called when overtime starts).
+function MM_ZI_ActivateJumppads(mapName) {
+    local defs = ::MM_ZI_JUMPPAD_DEFS[mapName];
+    if (defs == null) return;
+
+    foreach (def in defs) {
+        local particle = MM_GetEntByName(def.name + "_particle");
+        if (particle != null) EntFireByHandle(particle, "Start", "", 0, null, null);
+    }
+
+    // Start the periodic launcher think (idempotent per round).
+    MM_CreateDummyThink("MM_ZI_JumppadThink");
+}
+
+function MM_ZI_MapSpecific_RoundStart() {
+    local mapName = GetMapName();
+
+    switch (mapName) {
+        case "zi_blazehattan_v4_0_5":
+        case "zi_woods_v4_0_5":
+        case "workshop/zi_doomtown_b4.ugc3793747813":
+        case "workshop/zi_outbreak_b5a2.ugc3795225054":
+            MM_ZI_SpawnJumppads(mapName);
+    }
+}
+
+function MM_ZI_MapSpecific_OvertimeStart() {
+    local mapName = GetMapName();
+
+    switch (mapName) {
+        case "zi_blazehattan_v4_0_5":
+        case "zi_woods_v4_0_5":
+        case "workshop/zi_doomtown_b4.ugc3793747813":
+        case "workshop/zi_outbreak_b5a2.ugc3795225054":
+            // Activating Jumppads
+            MM_ZI_ActivateJumppads(mapName);
+            break;
+        case "zi_devastation_final1_v4_0_5":
+            // Kill all trigger_multiple entities (e.g. spawndoors) and force the exit doors open.
+            local triggers = [];
+            for (local trig = null; trig = Entities.FindByClassname(trig, "trigger_multiple");) {
+                triggers.push(trig);
+            }
+            foreach (trig in triggers) {
+                trig.Kill();
+            }
+            local door1 = MM_GetEntByName("swr_exit_door_1");
+            if (door1 != null) EntFireByHandle(door1, "Open", "", 0, null, null);
+            local door2 = MM_GetEntByName("swr_exit_door_2");
+            if (door2 != null) EntFireByHandle(door2, "Open", "", 0, null, null);
+            break;
+    }
+}
