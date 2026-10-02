@@ -4,7 +4,9 @@
 ::MM_ZI_OVERTIME <- false;
 ::MM_ZI_OVERTIME_DAMAGE <- 0;
 ::MM_ZI_OVERTIME_DAMAGE_LAST_INCREASE <- 0;
-::MM_ZI_MAX_TIME <- 150;
+// -1 means "use the map's own team_round_timer timer_length (m_nTimerInitialLength)".
+// Individual map mods can override this to force a custom round duration.
+::MM_ZI_MAX_TIME <- -1;
 ::MM_ZI_ADD_TIME_BASE <- 5;
 ::MM_ZI_ADD_TIME_MIN <- 2;
 
@@ -24,6 +26,15 @@
 
 ::MM_ZI_LOGIC_SCRIPT <- null;
 ::MM_ZI_LOGIC_SCRIPT_SCOPE <- null;
+
+// Returns the round duration to apply: the custom override if set (>= 0),
+// otherwise the map's own team_round_timer default (m_nTimerInitialLength,
+// i.e. the "timer_length" keyfield - not the setup time).
+function MM_ZI_GetRoundTime(timer) {
+    if (::MM_ZI_MAX_TIME >= 0) return ::MM_ZI_MAX_TIME;
+    local mapDefault = GetPropInt(timer, "m_nTimerInitialLength");
+    return (mapDefault > 0) ? mapDefault : 150;
+}
 
 function MM_Zombie_Infection() {
     ::MM_ZI_ROUND_FINISHED <- false;
@@ -118,8 +129,9 @@ function MM_ZI_OverrideSetupFinished() {
         // can overwrite it with the map's default values.
         local timer = Entities.FindByClassname(null, "team_round_timer");
         if (timer != null) {
-            EntFireByHandle(timer, "SetTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
-            EntFireByHandle(timer, "SetMaxTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+            local roundTime = MM_ZI_GetRoundTime(timer);
+            EntFireByHandle(timer, "SetTime", "" + roundTime, 0, null, null);
+            EntFireByHandle(timer, "SetMaxTime", "" + roundTime, 0, null, null);
         }
 
         BuildZombieSpawnPointArray();
@@ -299,10 +311,11 @@ function MM_ZI_OverrideSetupFinished() {
                 };
             };
 
-            // MEGAMOD: Force round time to 2 minutes.
+            // MEGAMOD: Force round time (custom or map default).
             local _hRoundTimer = Entities.FindByClassname( null, "team_round_timer" );
-            EntFireByHandle(_hRoundTimer, "SetTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
-            EntFireByHandle(_hRoundTimer, "SetMaxTime", "" + ::MM_ZI_MAX_TIME, 0, null, null);
+            local _roundTime = MM_ZI_GetRoundTime(_hRoundTimer);
+            EntFireByHandle(_hRoundTimer, "SetTime", "" + _roundTime, 0, null, null);
+            EntFireByHandle(_hRoundTimer, "SetMaxTime", "" + _roundTime, 0, null, null);
 
             PlayGlobalBell( false );
 
@@ -964,7 +977,7 @@ function MM_ZI_OverrideRoundEnd() {
 // props, an info_particle_system and a trigger_catapult that launch players up to
 // the elevated zombie spawn. Particles and catapults are disabled until overtime.
 ::MM_ZI_JUMPPAD_DEFS <- {
-    ["zi_blazehattan_v4_0_5"] = [
+    ["zi_blazehattan"] = [
         {
             name = "jumppad_gate2",
             origin = Vector(-1400, -1592, 39.0283),
@@ -977,7 +990,7 @@ function MM_ZI_OverrideRoundEnd() {
             extraProps = []
         }
     ],
-    ["zi_woods_v4_0_5"] = [
+    ["zi_woods"] = [
         {
             name = "jumppad_cliffside",
             origin = Vector(-732, -4572, 38.25),
@@ -1231,8 +1244,8 @@ function MM_ZI_MapSpecific_RoundStart() {
     local mapName = GetMapName();
 
     switch (mapName) {
-        case "zi_blazehattan_v4_0_5":
-        case "zi_woods_v4_0_5":
+        case "zi_blazehattan":
+        case "zi_woods":
         case "workshop/zi_doomtown_b4.ugc3793747813":
         case "workshop/zi_outbreak_b5a2.ugc3795225054":
             MM_ZI_SpawnJumppads(mapName);
@@ -1243,14 +1256,14 @@ function MM_ZI_MapSpecific_OvertimeStart() {
     local mapName = GetMapName();
 
     switch (mapName) {
-        case "zi_blazehattan_v4_0_5":
-        case "zi_woods_v4_0_5":
+        case "zi_blazehattan":
+        case "zi_woods":
         case "workshop/zi_doomtown_b4.ugc3793747813":
         case "workshop/zi_outbreak_b5a2.ugc3795225054":
             // Activating Jumppads
             MM_ZI_ActivateJumppads(mapName);
             break;
-        case "zi_devastation_final1_v4_0_5":
+        case "zi_devastation_final1":
             // Kill all trigger_multiple entities (e.g. spawndoors) and force the exit doors open.
             local triggers = [];
             for (local trig = null; trig = Entities.FindByClassname(trig, "trigger_multiple");) {
