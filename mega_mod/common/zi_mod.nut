@@ -337,6 +337,13 @@ function MM_ZI_OverrideDeath() {
         if ( _sc != null )
             _hPlayer.SpoofZombieBuffFX( false );
 
+        // a soldier dying mid-pounce skips the landing, leaving the fall whistle looping
+        if ( _sc != null && ( "m_iFlags" in _sc ) && ( _sc.m_iFlags & ZBIT_SOLDIER_IN_POUNCE ) )
+        {
+            _sc.m_iFlags <- ( _sc.m_iFlags & ~ZBIT_SOLDIER_IN_POUNCE );
+            _hPlayer.EndSoldierFall();
+        };
+
         // a death mid-picker/emerge leaks locked state - the exit path is otherwise
         // only reachable from FinishSpawnEmerge, which a corpse never gets to
         if ( _sc != null && ( "m_iFlags" in _sc ) )
