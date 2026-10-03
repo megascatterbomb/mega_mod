@@ -52,6 +52,9 @@ function MM_LoadConfig() {
 	foreach (mod in MM_ALL_MAP_MODS) {
 		mapMods.rawset(mod, true);
 	};
+	foreach (entry in MM_WILDCARD_MAP_MODS) {
+		mapMods.rawset(entry[0], true);
+	};
 	local configString = FileToString(MM_CONFIG_PATH);
 
 	// Load existing config

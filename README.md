@@ -28,6 +28,7 @@ Some mods depend on certain cvars being in vscript_convar_allowlist:
     - `ApplyMod()`: Applies the modification.
 - `/mapmods`
   - Script files that are automatically included when the map with the same filename loads.
+  - Wildcard entries are defined in `MM_WILDCARD_MAP_MODS` as `[pattern, filePath]` tuples. The pattern uses glob syntax where `*` matches any sequence of characters. For example, `["tf2ware_ultimate_*", "workshop/tf2ware_ultimate.ugc3413262999"]` loads the workshop tf2ware mod for any local map starting with `tf2ware_ultimate_`. Exact-name entries in `MM_ALL_MAP_MODS` always take priority over wildcard matches.
 - `/tug_of_war_addons`
   - Addons that utilize the official addon support in the Tug-of-war VScript gamemode.
 - `/vsh_addons`

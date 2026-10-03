@@ -40,7 +40,14 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
     "workshop/plr_highertower.ugc899335714"
     "workshop/sd_turbine_a3a.ugc2044308678"
     "workshop/tf2ware_ultimate.ugc3413262999"
-    "workshop/tf2ware_ultimate_fix.ugc3413262999"
+];
+
+// Wildcard map mods: [pattern, filePath] — pattern is glob-matched against map name ('*' matches any chars),
+// filePath is the actual script to include (relative to mega_mod/mapmods/).
+// Exact-name entries in MM_ALL_MAP_MODS always take priority over wildcard matches.
+::MM_WILDCARD_MAP_MODS <- [
+    ["tf2ware_ultimate_*", "workshop/tf2ware_ultimate.ugc3413262999"],
+    ["workshop/tf2ware_ultimate_*", "workshop/tf2ware_ultimate.ugc3413262999"]
 ];
 
 // To create a global mod: create a file in mega_mod/globalmods/ with the name of the mod.
@@ -73,19 +80,29 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
 IncludeScript("mega_mod/config.nut");
 
 local mapName = GetMapName();
-local mapModIndex = MM_ALL_MAP_MODS.find(mapName);
-local hasMapMod = mapModIndex != null;
 
 printl("MEGAMOD: Loading mega_mod/util.nut...");
 IncludeScript("mega_mod/util.nut")
 printl("MEGAMOD: util.nut started");
 
+// Resolve the mod for this map. Exact-name entries take priority over wildcard matches.
+local matchedMapMod = MM_FindMapMod(mapName);
+local hasMapMod = matchedMapMod != null;
+
 if(hasMapMod) {
-    if(MM_ModIsEnabled(mapName, true)) {
-        IncludeScript("mega_mod/mapmods/" + mapName + ".nut")
-        printl("MEGAMOD: " + mapName + ".nut started")
+    local modKey, scriptPath;
+    if(type(matchedMapMod) == "array") {
+        modKey = matchedMapMod[0];
+        scriptPath = matchedMapMod[1];
     } else {
-        printl("MEGAMOD: " + mapName + " has a mod, but is disabled, skipping...");
+        modKey = matchedMapMod;
+        scriptPath = matchedMapMod;
+    }
+    if(MM_ModIsEnabled(modKey, true)) {
+        IncludeScript("mega_mod/mapmods/" + scriptPath + ".nut")
+        printl("MEGAMOD: " + modKey + " -> " + scriptPath + ".nut started")
+    } else {
+        printl("MEGAMOD: " + modKey + " has a mod, but is disabled, skipping...");
     }
 } else {
     printl("MEGAMOD: " + mapName + " is not listed within mega_mod.nut.");

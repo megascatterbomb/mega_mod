@@ -225,6 +225,36 @@ function MM_Gamemode_CheckIfMultiStage() {
     return rounds > 1;
 }
 
+// Glob-style wildcard matching. '*' matches any sequence of characters (including none).
+// Splits the pattern on '*' and requires each chunk to be found in str, in order,
+// with each match starting at or after where the previous chunk ended.
+function MM_GlobMatch(pattern, str) {
+    local chunks = split(pattern, "*");
+    local pos = 0;
+    foreach (chunk in chunks) {
+        if (chunk.len() == 0) continue; // empty chunk from leading/trailing/consecutive '*'
+        local idx = str.find(chunk, pos);
+        if (idx < 0) return false;
+        pos = idx + chunk.len();
+    }
+    return true;
+}
+
+// Finds the map mod entry that matches mapName. Exact name matches take priority over wildcard matches.
+// Returns the matched entry: a string (exact) or a [pattern, filePath] tuple (wildcard), or null.
+function MM_FindMapMod(mapName) {
+    // Pass 1: exact name match
+    foreach (mod in MM_ALL_MAP_MODS) {
+        if (mod == mapName) return mod;
+    }
+    // Pass 2: wildcard glob match
+    foreach (entry in MM_WILDCARD_MAP_MODS) {
+        local m = MM_GlobMatch(entry[0], mapName);
+        if (m) return entry;
+    }
+    return null;
+}
+
 // hasMapMod == true: Mod is loaded if both ShouldApply() and LoadAlongsideMapMods() returns true
 // hasMapMod == false: Mod is loaded if ShouldApply() returns true
 // hasMapMod == null: Mod is always loaded
