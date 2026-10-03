@@ -182,7 +182,7 @@ When a tank spawns, its health will be announced in chat. When a tank is destroy
 
 No global mod used; mod has separate implementations for each supported map.
 
-Currently supported maps: `plr_bananabay`, `plr_cutter`, `plr_hacksaw`, `plr_hacksaw_event`, `plr_hightower`, `plr_hightower_event`, `plr_nightfall_final`, `plr_pipeline`, [`plr_highertower`](https://steamcommunity.com/sharedfiles/filedetails/?id=899335714).
+Currently supported maps: `plr_bananabay`, `plr_cutter`, `plr_hacksaw`, `plr_hacksaw_event`, `plr_hightower`, `plr_hightower_event`, `plr_nightfall_final`, `plr_pipeline`, `4plr_sisyphus`, [`plr_highertower`](https://steamcommunity.com/sharedfiles/filedetails/?id=899335714).
 
 ### Added Overtime
 
