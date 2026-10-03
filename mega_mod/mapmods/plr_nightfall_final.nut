@@ -39,18 +39,18 @@ function OnGameEvent_teamplay_round_start(params) {
 
     // Rollback logic replacement
 
-    PLR_AddRollbackZone(2, "plr_red_pathA_hillA2", "plr_red_pathA_hillA4", "plr_red_pathA_hillA1");
-    PLR_AddRollbackZone(3, "plr_blu_pathA_hillA2", "plr_blu_pathA_hillA4", "plr_blu_pathA_hillA1");
+    PLR_AddRollbackZone(2, "plr_red_pathA_hillA2", "plr_red_pathA_hillA4");
+    PLR_AddRollbackZone(3, "plr_blu_pathA_hillA2", "plr_blu_pathA_hillA4");
 
-    PLR_AddRollbackZone(2, "plr_red_pathB_hillA2", "plr_red_pathB_hillA5", "plr_red_pathB_hillA1");
-    PLR_AddRollbackZone(2, "plr_red_pathB_hillB2", "plr_red_pathB_hillB4", "plr_red_pathB_hillB1");
-    PLR_AddRollbackZone(3, "plr_blu_pathB_hillA2", "plr_blu_pathB_hillA5", "plr_blu_pathB_hillA1");
-    PLR_AddRollbackZone(3, "plr_blu_pathB_hillB2", "plr_blu_pathB_hillB4", "plr_blu_pathB_hillB1");
+    PLR_AddRollbackZone(2, "plr_red_pathB_hillA2", "plr_red_pathB_hillA5");
+    PLR_AddRollbackZone(2, "plr_red_pathB_hillB2", "plr_red_pathB_hillB4");
+    PLR_AddRollbackZone(3, "plr_blu_pathB_hillA2", "plr_blu_pathB_hillA5");
+    PLR_AddRollbackZone(3, "plr_blu_pathB_hillB2", "plr_blu_pathB_hillB4");
 
-    PLR_AddRollbackZone(2, "plr_red_pathC_hillA2", "plr_red_pathC_hillA6", "plr_red_pathC_hillA1");
-    PLR_AddRollbackZone(2, "plr_red_pathC_hillB2", "plr_red_pathC_hillB6", "plr_red_pathC_hillB1");
-    PLR_AddRollbackZone(3, "plr_blu_pathC_hillA2", "plr_blu_pathC_hillA6", "plr_blu_pathC_hillA1");
-    PLR_AddRollbackZone(3, "plr_blu_pathC_hillB2", "plr_blu_pathC_hillB6", "plr_blu_pathC_hillB1");
+    PLR_AddRollbackZone(2, "plr_red_pathC_hillA2", "plr_red_pathC_hillA6");
+    PLR_AddRollbackZone(2, "plr_red_pathC_hillB2", "plr_red_pathC_hillB6");
+    PLR_AddRollbackZone(3, "plr_blu_pathC_hillA2", "plr_blu_pathC_hillA6");
+    PLR_AddRollbackZone(3, "plr_blu_pathC_hillB2", "plr_blu_pathC_hillB6");
 
     // Crossing logic replacement (yes they used "crossover2" twice)
     foreach(entName in [

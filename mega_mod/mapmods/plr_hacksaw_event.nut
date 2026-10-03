@@ -42,12 +42,12 @@ function OnGameEvent_teamplay_round_start(params) {
     EntFire("text_hack_blu*", "AddOutput", "channel 4", 0, null);
 
     // Rollzones
-    PLR_AddRollbackZone(2, "ssplr_red_pathA_start64", "ssplr_red_pathA_start65", "ssplr_red_pathA_start83");
-    PLR_AddRollbackZone(2, "ssplr_red_pathA_start74", "ssplr_red_pathA_start75", "ssplr_red_pathA_start73");
-    PLR_AddRollbackZone(2, "ssplr_red_pathA_start82", "red_path_15", "ssplr_red_pathA_start81");
-    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start68", "ssplr_blu_pathA_start69", "ssplr_blu_pathA_start87");
-    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start78", "ssplr_blu_pathA_start79", "ssplr_blu_pathA_start77");
-    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start85", "blu_path_15", "ssplr_blu_pathA_start84");
+    PLR_AddRollbackZone(2, "ssplr_red_pathA_start64", "ssplr_red_pathA_start65");
+    PLR_AddRollbackZone(2, "ssplr_red_pathA_start74", "ssplr_red_pathA_start75");
+    PLR_AddRollbackZone(2, "ssplr_red_pathA_start82", "red_path_15");
+    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start68", "ssplr_blu_pathA_start69");
+    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start78", "ssplr_blu_pathA_start79");
+    PLR_AddRollbackZone(3, "ssplr_blu_pathA_start85", "blu_path_15");
 
     // Crossing logic replacement
     foreach(entName in [

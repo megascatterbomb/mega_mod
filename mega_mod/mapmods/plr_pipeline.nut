@@ -42,16 +42,16 @@ function OnGameEvent_teamplay_round_start(params) {
     MM_GetEntByName("blue_train_hill_branch").Kill();
     MM_GetEntByName("blue_train_hillclimb_backstop_relay").Kill();
 
-    PLR_AddRollbackZone(2, "red_path_26", "red_path_27", "red_path_25");
-    PLR_AddRollbackZone(3, "blue_path_26", "blue_path_27", "blue_path_25");
+    PLR_AddRollbackZone(2, "red_path_26", "red_path_27");
+    PLR_AddRollbackZone(3, "blue_path_26", "blue_path_27");
 
-    PLR_AddRollbackZone(2, "red_path_b_22", "red_path_b_23", "red_path_b_21");
-    PLR_AddRollbackZone(3, "blue_path_b_22", "blue_path_b_23", "blue_path_b_21");
+    PLR_AddRollbackZone(2, "red_path_b_22", "red_path_b_23");
+    PLR_AddRollbackZone(3, "blue_path_b_22", "blue_path_b_23");
 
-    PLR_AddRollbackZone(2, "red_path_c_3", "red_path_c_6", "red_path_c_2");
-    PLR_AddRollbackZone(2, "red_path_c_8", "red_path_c_11", "red_path_c_7");
-    PLR_AddRollbackZone(3, "blue_path_c_3", "blue_path_c_6", "blue_path_c_2");
-    PLR_AddRollbackZone(3, "blue_path_c_8", "blue_path_c_11", "blue_path_c_7");
+    PLR_AddRollbackZone(2, "red_path_c_3", "red_path_c_6");
+    PLR_AddRollbackZone(2, "red_path_c_8", "red_path_c_11");
+    PLR_AddRollbackZone(3, "blue_path_c_3", "blue_path_c_6");
+    PLR_AddRollbackZone(3, "blue_path_c_8", "blue_path_c_11");
 
     // Crossing logic replacement
     foreach (entName in [

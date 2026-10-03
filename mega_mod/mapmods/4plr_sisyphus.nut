@@ -65,16 +65,16 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(PLR_TEAMS[5].pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_ylw", "InValue", "", 0, -1);
 
     // Rollback zones - first hill (track_2 to track_3)
-    PLR_AddRollbackZone(2, "path_red_2", "path_red_3", "path_red_28");
-    PLR_AddRollbackZone(3, "path_blu_2", "path_blu_3", "path_blu_29");
-    PLR_AddRollbackZone(4, "path_grn_2", "path_grn_3", "path_grn_28");
-    PLR_AddRollbackZone(5, "path_ylw_2", "path_ylw_3", "path_ylw_28");
+    PLR_AddRollbackZone(2, "path_red_2", "path_red_3");
+    PLR_AddRollbackZone(3, "path_blu_2", "path_blu_3");
+    PLR_AddRollbackZone(4, "path_grn_2", "path_grn_3");
+    PLR_AddRollbackZone(5, "path_ylw_2", "path_ylw_3");
 
     // Rollback zones - final hill (track_6 to end of track; blu starts at track_7)
-    PLR_AddRollbackZone(2, "path_red_6", null, "path_red_24");
-    PLR_AddRollbackZone(3, "path_blu_7", null, "path_blu_25");
-    PLR_AddRollbackZone(4, "path_grn_6", null, "path_grn_24");
-    PLR_AddRollbackZone(5, "path_ylw_6", null, "path_ylw_24");
+    PLR_AddRollbackZone(2, "path_red_6", null);
+    PLR_AddRollbackZone(3, "path_blu_7", null);
+    PLR_AddRollbackZone(4, "path_grn_6", null);
+    PLR_AddRollbackZone(5, "path_ylw_6", null);
 
     // Timer logic replacement - kill and recreate.
     local oldTimer = MM_GetEntByName("ssplr_timer");

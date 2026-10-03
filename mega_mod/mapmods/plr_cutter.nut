@@ -27,12 +27,12 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
 
     // Rollzones
-    PLR_AddRollbackZone(2, "path_red_rollback2_1", "path_red_rollback2_5", "path_red_256CCW_2_9");
-    PLR_AddRollbackZone(2, "path_red_rollback3_1", "path_red_rollback3_5", "path_red_45bCCW_2_4");
-    PLR_AddRollbackZone(2, "path_red_finalhill1", "plr_red_pathA_end", "path_red_128CCW_3_5");
-    PLR_AddRollbackZone(3, "path_blu_rollback2_1", "path_blu_rollback2_5", "path_blu_256CCW_2_9");
-    PLR_AddRollbackZone(3, "path_blu_rollback3_1", "path_blu_rollback3_5", "path_blu_45bCCW_2_4");
-    PLR_AddRollbackZone(3, "path_blu_finalhill1", "plr_blu_pathA_end", "path_blu_finalhill1");
+    PLR_AddRollbackZone(2, "path_red_rollback2_1", "path_red_rollback2_5");
+    PLR_AddRollbackZone(2, "path_red_rollback3_1", "path_red_rollback3_5");
+    PLR_AddRollbackZone(2, "path_red_finalhill1", "plr_red_pathA_end");
+    PLR_AddRollbackZone(3, "path_blu_rollback2_1", "path_blu_rollback2_5");
+    PLR_AddRollbackZone(3, "path_blu_rollback3_1", "path_blu_rollback3_5");
+    PLR_AddRollbackZone(3, "path_blu_finalhill1", "plr_blu_pathA_end");
 
     // Crossing logic replacement
     foreach(entName in [

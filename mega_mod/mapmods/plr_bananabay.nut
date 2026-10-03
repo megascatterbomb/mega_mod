@@ -30,17 +30,17 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
 
     // Rollzones
-    PLR_AddRollbackZone(2, "minecart_path_36", "minecart_path_38", "minecart_path_35");
-    PLR_AddRollforwardZone(2, "minecart_path_48", "minecart_path_52", "minecart_path_51");
-    PLR_AddRollbackZone(2, "minecart_path_57", "minecart_path_68", "minecart_path_56");
-    PLR_AddRollbackZone(2, "minecart_path_77", "minecart_path_78", "minecart_path_76");
-    PLR_AddRollbackZone(2, "minecart_path_88", null, "minecart_path_87");
+    PLR_AddRollbackZone(2, "minecart_path_36", "minecart_path_38");
+    PLR_AddRollforwardZone(2, "minecart_path_48", "minecart_path_52");
+    PLR_AddRollbackZone(2, "minecart_path_57", "minecart_path_68");
+    PLR_AddRollbackZone(2, "minecart_path_77", "minecart_path_78");
+    PLR_AddRollbackZone(2, "minecart_path_88", null);
 
-    PLR_AddRollbackZone(3, "minecart_bpath_36", "minecart_bpath_38", "minecart_bpath_35");
-    PLR_AddRollforwardZone(3, "minecart_bpath_48", "minecart_bpath_52", "minecart_bpath_51");
-    PLR_AddRollbackZone(3, "minecart_bpath_57", "minecart_bpath_68", "minecart_bpath_56");
-    PLR_AddRollbackZone(3, "minecart_bpath_77", "minecart_bpath_78", "minecart_bpath_76");
-    PLR_AddRollbackZone(3, "minecart_bpath_80", null, "minecart_bpath_88");
+    PLR_AddRollbackZone(3, "minecart_bpath_36", "minecart_bpath_38");
+    PLR_AddRollforwardZone(3, "minecart_bpath_48", "minecart_bpath_52");
+    PLR_AddRollbackZone(3, "minecart_bpath_57", "minecart_bpath_68");
+    PLR_AddRollbackZone(3, "minecart_bpath_77", "minecart_bpath_78");
+    PLR_AddRollbackZone(3, "minecart_bpath_80", null);
 
     // Track if the cart is at the cutoff between the track and the capture zone
     PLR_TEAMS[2].custom.atCutoff <- false;

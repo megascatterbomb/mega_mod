@@ -39,8 +39,8 @@ function OnGameEvent_teamplay_round_start(params) {
     EntityOutputs.AddOutput(PLR_TEAMS[3].pushzone, "OnNumCappersChanged2", "mm_plr_logiccase_blu", "InValue", "", 0, -1);
 
     // First hills
-    PLR_AddRollbackZone(2, "plr_red_pathC_mid_35", "plr_red_pathC_mid_38", "plr_red_pathC_mid_34");
-    PLR_AddRollbackZone(3, "plr_blu_pathC_hillA38", "plr_blu_pathC_hillA22", "plr_blu_pathC_hillA19");
+    PLR_AddRollbackZone(2, "plr_red_pathC_mid_35", "plr_red_pathC_mid_38");
+    PLR_AddRollbackZone(3, "plr_blu_pathC_hillA38", "plr_blu_pathC_hillA22");
     // Elevators
     PLR_AddRollbackZone(2, "plr_red_pathC_hillA3", "plr_red_pathC_end_dummy", "plr_red_pathC_hillA2");
     PLR_AddRollbackZone(3, "plr_blu_pathC_hillA3", "plr_blu_pathC_end_dummy", "plr_blu_pathC_hillA2");

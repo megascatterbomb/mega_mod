@@ -52,6 +52,7 @@ function DisplayStalemateAlert() {
         background = 0,
         display_to_team = 0
     });
+    NetProps.SetPropBool(text_tf, "m_bForcePurgeFixedupStrings", true);
     EntFireByHandle(text_tf, "Display", "", 0, null, null);
     EntFireByHandle(text_tf, "Kill", "", 5, null, null);
 }

@@ -321,14 +321,16 @@ function PLR_AddCaptureOutputsToLogicCase(team, entity) {
         "PLR_CartEvent(" + team + ", 3)", 0, -1);
 }
 
-function PLR_AddRollbackZone(team, startPath, endPath, disablePath) {
+function PLR_AddRollbackZone(team, startPath, endPath, disablePath = null) {
     local t = PLR_GetTeam(team);
     local sparksName = t.cartsparks[0].GetName();
 
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", sparksName,
         "StopSpark", "", 0, -1);
-    EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", disablePath,
-        "DisablePath", "", 0, -1);
+    if (disablePath) {
+        EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", disablePath,
+            "DisablePath", "", 0, -1);
+    }
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self",
         "RunScriptCode", "PLR_RollbackStart(" + team + ")", 0, -1);
     if (endPath) {
@@ -337,14 +339,16 @@ function PLR_AddRollbackZone(team, startPath, endPath, disablePath) {
     }
 }
 
-function PLR_AddRollforwardZone(team, startPath, endPath, disablePath) {
+function PLR_AddRollforwardZone(team, startPath, endPath, disablePath = null) {
     EntityOutputs.AddOutput(MM_GetEntByName(startPath), "OnPass", "!self",
         "RunScriptCode", "PLR_RollforwardStart(" + team + ")", 0, -1);
     if (endPath) {
         EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", "!self",
             "RunScriptCode", "PLR_RollforwardEnd(" + team + ")", 0, -1);
-        EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", disablePath,
-            "DisablePath", "", 0, -1);
+        if (disablePath) {
+            EntityOutputs.AddOutput(MM_GetEntByName(endPath), "OnPass", disablePath,
+                "DisablePath", "", 0, -1);
+        }
     }
 }
 
@@ -485,11 +489,23 @@ function PLR_SetCrossing(team, crossingID) {
 // ============================================================================
 
 function PLR_RollbackStart(team) {
-    PLR_TEAMS[team].rollstate = -1;
+    local t = PLR_TEAMS[team];
+    local speed = NetProps.GetPropFloat(t.train, "m_flSpeed");
+    // At the entry (bottom) of a rollback zone:
+    //   Forward/stopped → cart is on the incline → rollstate -1
+    //   Backward        → cart is rolling back off the bottom → rollstate 0
+    t.rollstate = (speed >= 0) ? -1 : 0;
+    PLR_UpdateCart(team, t.pushstate);
 }
 
 function PLR_RollbackEnd(team) {
-    PLR_TEAMS[team].rollstate = 0;
+    local t = PLR_TEAMS[team];
+    local speed = NetProps.GetPropFloat(t.train, "m_flSpeed");
+    // At the exit (top) of a rollback zone:
+    //   Forward/stopped → cart has left the incline → rollstate 0
+    //   Backward        → cart is rolling back down the incline → rollstate -1
+    t.rollstate = (speed >= 0) ? 0 : -1;
+    PLR_UpdateCart(team, t.pushstate);
 }
 
 function PLR_RollforwardStart(team) {
@@ -584,6 +600,7 @@ function PLR_AnnounceRollbackDisabled() {
         background = 0,
         display_to_team = 0
     });
+    NetProps.SetPropBool(text_tf, "m_bForcePurgeFixedupStrings", true);
     EntFireByHandle(text_tf, "Display", "", 0.1, self, self);
     EntFireByHandle(text_tf, "Kill", "", 7, self, self);
 }
