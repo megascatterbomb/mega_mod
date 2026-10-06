@@ -14,6 +14,7 @@ if(getroottable().rawin("MEGA_MOD_LOADED") && ::MEGA_MOD_LOADED) {
 ::MM_ALL_MAP_MODS <- [
     "2koth_abbey"
     "arena_perks"
+    "ctf_medi_evil"
     "cp_cowerhouse"
     "cp_freaky_fair"
     "cp_standin_final"
